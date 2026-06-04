@@ -1,0 +1,364 @@
+/* =============================================
+   calendar.css  —  Monthly grid calendar styles
+   ============================================= */
+
+/* ------- Calendar wrapper ------- */
+#home-calendar {
+  padding-bottom: var(--space-4);
+}
+
+/* ------- Header: month title + nav buttons ------- */
+.cal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.cal-month-title {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.cal-month-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-text-primary);
+}
+
+.cal-year {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--clr-text-secondary);
+}
+
+.cal-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-secondary);
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  transition: color var(--transition-instant),
+              background var(--transition-instant);
+}
+
+.cal-nav-btn:hover {
+  color: var(--clr-text-primary);
+  background: var(--clr-surface-raised);
+}
+
+.cal-today-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--clr-accent);
+  border: 1px solid var(--clr-accent);
+  min-height: var(--touch-min);
+  transition: background var(--transition-instant),
+              color var(--transition-instant);
+}
+
+.cal-today-btn:hover {
+  background: var(--clr-accent-dim);
+}
+
+/* ------- Day name header row ------- */
+.cal-day-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 2px;
+}
+
+.cal-day-name {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--space-1) 0;
+}
+
+/* ------- Grid ------- */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+/* ------- Day cell ------- */
+.cal-cell {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 4px 6px;
+  min-height: 72px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--transition-instant),
+              background   var(--transition-instant);
+  /* Prevent accidental text selection during drag */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cal-cell--empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-cell:not(.cal-cell--empty):hover {
+  border-color: var(--clr-accent);
+  background: var(--clr-surface-raised);
+}
+
+/* Today highlight */
+.cal-cell--today {
+  border-color: var(--clr-accent);
+  background: var(--clr-accent-dim);
+}
+
+/* Drop target highlight */
+.cal-cell--drop-target {
+  border-color: var(--clr-accent) !important;
+  background: rgba(79, 124, 255, 0.2) !important;
+  outline: 2px solid var(--clr-accent);
+}
+
+/* ------- Day number ------- */
+.cal-cell-day {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--clr-text-secondary);
+  line-height: 1;
+  margin-bottom: 4px;
+  text-align: right;
+}
+
+.cal-cell-day--today {
+  color: var(--clr-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ------- Task pills inside cells ------- */
+.cal-cell-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cal-pill {
+  display: block;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: grab;
+  border-left: 3px solid transparent;
+  /* No transform animation — instant colour only */
+  transition: opacity var(--transition-instant);
+}
+
+.cal-pill:active {
+  cursor: grabbing;
+}
+
+/* Priority colours */
+.priority-pill--high {
+  background: rgba(255, 77, 79, 0.18);
+  color: #ff9092;
+  border-left-color: var(--clr-priority-high);
+}
+
+.priority-pill--medium {
+  background: rgba(250, 173, 20, 0.18);
+  color: #ffd666;
+  border-left-color: var(--clr-priority-medium);
+}
+
+.priority-pill--low {
+  background: rgba(82, 196, 26, 0.18);
+  color: #95de64;
+  border-left-color: var(--clr-priority-low);
+}
+
+/* Done pill: muted */
+.status-pill--done {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+/* Dragging state */
+.cal-pill--dragging {
+  opacity: 0.3;
+  cursor: grabbing;
+}
+
+/* Touch ghost clone */
+.cal-pill--ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.85;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+/* More overflow badge */
+.cal-more {
+  font-size: 10px;
+  color: var(--clr-text-disabled);
+  padding: 0 2px;
+}
+
+/* ------- Day Detail Drawer ------- */
+.cal-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.cal-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.cal-drawer-panel {
+  position: relative;
+  background: var(--clr-surface);
+  border-top: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.cal-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--clr-border);
+  flex-shrink: 0;
+}
+
+.cal-drawer-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+}
+
+.cal-drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--clr-text-secondary);
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+}
+
+.cal-drawer-close:hover {
+  background: var(--clr-surface-raised);
+  color: var(--clr-text-primary);
+}
+
+.cal-drawer-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Drawer task rows */
+.drawer-task-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--clr-surface-raised);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  padding-right: var(--space-3);
+}
+
+.drawer-task-strip {
+  width: 4px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.priority-row--high   .drawer-task-strip { background: var(--clr-priority-high); }
+.priority-row--medium .drawer-task-strip { background: var(--clr-priority-medium); }
+.priority-row--low    .drawer-task-strip { background: var(--clr-priority-low); }
+
+.drawer-task-info {
+  flex: 1;
+  padding: var(--space-2) 0;
+  min-width: 0;
+}
+
+.drawer-task-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-task-meta {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  margin-top: 2px;
+}
+
+.drawer-empty {
+  color: var(--clr-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+/* ------- Responsive: compact cells on small screens ------- */
+@media (max-width: 480px) {
+  .cal-cell {
+    min-height: 54px;
+    padding: 3px 2px 4px;
+  }
+
+  .cal-pill {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+
+  .cal-cell-day {
+    font-size: 10px;
+  }
+}

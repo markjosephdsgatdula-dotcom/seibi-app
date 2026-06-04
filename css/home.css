@@ -1,0 +1,255 @@
+/* =============================================
+   home.css  —  Daily Tasks view styles
+   MaintainX-inspired priority colour strips
+   ============================================= */
+
+/* ------- Daily Summary Bar ------- */
+.daily-summary {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.daily-date {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-2);
+}
+
+.daily-stats {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stat-done {
+  background: rgba(82, 196, 26, 0.15);
+  color: #52c41a;
+}
+
+.stat-overdue {
+  background: rgba(255, 77, 79, 0.15);
+  color: var(--clr-priority-high);
+}
+
+/* Progress bar */
+.progress-bar-wrap {
+  height: 5px;
+  background: var(--clr-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--clr-accent), #7b9fff);
+  border-radius: 99px;
+  transition: width var(--transition-fast);
+}
+
+/* ------- Task Group ------- */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.task-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.task-group-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0 var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
+/* ------- Task Card ------- */
+.task-card {
+  display: flex;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 80px;
+  /* No transform animation per spec — instant appear */
+}
+
+/* ── Priority strip (left coloured bar — MaintainX style) ── */
+.task-strip {
+  width: 5px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.priority-high   .task-strip { background: var(--clr-priority-high); }
+.priority-medium .task-strip { background: var(--clr-priority-medium); }
+.priority-low    .task-strip { background: var(--clr-priority-low); }
+
+/* Subtle left border tint matching priority */
+.priority-high   { border-left-color: rgba(255, 77, 79, 0.4); }
+.priority-medium { border-left-color: rgba(250, 173, 20, 0.4); }
+.priority-low    { border-left-color: rgba(82, 196, 26, 0.3); }
+
+/* Done card: muted appearance */
+.status-done {
+  opacity: 0.5;
+}
+
+/* ------- Task Body ------- */
+.task-body {
+  flex: 1;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0; /* prevent overflow */
+}
+
+/* ------- Row 1: Title + Done button ------- */
+.task-top-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.task-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+  line-height: 1.3;
+  /* Prevent very long titles from blowing layout */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.task-title--done {
+  text-decoration: line-through;
+  color: var(--clr-text-disabled);
+}
+
+/* Done toggle button */
+.task-done-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--clr-text-disabled);
+  transition: color var(--transition-instant),
+              background var(--transition-instant);
+  /* Ensure touch target is big enough with padding trick */
+  margin: -4px;
+  padding: 4px;
+}
+
+.task-done-btn:hover {
+  color: var(--clr-text-primary);
+  background: var(--clr-surface-raised);
+}
+
+.task-done-btn--checked {
+  color: #52c41a;
+}
+
+.task-done-btn--checked:hover {
+  color: #73d13d;
+  background: rgba(82, 196, 26, 0.1);
+}
+
+/* ------- Row 2: Asset + Location meta ------- */
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.task-asset,
+.task-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+}
+
+/* ------- Row 3: Chips ------- */
+.task-chips-row {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.chip-time,
+.chip-duration {
+  background: var(--clr-surface-raised);
+  color: var(--clr-text-secondary);
+}
+
+.chip-assignee {
+  background: var(--clr-surface-raised);
+  color: var(--clr-text-secondary);
+}
+
+/* Priority chips */
+.chip-priority--high   { background: rgba(255, 77, 79, 0.15);  color: #ff7875; }
+.chip-priority--medium { background: rgba(250, 173, 20, 0.15); color: #ffc53d; }
+.chip-priority--low    { background: rgba(82, 196, 26, 0.15);  color: #95de64; }
+
+/* Status chips */
+.chip-status--pending { background: var(--clr-surface-raised); color: var(--clr-text-secondary); }
+.chip-status--done    { background: rgba(82, 196, 26, 0.15);   color: #95de64; }
+.chip-status--overdue { background: rgba(255, 77, 79, 0.15);   color: #ff7875; }
+
+/* ------- Empty state ------- */
+.tasks-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px var(--space-4);
+  gap: var(--space-3);
+  color: var(--clr-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.tasks-empty-icon {
+  font-size: 40px;
+}

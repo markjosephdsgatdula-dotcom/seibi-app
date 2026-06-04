@@ -1,0 +1,241 @@
+/* =============================================
+   notice.css  —  Global Notice Board styles
+   ============================================= */
+
+/* ------- View inner layout ------- */
+/* The notice view needs to fill its panel and stack
+   feed (flex-grow) + compose bar (fixed height) */
+.notice-view-inner {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom) - 32px);
+  /* 32px accounts for the view padding-top + header area */
+}
+
+/* ------- Scrollable feed ------- */
+.notice-feed {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+/* ------- Notice card ------- */
+.notice-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+/* ------- Avatar circle ------- */
+.notice-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+  letter-spacing: 0.03em;
+  /* Colour is set inline per-card */
+}
+
+/* ------- Card body ------- */
+.notice-body {
+  flex: 1;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+/* ------- Meta row: author + time + category ------- */
+.notice-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.notice-author {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+}
+
+.notice-time {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-disabled);
+  cursor: default;
+}
+
+/* Category chip */
+.notice-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.notice-cat--info   { background: rgba(79, 124, 255, 0.15); color: #7b9fff; }
+.notice-cat--alert  { background: rgba(255, 77, 79, 0.15);  color: #ff7875; }
+.notice-cat--safety { background: rgba(250, 173, 20, 0.15); color: #ffc53d; }
+.notice-cat--update { background: rgba(82, 196, 26, 0.15);  color: #95de64; }
+
+/* ------- Message text ------- */
+.notice-message {
+  font-size: var(--font-size-sm);
+  color: var(--clr-text-primary);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* ------- Empty state ------- */
+.notice-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--space-3);
+  color: var(--clr-text-secondary);
+  font-size: var(--font-size-sm);
+  padding: 60px 0;
+}
+
+.notice-empty-icon { font-size: 40px; }
+
+/* =============================================
+   Compose bar
+   ============================================= */
+
+.notice-compose {
+  flex-shrink: 0;
+  border-top: 1px solid var(--clr-border);
+  background: var(--clr-surface);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+/* Row 1: author + category */
+.compose-top-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.compose-input,
+.compose-select,
+.compose-textarea {
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  outline: none;
+  transition: border-color var(--transition-instant);
+}
+
+.compose-input:focus,
+.compose-select:focus,
+.compose-textarea:focus {
+  border-color: var(--clr-accent);
+}
+
+/* Error shake */
+.compose-input--error {
+  border-color: var(--clr-priority-high) !important;
+  animation: input-shake 0.35s ease;
+}
+
+@keyframes input-shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.compose-author {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--touch-min);
+}
+
+.compose-select {
+  flex-shrink: 0;
+  min-height: var(--touch-min);
+  cursor: pointer;
+  /* Style the native select to match dark theme */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238890b5' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+/* Row 2: textarea + send button */
+.compose-bottom-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.compose-textarea {
+  flex: 1;
+  resize: none;
+  line-height: 1.5;
+  min-height: var(--touch-min);
+  max-height: 120px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Post / send button */
+.compose-post-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-instant),
+              opacity var(--transition-instant);
+}
+
+.compose-post-btn:hover {
+  background: #3d6bef;
+}
+
+.compose-post-btn:active {
+  opacity: 0.8;
+}
+
+.compose-post-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ------- Responsive ------- */
+@media (min-width: 600px) {
+  .notice-card {
+    max-width: 680px;
+  }
+}

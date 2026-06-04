@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Seibi — Equipment Maintenance & Inspection Management" />
+  <title>Seibi · Maintenance</title>
+
+  <!-- Preconnect for faster font load -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/calendar.css" />
+  <link rel="stylesheet" href="css/notice.css" />
+  <link rel="stylesheet" href="css/history.css" />
+  <link rel="stylesheet" href="css/assets.css" />
+</head>
+<body>
+
+  <!-- ==================== APP SHELL ==================== -->
+  <div id="app-shell">
+
+    <!-- -------- VIEW CONTAINER -------- -->
+    <main id="view-container" role="main">
+
+      <!-- VIEW: Home / Calendar -->
+      <section
+        id="view-home"
+        class="view active"
+        role="tabpanel"
+        aria-labelledby="tab-home"
+        tabindex="0"
+      >
+        <div class="view-header">
+          <!-- Sub-tab toggle -->
+          <div class="subtab-toggle" role="group" aria-label="Home view mode">
+            <button
+              id="subtab-daily"
+              class="subtab-btn active"
+              aria-pressed="true"
+              onclick="App.HomeView.setMode('daily')"
+            >Daily Tasks</button>
+            <button
+              id="subtab-calendar"
+              class="subtab-btn"
+              aria-pressed="false"
+              onclick="App.HomeView.setMode('calendar')"
+            >Calendar</button>
+          </div>
+        </div>
+
+        <div id="home-daily" class="home-panel active">
+          <!-- Rendered by HomeView.init() via MockDB → future: IndexedDB -->
+        </div>
+
+        <div id="home-calendar" class="home-panel">
+          <p class="placeholder-text">📅 Drag-and-drop calendar coming in Phase 1 iteration 2.</p>
+        </div>
+      </section>
+
+      <!-- VIEW: Asset Management -->
+      <section
+        id="view-assets"
+        class="view"
+        role="tabpanel"
+        aria-labelledby="tab-assets"
+        tabindex="0"
+      >
+        <div class="view-header">
+          <h1 class="view-title">Asset Management</h1>
+        </div>
+        <div id="assets-container"></div>
+      </section>
+
+      <!-- VIEW: History Log -->
+      <section
+        id="view-history"
+        class="view"
+        role="tabpanel"
+        aria-labelledby="tab-history"
+        tabindex="0"
+      >
+        <div class="view-header">
+          <h1 class="view-title">History Log</h1>
+          <div class="sort-toggle" role="group" aria-label="Sort history by">
+            <button
+              class="sort-btn active"
+              data-sort="date"
+              aria-pressed="true"
+              onclick="App.HistoryView.setSort('date')"
+            >By Date</button>
+            <button
+              class="sort-btn"
+              data-sort="machine"
+              aria-pressed="false"
+              onclick="App.HistoryView.setSort('machine')"
+            >By Machine</button>
+          </div>
+        </div>
+        <!-- Rendered by HistoryView.init() via HistoryStore -->
+        <div id="history-list"></div>
+      </section>
+
+      <!-- VIEW: Notice Board -->
+      <section
+        id="view-notice"
+        class="view"
+        role="tabpanel"
+        aria-labelledby="tab-notice"
+        tabindex="0"
+      >
+        <!-- Rendered by NoticeView.init() -->
+      </section>
+
+    </main>
+
+    <!-- -------- BOTTOM NAVIGATION BAR -------- -->
+    <nav id="bottom-nav" role="tablist" aria-label="Main navigation">
+
+      <button
+        id="tab-home"
+        class="nav-tab active"
+        role="tab"
+        aria-selected="true"
+        aria-controls="view-home"
+        data-view="home"
+        onclick="App.Nav.switchTo('home')"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <!-- Home / Calendar icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+            <path d="M9 21V12h6v9"/>
+          </svg>
+        </span>
+        <span class="nav-label">Home</span>
+      </button>
+
+      <button
+        id="tab-assets"
+        class="nav-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="view-assets"
+        data-view="assets"
+        onclick="App.Nav.switchTo('assets')"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <!-- Asset / Machine icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            <line x1="12" y1="12" x2="12" y2="16"/>
+            <line x1="10" y1="14" x2="14" y2="14"/>
+          </svg>
+        </span>
+        <span class="nav-label">Assets</span>
+      </button>
+
+      <button
+        id="tab-history"
+        class="nav-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="view-history"
+        data-view="history"
+        onclick="App.Nav.switchTo('history')"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <!-- History / Clock icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </span>
+        <span class="nav-label">History</span>
+      </button>
+
+      <button
+        id="tab-notice"
+        class="nav-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="view-notice"
+        data-view="notice"
+        onclick="App.Nav.switchTo('notice')"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <!-- Notice / Megaphone icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8.5c0-2.5-1.8-4.5-4-4.5S14 6 14 8.5v7c0 2.5 1.8 4.5 4 4.5s4-2 4-4.5v-7z"/>
+            <path d="M14 8.5H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h10"/>
+            <path d="M6 15.5v4"/>
+          </svg>
+        </span>
+        <span class="nav-label">Notice</span>
+      </button>
+
+    </nav>
+  </div><!-- /#app-shell -->
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="js/router.js"></script>
+  <script src="js/data/mock.js"></script>
+  <script src="js/data/notices.js"></script>
+  <script src="js/data/history.js"></script>
+  <script src="js/data/assets.js"></script>
+  <script src="js/views/home.js"></script>
+  <script src="js/views/calendar.js"></script>
+  <script src="js/views/history.js"></script>
+  <script src="js/views/notice.js"></script>
+  <script src="js/views/assets.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

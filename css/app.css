@@ -1,0 +1,112 @@
+/* =============================================
+   app.css  —  Global layout & shared components
+   ============================================= */
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--clr-text-primary);
+  background: var(--clr-bg);
+  line-height: 1.5;
+}
+
+/* ------- App Shell ------- */
+#app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 960px;   /* Comfortable on iPad and desktop */
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ------- View Container ------- */
+#view-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Pad bottom so content never hides behind nav bar */
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+}
+
+/* ------- View Sections ------- */
+.view {
+  display: none;          /* Hidden by default */
+  flex-direction: column;
+  min-height: 100%;
+  padding: var(--space-4);
+}
+
+.view.active {
+  display: flex;
+}
+
+/* ------- View Header ------- */
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--clr-border);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.view-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+}
+
+/* ------- Sub-tab Toggle (Home: Daily / Calendar) ------- */
+.subtab-toggle,
+.sort-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--clr-surface);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.subtab-btn,
+.sort-btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--clr-text-secondary);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  transition: background var(--transition-instant),
+              color var(--transition-instant);
+}
+
+.subtab-btn.active,
+.sort-btn.active {
+  background: var(--clr-accent);
+  color: #fff;
+}
+
+.subtab-btn:not(.active):hover,
+.sort-btn:not(.active):hover {
+  color: var(--clr-text-primary);
+  background: var(--clr-surface-raised);
+}
+
+/* ------- Home Panels ------- */
+.home-panel {
+  display: none;
+}
+
+.home-panel.active {
+  display: block;
+}
+
+/* ------- Placeholder text ------- */
+.placeholder-text {
+  color: var(--clr-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: var(--space-6) 0;
+}

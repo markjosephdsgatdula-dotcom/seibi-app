@@ -987,6 +987,7 @@ const AssetsView = (() => {
 
         refresh();
         if (typeof HomeView !== 'undefined') HomeView.refresh();
+        if (typeof CalendarView !== 'undefined') CalendarView.init();
         if (typeof HistoryView !== 'undefined') HistoryView.init();
 
         _showSuccessBanner(historyRecord.assetName);

@@ -54,7 +54,7 @@ const NoticeStore = (() => {
    * Post a new notice.
    * @param {{ author: string, category: string, message: string }} data
    */
-  function post({ author, category, message }) {
+  function post({ author, category, message, assetId = null, photo = null }) {
     const notices = _load();
     const initials = author
       .trim()
@@ -70,6 +70,8 @@ const NoticeStore = (() => {
       category,
       message: message.trim(),
       timestamp: new Date().toISOString(),
+      assetId,
+      photo
     };
 
     notices.push(notice);
@@ -82,6 +84,36 @@ const NoticeStore = (() => {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  return { getAll, post, clearAll, CATEGORIES };
+  /** Delete a notice by id */
+  function deleteNotice(id) {
+    const notices = _load().filter(n => n.id !== id);
+    _save(notices);
+    return Promise.resolve();
+  }
+
+  /**
+   * Mark a defect notice as repaired.
+   * @param {string} id
+   * @param {{ repairedBy: string, repairNote: string }} data
+   */
+  function markRepaired(id, { repairedBy, repairNote }) {
+    const notices = _load();
+    const notice = notices.find(n => n.id === id);
+    if (!notice) return Promise.resolve();
+    notice.repaired   = true;
+    notice.repairedBy = repairedBy.trim();
+    notice.repairedAt = new Date().toISOString();
+    notice.repairNote = repairNote.trim();
+    _save(notices);
+
+    // Sync back to AssetStore: resolve the asset's repair status!
+    if (notice.assetId && typeof AssetStore !== 'undefined') {
+      AssetStore.resolveRepair(notice.assetId);
+    }
+
+    return Promise.resolve(notice);
+  }
+
+  return { getAll, post, deleteNotice, markRepaired, clearAll, CATEGORIES };
 
 })();

@@ -92,6 +92,34 @@ const MockDB = (() => {
       estimatedMins: 25,
       assignedTo: 'Unassigned',
       tags: ['robot', 'welding'],
+    },
+    {
+      id: 'task-regulator-01',
+      title: 'Regulator Pillar Left — Monthly Inspection',
+      assetId: 'asset-regulator-01',
+      assetName: 'Regulator Pillar Left',
+      location: 'Pillar Left',
+      priority: PRIORITY.HIGH,
+      status: STATUS.PENDING,
+      dueDate: '2026-06-10',
+      dueTime: '15:00',
+      estimatedMins: 15,
+      assignedTo: 'Unassigned',
+      tags: ['regulator', 'gas'],
+    },
+    {
+      id: 'task-regulator-02',
+      title: 'Regulator Pillar Right — Monthly Inspection',
+      assetId: 'asset-regulator-02',
+      assetName: 'Regulator Pillar Right',
+      location: 'Pillar Right',
+      priority: PRIORITY.HIGH,
+      status: STATUS.PENDING,
+      dueDate: '2026-06-10',
+      dueTime: '16:00',
+      estimatedMins: 15,
+      assignedTo: 'Unassigned',
+      tags: ['regulator', 'gas'],
     }
   ];
 
@@ -152,6 +180,17 @@ const MockDB = (() => {
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.status = STATUS.DONE;
+      task.dueDate = new Date().toISOString().slice(0, 10);
+      _save(tasks);
+    }
+    return Promise.resolve(task);
+  }
+
+  function markPending(id) {
+    const tasks = _load();
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      task.status = STATUS.PENDING;
       _save(tasks);
     }
     return Promise.resolve(task);
@@ -189,41 +228,35 @@ const MockDB = (() => {
    */
   function syncCompletedInspection(assetId, nextDueDate) {
     const tasks = _load();
-    
+
     // 1. Mark existing pending/overdue task for this asset as completed today
     const activeTasks = tasks.filter(t => t.assetId === assetId && t.status !== STATUS.DONE);
+
+    // Grab name/location from the live task data — respects any user edits
+    const referenceTask = activeTasks[0] || tasks.filter(t => t.assetId === assetId)[0];
+    const assetName = referenceTask ? referenceTask.assetName : 'Robot';
+    const location  = referenceTask ? referenceTask.location  : 'Workshop';
+    const dueTime   = referenceTask ? referenceTask.dueTime   : '09:00';
+    const estMins   = referenceTask ? referenceTask.estimatedMins : 25;
+
     activeTasks.forEach(t => {
       t.status = STATUS.DONE;
+      t.originalDueDate = t.originalDueDate || t.dueDate;
       t.dueDate = new Date().toISOString().slice(0, 10);
     });
-
-    const assetNameMap = {
-      'asset-robot-03': 'Welding Robot #3',
-      'asset-robot-04': 'Welding Robot #4',
-      'asset-robot-05': 'Welding Robot #5',
-      'asset-robot-06': 'Welding Robot #6',
-      'asset-robot-tig-01': 'TIG Welding Robot #1'
-    };
-    const locationMap = {
-      'asset-robot-03': 'Bay B',
-      'asset-robot-04': 'Bay B',
-      'asset-robot-05': 'Bay C',
-      'asset-robot-06': 'Bay C',
-      'asset-robot-tig-01': 'Bay D'
-    };
 
     // 2. Schedule the next check on the calendar
     const newTask = {
       id: `task-robot-${Date.now()}`,
-      title: `${assetNameMap[assetId] || 'Robot'} — Monthly Inspection`,
+      title: `${assetName} — Monthly Inspection`,
       assetId: assetId,
-      assetName: assetNameMap[assetId] || 'Robot',
-      location: locationMap[assetId] || 'Workshop',
+      assetName: assetName,
+      location: location,
       priority: PRIORITY.HIGH,
       status: STATUS.PENDING,
       dueDate: nextDueDate,
-      dueTime: '09:00',
-      estimatedMins: 25,
+      dueTime: dueTime,
+      estimatedMins: estMins,
       assignedTo: 'Unassigned',
       tags: ['robot', 'welding']
     };
@@ -258,6 +291,30 @@ const MockDB = (() => {
     return Promise.resolve(newTask);
   }
 
+  function scheduleCustomTask({ title, dueDate, dueTime, assignedTo, priority, notes }) {
+    const tasks = _load();
+    const newTask = {
+      id: `task-custom-${Date.now()}`,
+      title: title.trim(),
+      assetId: null,
+      assetName: 'Custom',
+      location: 'Workshop',
+      priority: priority || PRIORITY.MEDIUM,
+      status: STATUS.PENDING,
+      dueDate: dueDate,
+      dueTime: dueTime || '09:00',
+      estimatedMins: 30,
+      assignedTo: assignedTo || 'Unassigned',
+      tags: ['custom', 'work-order']
+    };
+    if (notes) {
+      newTask.notes = notes.trim();
+    }
+    tasks.push(newTask);
+    _save(tasks);
+    return Promise.resolve(newTask);
+  }
+
   function syncAssetDetails(assetId, assetName, location) {
     const tasks = _load();
     let changed = false;
@@ -275,6 +332,71 @@ const MockDB = (() => {
     return Promise.resolve();
   }
 
-  return { getTodaysTasks, getAllTasks, getTaskById, markDone, reschedule, syncCompletedInspection, scheduleInspectionTask, syncAssetDetails, PRIORITY, STATUS };
+  function rollbackCompletedInspection(assetId, completedAtStr) {
+    const tasks = _load();
+    const completionDay = completedAtStr.slice(0, 10);
+
+    // 1. Find the task that was completed for this asset on that completion day
+    const completedTasks = tasks.filter(t => 
+      t.assetId === assetId && 
+      t.status === STATUS.DONE && 
+      t.dueDate === completionDay
+    );
+
+    // 2. Revert those completed tasks to pending/overdue
+    let restoredDueDate = completionDay;
+    completedTasks.forEach(t => {
+      t.status = STATUS.PENDING;
+      if (t.originalDueDate) {
+        t.dueDate = t.originalDueDate;
+        restoredDueDate = t.originalDueDate;
+      }
+    });
+
+    // 3. Find and delete the future task that was scheduled for this asset
+    const filteredTasks = tasks.filter(t => {
+      const isFuturePending = t.assetId === assetId && t.status === STATUS.PENDING && t.dueDate > completionDay;
+      return !isFuturePending;
+    });
+
+    // Save the updated tasks
+    _save(filteredTasks);
+
+    // 4. Update the asset registry state
+    if (typeof AssetStore !== 'undefined') {
+      AssetStore.getAll().then(assets => {
+        const asset = assets.find(a => a.id === assetId);
+        if (asset) {
+          asset.status = 'inspection_due';
+          asset.dueDate = restoredDueDate;
+
+          // Find the previous history record for this asset to restore lastInspected date
+          if (typeof HistoryStore !== 'undefined') {
+            HistoryStore.getAll().then(records => {
+              const remainingForAsset = records.filter(r => 
+                r.assetId === assetId && 
+                r.completedAt.slice(0, 10) !== completionDay
+              );
+              if (remainingForAsset.length > 0) {
+                asset.lastInspected = remainingForAsset[0].completedAt.slice(0, 10);
+              } else {
+                asset.lastInspected = null;
+              }
+              localStorage.setItem('seibi_assets', JSON.stringify(assets));
+              if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+            });
+          } else {
+            asset.lastInspected = null;
+            localStorage.setItem('seibi_assets', JSON.stringify(assets));
+            if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+          }
+        }
+      });
+    }
+
+    return Promise.resolve();
+  }
+
+  return { getTodaysTasks, getAllTasks, getTaskById, markDone, markPending, reschedule, syncCompletedInspection, scheduleInspectionTask, syncAssetDetails, rollbackCompletedInspection, scheduleCustomTask, PRIORITY, STATUS };
 
 })();

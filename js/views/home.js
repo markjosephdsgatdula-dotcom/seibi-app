@@ -39,25 +39,62 @@ const HomeView = (() => {
 
   // ─── Summary bar ─────────────────────────────────────────────────────────
 
-  function _renderSummary(tasks) {
+  function _renderDashboard(tasks, assets = []) {
     const total   = tasks.length;
     const done    = tasks.filter(t => t.status === 'done').length;
-    const overdue = tasks.filter(t => t.status === 'overdue').length;
     const pct     = total ? Math.round((done / total) * 100) : 0;
 
-    const today = new Date().toLocaleDateString('en-US', {
+    const today = new Date().toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', {
       weekday: 'long', month: 'long', day: 'numeric',
     });
+
+    const activeAssets = assets.filter(a => a.status !== 'decommissioned');
+    const totalActiveAssets = activeAssets.length;
+    const defectsCount = activeAssets.filter(a => a.status === 'needs_repair').length;
+    const healthyCount = activeAssets.filter(a => a.status === 'healthy').length;
+    const healthPct = totalActiveAssets ? Math.round((healthyCount / totalActiveAssets) * 100) : 100;
 
     return `
       <div class="daily-summary">
         <div class="daily-date">${today}</div>
-        <div class="daily-stats">
-          <span class="stat-chip stat-done">${done}/${total} done</span>
-          ${overdue > 0 ? `<span class="stat-chip stat-overdue">${overdue} overdue</span>` : ''}
-        </div>
-        <div class="progress-bar-wrap" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Tasks completed">
-          <div class="progress-bar-fill" style="width: ${pct}%"></div>
+        <div class="dashboard-grid">
+          
+          <div class="dashboard-card card-progress">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-icon">📈</span>
+              <span class="dashboard-card-title">${I18n.t('task_progress')}</span>
+            </div>
+            <div class="dashboard-card-value">${done} / ${total}</div>
+            <div class="dashboard-card-meta">
+              <div class="dashboard-progress-wrap">
+                <div class="dashboard-progress-fill" style="width: ${pct}%"></div>
+              </div>
+              <span class="dashboard-progress-label">${pct}% ${I18n.t('completed_pct')}</span>
+            </div>
+          </div>
+
+          <div class="dashboard-card card-defects ${defectsCount > 0 ? 'card-defects--warning' : ''}">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-icon">${defectsCount > 0 ? '⚠️' : '✅'}</span>
+              <span class="dashboard-card-title">${I18n.t('active_defects')}</span>
+            </div>
+            <div class="dashboard-card-value">${defectsCount}</div>
+            <div class="dashboard-card-meta">
+              <span>${defectsCount > 0 ? I18n.t('requires_action') : I18n.t('all_healthy')}</span>
+            </div>
+          </div>
+
+          <div class="dashboard-card card-health">
+            <div class="dashboard-card-header">
+              <span class="dashboard-card-icon">⚙️</span>
+              <span class="dashboard-card-title">${I18n.t('asset_health')}</span>
+            </div>
+            <div class="dashboard-card-value">${healthPct}%</div>
+            <div class="dashboard-card-meta">
+              <span>${healthyCount} ${I18n.t('of')} ${totalActiveAssets} ${I18n.t('healthy_ratio')}</span>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
@@ -66,14 +103,18 @@ const HomeView = (() => {
   // ─── Task card ────────────────────────────────────────────────────────────
 
   function _priorityLabel(p) {
-    return { high: 'High', medium: 'Medium', low: 'Low' }[p] ?? p;
+    return {
+      high: I18n.getLang() === 'jp' ? '高' : 'High',
+      medium: I18n.getLang() === 'jp' ? '中' : 'Medium',
+      low: I18n.getLang() === 'jp' ? '低' : 'Low'
+    }[p] ?? p;
   }
 
   function _statusLabel(s) {
     return {
-      'pending': 'Pending',
-      'done':    'Done',
-      'overdue': 'Overdue',
+      'pending': I18n.t('card_pending'),
+      'done':    I18n.t('card_done'),
+      'overdue': I18n.t('card_overdue'),
     }[s] ?? s;
   }
 
@@ -128,7 +169,7 @@ const HomeView = (() => {
           <!-- Row 3: Chips (time, assignee, priority, status) -->
           <div class="task-chips-row">
             <span class="chip chip-time">⏰ ${task.dueTime}</span>
-            <span class="chip chip-duration">~${task.estimatedMins}min</span>
+            <span class="chip chip-duration">~${task.estimatedMins}${I18n.t('min')}</span>
             <span class="chip chip-assignee">👤 ${task.assignedTo}</span>
             <span class="chip chip-priority chip-priority--${task.priority}">${_priorityLabel(task.priority)}</span>
             <span class="chip chip-status chip-status--${task.status}">${_statusLabel(task.status)}</span>
@@ -152,12 +193,12 @@ const HomeView = (() => {
   }
 
   const GROUP_LABELS = {
-    'overdue': '🔴 Overdue',
-    'pending': '⚪ Pending',
-    'done':    '✅ Completed',
+    get overdue() { return I18n.t('group_overdue'); },
+    get pending() { return I18n.t('group_pending'); },
+    get done() { return I18n.t('group_done'); }
   };
 
-  function _renderList(tasks) {
+  function _renderList(tasks, assets = []) {
     const panel = document.getElementById('home-daily');
     if (!panel) return;
 
@@ -165,14 +206,14 @@ const HomeView = (() => {
       panel.innerHTML = `
         <div class="tasks-empty">
           <div class="tasks-empty-icon">🎉</div>
-          <p>No tasks scheduled for today.</p>
+          <p>${I18n.t('tasks_empty')}</p>
         </div>`;
       return;
     }
 
     const { groups, order } = _groupTasks(tasks);
 
-    let html = _renderSummary(tasks);
+    let html = _renderDashboard(tasks, assets);
     html += '<div class="task-list" id="task-list">';
 
     order.forEach(status => {
@@ -204,30 +245,28 @@ const HomeView = (() => {
     }
 
     if (isDone) {
-      task.status = 'pending';
+      MockDB.markPending(taskId).then(() => refresh());
     } else {
-      MockDB.markDone(taskId);
+      MockDB.markDone(taskId).then(() => refresh());
     }
-
-    refresh();
   }
 
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   /** Public: re-fetch tasks and re-render (call after any external data change) */
   function refresh() {
-    MockDB.getTodaysTasks().then(tasks => {
+    Promise.all([
+      MockDB.getTodaysTasks(),
+      typeof AssetStore !== 'undefined' ? AssetStore.getAll() : Promise.resolve([])
+    ]).then(([tasks, assets]) => {
       _tasks = tasks;
-      _renderList(_tasks);
+      _renderList(tasks, assets);
     });
   }
 
   function init() {
     _updateMode(_currentMode);
-    MockDB.getTodaysTasks().then(tasks => {
-      _tasks = tasks;
-      _renderList(_tasks);
-    });
+    refresh();
   }
 
   return { setMode, init, refresh, toggleDone };

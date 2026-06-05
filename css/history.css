@@ -205,3 +205,8 @@
 }
 
 .hist-empty-icon { font-size: 40px; }
+
+/* ------- History Defect Photo Hover ------- */
+.hist-photo-wrapper:hover {
+  border-color: var(--clr-accent) !important;
+}

@@ -26,7 +26,7 @@ const AssetStore = (() => {
     return `${y}-${m}-${d}`;
   }
 
-  // Seed default checklist template items
+  // Seed default checklist template items (Decoupled Regulator check #8, re-numbered to 11 items)
   const _defaultChecklistItems = [
     { id: 1, title: 'Clean rear filter', desc: '溶接機裏側のフィルターを清掃', freq: 'monthly', image: 'image1.jpeg' },
     { id: 2, title: 'Check gas pressure needle', desc: '1F中庭 ガス圧計ゲージの針確認（異常時は大丸エナウィンに連絡）', freq: 'monthly', image: 'image2.jpeg' },
@@ -35,11 +35,10 @@ const AssetStore = (() => {
     { id: 5, title: 'Inspect electrical wiring', desc: '電気配線の破損確認（目視による亀裂等の有無）', freq: 'monthly', image: 'image5.jpeg' },
     { id: 6, title: 'Check torch nozzle & tip', desc: 'トーチノズル、チップ、Sワッシャーの有無・清掃・緩み確認', freq: 'monthly', image: 'image7.jpeg' },
     { id: 7, title: 'Verify gas button test', desc: '溶接機左下のガスチェックボタンを押し、清掃したトーチからガスが出るか確認', freq: 'monthly', image: 'image6.jpeg' },
-    { id: 8, title: 'Check gas leak & adjust flow', desc: 'ガス漏れ確認（レギュレーター、カプラ、配管接続部に探知スプレー）。流量12L/min調整', freq: 'monthly', image: 'image8.jpeg' },
-    { id: 9, title: 'Clean feeding rollers', desc: '送給装置のローラーにエアーブローする（送給圧は3.5に調整）', freq: 'monthly', image: 'image9.jpeg' },
-    { id: 10, title: 'Verify robot alignment', desc: 'ロボットと定盤の位置出し確認（定盤A、B、C）', freq: 'monthly', image: 'image10.jpeg' },
-    { id: 11, title: 'Blow air inside machine', desc: '溶接機内のエアブロー清掃', freq: 'annual', image: 'image12.jpeg' },
-    { id: 12, title: 'Clean conduit hose', desc: 'コンジットホース内のアルコール清掃', freq: 'semi-annual', image: 'image11.jpeg' }
+    { id: 8, title: 'Clean feeding rollers', desc: '送給装置のローラーにエアーブローする（送給圧は3.5に調整）', freq: 'monthly', image: 'image9.jpeg' },
+    { id: 9, title: 'Verify robot alignment', desc: 'ロボットと定盤の位置出し確認（定盤A、B、C）', freq: 'monthly', image: 'image10.jpeg' },
+    { id: 10, title: 'Blow air inside machine', desc: '溶接機内のエアブロー清掃', freq: 'annual', image: 'image12.jpeg' },
+    { id: 11, title: 'Clean conduit hose', desc: 'コンジットホース内のアルコール清掃', freq: 'semi-annual', image: 'image11.jpeg' }
   ];
 
   // Seed templates
@@ -48,6 +47,24 @@ const AssetStore = (() => {
       id: 'template-co2-mag',
       name: 'CO2/MAG Robot Template',
       items: _defaultChecklistItems
+    },
+    {
+      id: 'template-regulator',
+      name: 'Gas Regulator Template',
+      items: [
+        { id: 1, title: 'Check gas leak', desc: 'ガス漏れ確認（レギュレーター、カプラ、配管接続部に探知スプレー）', freq: 'monthly', image: 'image8.jpeg' },
+        { id: 2, title: 'Adjust and verify flow rate', desc: '流量12L/min調整・動作確認', freq: 'monthly', image: 'image8.jpeg' }
+      ]
+    },
+    {
+      id: 'template-grinder',
+      name: 'Grinder & Sander Template',
+      items: [
+        { id: 1, title: 'Inspect power cable', desc: '電気配線の破損確認（目視による被覆の亀裂や断線の有無）', freq: 'monthly', image: 'generic-check.png' },
+        { id: 2, title: 'Check grinding stone / belt wear', desc: '砥石・研磨ベルトの摩耗、ひび割れ、目詰まりの確認', freq: 'monthly', image: 'generic-check.png' },
+        { id: 3, title: 'Verify safety guard', desc: '安全カバーが正しく取り付けられており、緩みや破損が無いか確認', freq: 'monthly', image: 'generic-check.png' },
+        { id: 4, title: 'Test abnormal vibration / sound', desc: '無負荷状態で運転させ、スイッチの作動、異音・異常振動が無いか確認', freq: 'monthly', image: 'generic-check.png' }
+      ]
     }
   ];
 
@@ -129,6 +146,28 @@ const AssetStore = (() => {
       model: 'DAIHEN Welbee T500',
       location: 'Bay D',
       templateId: 'template-co2-mag'
+    },
+    {
+      id: 'asset-regulator-01',
+      name: 'Regulator Pillar Left',
+      type: 'REGULATOR',
+      status: 'healthy',
+      lastInspected: '2026-05-13',
+      dueDate: '2026-06-10',
+      model: 'Standard Regulator',
+      location: 'Pillar Left',
+      templateId: 'template-regulator'
+    },
+    {
+      id: 'asset-regulator-02',
+      name: 'Regulator Pillar Right',
+      type: 'REGULATOR',
+      status: 'healthy',
+      lastInspected: '2026-05-13',
+      dueDate: '2026-06-10',
+      model: 'Standard Regulator',
+      location: 'Pillar Right',
+      templateId: 'template-regulator'
     }
   ];
 
@@ -253,7 +292,7 @@ const AssetStore = (() => {
     });
   }
 
-  function completeInspection(id, completedDateStr = new Date().toISOString().slice(0, 10)) {
+  function completeInspection(id, completedDateStr = new Date().toISOString().slice(0, 10), hasFailures = false) {
     const assets = _loadAssets();
     const asset = assets.find(a => a.id === id);
     if (!asset) return Promise.reject(new Error('Asset not found'));
@@ -261,7 +300,7 @@ const AssetStore = (() => {
     const completedDate = new Date(completedDateStr);
     const nextDueDate = getSecondWednesdayOfNextMonth(completedDate);
 
-    asset.status = 'healthy';
+    asset.status = hasFailures ? 'needs_repair' : 'healthy';
     asset.lastInspected = completedDateStr;
     asset.dueDate = nextDueDate;
 
@@ -360,6 +399,27 @@ const AssetStore = (() => {
     return Promise.resolve(newId);
   }
 
+  function resolveRepair(id) {
+    const assets = _loadAssets();
+    const asset = assets.find(a => a.id === id);
+    if (!asset) return Promise.reject(new Error('Asset not found'));
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (asset.dueDate && asset.dueDate <= todayStr) {
+      asset.status = 'inspection_due';
+    } else {
+      asset.status = 'healthy';
+    }
+
+    _saveAssets(assets);
+
+    if (typeof AssetsView !== 'undefined') {
+      AssetsView.refresh();
+    }
+
+    return Promise.resolve(asset);
+  }
+
   return { 
     getAll, 
     getById, 
@@ -372,7 +432,8 @@ const AssetStore = (() => {
     createTemplate,
     updateAsset,
     updateTemplate,
-    cloneTemplate
+    cloneTemplate,
+    resolveRepair
   };
 
 })();

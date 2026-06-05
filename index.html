@@ -28,6 +28,13 @@
   <!-- ==================== APP SHELL ==================== -->
   <div id="app-shell">
 
+    <!-- Floating Language Selector -->
+    <div class="global-lang-selector" aria-label="Language selector">
+      <button class="lang-btn active" id="lang-btn-en" onclick="I18n.setLang('en')">🇺🇸 EN</button>
+      <span class="lang-divider">|</span>
+      <button class="lang-btn" id="lang-btn-jp" onclick="I18n.setLang('jp')">🇯🇵 JP</button>
+    </div>
+
     <!-- -------- VIEW CONTAINER -------- -->
     <main id="view-container" role="main">
 
@@ -208,6 +215,7 @@
   </div><!-- /#app-shell -->
 
   <!-- ==================== SCRIPTS ==================== -->
+  <script src="js/data/i18n.js"></script>
   <script src="js/router.js"></script>
   <script src="js/data/mock.js"></script>
   <script src="js/data/notices.js"></script>

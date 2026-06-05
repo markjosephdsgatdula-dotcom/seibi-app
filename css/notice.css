@@ -101,6 +101,171 @@
   word-break: break-word;
 }
 
+/* ------- Delete button (hidden until hover) ------- */
+.notice-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-disabled);
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--transition-instant),
+              color   var(--transition-instant),
+              background var(--transition-instant);
+  flex-shrink: 0;
+}
+
+.notice-card:hover .notice-delete-btn {
+  opacity: 1;
+}
+
+.notice-delete-btn:hover {
+  color: var(--clr-priority-high);
+  background: rgba(255, 77, 79, 0.12);
+}
+
+/* ------- Defect category chip ------- */
+.notice-cat--defect { background: rgba(250, 173, 20, 0.15); color: #ffc53d; }
+
+/* ------- Repaired body tint ------- */
+.notice-body--repaired {
+  border-color: rgba(82, 196, 26, 0.4);
+}
+
+/* ------- Repaired banner ------- */
+.notice-repaired-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(82, 196, 26, 0.08);
+  border: 1px solid rgba(82, 196, 26, 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.notice-repaired-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notice-repaired-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notice-repaired-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: #95de64;
+}
+
+.notice-repaired-note {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  font-style: italic;
+  word-break: break-word;
+}
+
+/* ------- Mark as Repaired button ------- */
+.notice-repair-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: #ffc53d;
+  border: 1px solid rgba(250, 173, 20, 0.35);
+  background: rgba(250, 173, 20, 0.08);
+  transition: background var(--transition-instant),
+              border-color var(--transition-instant);
+}
+
+.notice-repair-btn:hover {
+  background: rgba(250, 173, 20, 0.18);
+  border-color: rgba(250, 173, 20, 0.6);
+}
+
+/* ------- Inline repair form ------- */
+.notice-repair-form {
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background: var(--clr-surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+}
+
+.repair-input,
+.repair-textarea {
+  width: 100%;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--transition-instant);
+}
+
+.repair-input:focus,
+.repair-textarea:focus {
+  border-color: #52c41a;
+}
+
+.repair-textarea {
+  resize: none;
+  line-height: 1.5;
+}
+
+.repair-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.repair-cancel-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  border: 1px solid var(--clr-border);
+  transition: background var(--transition-instant);
+}
+
+.repair-cancel-btn:hover {
+  background: var(--clr-surface);
+}
+
+.repair-submit-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  background: rgba(82, 196, 26, 0.15);
+  color: #95de64;
+  border: 1px solid rgba(82, 196, 26, 0.35);
+  transition: background var(--transition-instant);
+}
+
+.repair-submit-btn:hover {
+  background: rgba(82, 196, 26, 0.25);
+}
+
+
 /* ------- Empty state ------- */
 .notice-empty {
   display: flex;
@@ -238,4 +403,111 @@
   .notice-card {
     max-width: 680px;
   }
+}
+
+/* ------- Search & Filter Toolbar ------- */
+.notice-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.notice-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notice-search-wrap .search-icon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--clr-text-secondary);
+  pointer-events: none;
+}
+
+.notice-search-input {
+  width: 100%;
+  min-height: var(--touch-min);
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-6) + 6px);
+  transition: border-color var(--transition-fast);
+}
+
+.notice-search-input:focus {
+  border-color: var(--clr-accent);
+  outline: none;
+}
+
+.notice-filter-chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.notice-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  min-height: 32px;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: 99px;
+  color: var(--clr-text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 0 var(--space-3);
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.filter-chip:hover {
+  border-color: var(--clr-text-secondary);
+  color: var(--clr-text-primary);
+}
+
+.filter-chip.active {
+  background: var(--clr-accent);
+  border-color: var(--clr-accent);
+  color: #fff;
+}
+
+/* ------- Notice Defect Photo Display ------- */
+.notice-photo-wrapper {
+  margin-top: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  overflow: hidden;
+  max-width: 240px;
+  max-height: 180px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.notice-photo-wrapper:hover {
+  border-color: var(--clr-accent);
+}
+
+.notice-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }

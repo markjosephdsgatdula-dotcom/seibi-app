@@ -114,6 +114,7 @@
 /* Left Accent Strips based on status */
 .asset-card.status-healthy::before { background: var(--clr-priority-low); }
 .asset-card.status-due::before { background: var(--clr-priority-medium); }
+.asset-card.status-needs_repair::before { background: var(--clr-priority-high); }
 .asset-card.status-decommissioned::before { background: var(--clr-text-disabled); }
 
 .asset-card-header {
@@ -181,6 +182,12 @@
   animation: pulse-orange 2s infinite ease-in-out;
 }
 
+.status-badge--repair {
+  background: rgba(245, 34, 45, 0.15);
+  color: #ff7875;
+  animation: pulse-red 2.5s infinite ease-in-out;
+}
+
 .status-badge--decommissioned {
   background: rgba(136, 144, 181, 0.1);
   color: var(--clr-text-secondary);
@@ -189,6 +196,11 @@
 @keyframes pulse-orange {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
 }
 
 .asset-btn {
@@ -835,5 +847,80 @@
 /* Override editor-row to support 6 columns for the image selector */
 .template-items-editor .editor-row {
   grid-template-columns: 24px 1fr 1fr 90px 140px 32px;
+}
+
+/* ------- Defect Photo Upload styling ------- */
+.defect-photo-upload-group {
+  border-top: 1px dashed var(--clr-border);
+  padding-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.defect-photo-picker-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.btn-photo-picker {
+  min-height: 34px;
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  color: var(--clr-text-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 0 var(--space-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.btn-photo-picker:hover {
+  background: var(--clr-border);
+  border-color: var(--clr-text-secondary);
+}
+
+.photo-filename-label {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  word-break: break-all;
+}
+
+.btn-photo-remove {
+  background: none;
+  border: none;
+  color: var(--clr-priority-high);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+}
+
+.btn-photo-remove:hover {
+  text-decoration: underline;
+}
+
+.photo-preview-container {
+  display: inline-block;
+  position: relative;
+}
+
+.defect-photo-preview {
+  display: block;
+  max-width: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-fast);
+}
+
+.defect-photo-preview:hover {
+  transform: scale(1.02);
 }
 

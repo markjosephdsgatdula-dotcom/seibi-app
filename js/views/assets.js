@@ -46,26 +46,32 @@ const AssetsView = (() => {
     if (status === 'healthy') {
       return `<span class="status-badge status-badge--healthy">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Healthy
+        ${I18n.t('badge_healthy')}
       </span>`;
     }
     if (status === 'inspection_due') {
       return `<span class="status-badge status-badge--due">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/></svg>
-        Due
+        ${I18n.t('badge_due')}
       </span>`;
     }
-    return `<span class="status-badge status-badge--decommissioned">Offline</span>`;
+    if (status === 'needs_repair') {
+      return `<span class="status-badge status-badge--repair">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        ${I18n.t('badge_repair')}
+      </span>`;
+    }
+    return `<span class="status-badge status-badge--decommissioned">${I18n.t('badge_offline')}</span>`;
   }
 
   function _renderCard(asset) {
     const isDecom = asset.status === 'decommissioned';
     const lastInspectedLabel = asset.lastInspected 
-      ? new Date(asset.lastInspected).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : 'Never';
+      ? new Date(asset.lastInspected).toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : I18n.t('never');
     const dueLabel = asset.dueDate
-      ? new Date(asset.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : 'N/A';
+      ? new Date(asset.dueDate).toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : I18n.t('na');
 
     return `
       <article class="asset-card status-${asset.status === 'inspection_due' ? 'due' : asset.status}" id="asset-card-${asset.id}">
@@ -81,16 +87,16 @@ const AssetsView = (() => {
           <div class="asset-meta-rows" style="margin-top: 12px;">
             <div class="asset-meta-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Location: ${asset.location}
+              ${I18n.t('meta_location')}: ${asset.location}
             </div>
             <div class="asset-meta-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Last Checked: ${lastInspectedLabel}
+              ${I18n.t('meta_last_checked')}: ${lastInspectedLabel}
             </div>
             ${!isDecom ? `
               <div class="asset-meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Next Due: <strong>${dueLabel}</strong>
+                ${I18n.t('meta_next_due')}: <strong>${dueLabel}</strong>
               </div>
             ` : ''}
           </div>
@@ -98,7 +104,7 @@ const AssetsView = (() => {
 
         <button class="asset-btn-secondary" onclick="AssetsView.openEditModal('${asset.id}')" style="margin-top: 12px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/></svg>
-          Edit Asset & Checklist
+          ${I18n.t('btn_edit_asset')}
         </button>
       </article>
     `;
@@ -111,29 +117,63 @@ const AssetsView = (() => {
     const active = assets.filter(a => a.status !== 'decommissioned');
     const offline = assets.filter(a => a.status === 'decommissioned');
 
+    const robots = active.filter(a => a.type === 'CO2_MAG' || a.type === 'TIG');
+    const regulators = active.filter(a => a.type === 'REGULATOR');
+    const tools = active.filter(a => a.type === 'GRINDER' || a.type === 'BELT_GRINDER' || a.type === 'SANDER');
+
     container.innerHTML = `
       <!-- Top Action Bar -->
       <div class="assets-actions-bar">
         <button class="asset-btn-primary" onclick="AssetsView.openRegisterModal()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Register Machine
+          ${I18n.t('btn_register_machine')}
         </button>
       </div>
 
-      <div class="assets-section">
-        <h2 class="assets-section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          Active Welding Robots (${active.length})
-        </h2>
-        <div class="asset-grid">
-          ${active.map(_renderCard).join('')}
+      <!-- Welding Robots Section -->
+      ${robots.length > 0 ? `
+        <div class="assets-section">
+          <h2 class="assets-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            ${I18n.t('section_active_robots')} (${robots.length})
+          </h2>
+          <div class="asset-grid">
+            ${robots.map(_renderCard).join('')}
+          </div>
         </div>
-      </div>
+      ` : ''}
 
+      <!-- Gas Regulators Section -->
+      ${regulators.length > 0 ? `
+        <div class="assets-section" style="margin-top: 32px;">
+          <h2 class="assets-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 12L16 8M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+            ${I18n.t('section_active_regulators')} (${regulators.length})
+          </h2>
+          <div class="asset-grid">
+            ${regulators.map(_renderCard).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Grinders & Sanders Section -->
+      ${tools.length > 0 ? `
+        <div class="assets-section" style="margin-top: 32px;">
+          <h2 class="assets-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            ${I18n.t('section_active_tools')} (${tools.length})
+          </h2>
+          <div class="asset-grid">
+            ${tools.map(_renderCard).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Inactive / Offline Section -->
       <div class="assets-section" style="margin-top: 32px;">
         <h2 class="assets-section-title" style="color: var(--clr-text-disabled);">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><rect x="2" y="7" width="20" height="14" rx="2" stroke="var(--clr-text-disabled)"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="var(--clr-text-disabled)"/></svg>
-          Inactive / Offline Robots (${offline.length})
+          ${I18n.t('section_inactive_robots')} (${offline.length})
         </h2>
         <div class="asset-grid">
           ${offline.map(_renderCard).join('')}
@@ -143,6 +183,8 @@ const AssetsView = (() => {
   }
 
   // ─── Registration Modal & Template Builder ──────────────────────────────
+
+  let _availableTemplates = [];
 
   function openRegisterModal() {
     // Reset form state
@@ -157,8 +199,12 @@ const AssetsView = (() => {
       customTemplateItems: []
     };
 
-    // Pre-populate custom list with clones of standard items for easy cloning/editing
-    AssetStore.getChecklistTemplate(11).then(defaultItems => {
+    // Load dynamic templates first, then pre-populate custom checklist row items
+    Promise.all([
+      AssetStore.getTemplates(),
+      AssetStore.getChecklistTemplate(11)
+    ]).then(([templates, defaultItems]) => {
+      _availableTemplates = templates;
       _newAssetForm.customTemplateItems = defaultItems.map(item => ({
         title: item.title,
         desc: item.desc,
@@ -173,12 +219,14 @@ const AssetsView = (() => {
     const existing = document.getElementById('register-modal');
     if (existing) existing.remove();
 
+    const isJp = I18n.getLang() === 'jp';
+
     const modal = document.createElement('div');
     modal.id = 'register-modal';
     modal.className = 'inspection-modal-backdrop';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', 'Register New Machine');
+    modal.setAttribute('aria-label', isJp ? '新規設備登録' : 'Register New Machine');
 
     const showBuilder = _newAssetForm.templateId === 'custom';
 
@@ -186,7 +234,7 @@ const AssetsView = (() => {
       <div class="inspection-modal-panel" style="max-width: 620px;">
         <!-- Header -->
         <header class="inspection-modal-header">
-          <h2 class="inspection-modal-title">Register Machine</h2>
+          <h2 class="inspection-modal-title">${isJp ? '新規設備登録' : 'Register Machine'}</h2>
           <button class="inspection-modal-close" onclick="AssetsView.closeRegisterModal()" aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -197,42 +245,56 @@ const AssetsView = (() => {
           <div class="register-form-grid">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-name">Machine Name (設備名) *</label>
+                <label class="inspector-input-label" for="reg-name">${isJp ? '設備名 (Machine Name) *' : 'Machine Name *'}</label>
                 <input id="reg-name" class="inspector-input" type="text" placeholder="e.g. Welding Robot #7" value="${_newAssetForm.name}" oninput="AssetsView.onRegFormChange('name', this.value)" />
               </div>
 
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-model">Model (設備呼称/型式) *</label>
+                <label class="inspector-input-label" for="reg-model">${isJp ? '設備呼称/型式 (Model) *' : 'Model *'}</label>
                 <input id="reg-model" class="inspector-input" type="text" placeholder="e.g. DAIHEN DP-350" value="${_newAssetForm.model}" oninput="AssetsView.onRegFormChange('model', this.value)" />
               </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-location">Location (配置) *</label>
+                <label class="inspector-input-label" for="reg-location">${isJp ? '配置場所 (Location) *' : 'Location *'}</label>
                 <input id="reg-location" class="inspector-input" type="text" placeholder="e.g. Bay C" value="${_newAssetForm.location}" oninput="AssetsView.onRegFormChange('location', this.value)" />
               </div>
 
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-type">Machine Type *</label>
+                <label class="inspector-input-label" for="reg-type">${isJp ? '設備分類 (Machine Type) *' : 'Machine Type *'}</label>
                 <select id="reg-type" class="form-select" onchange="AssetsView.onRegFormChange('type', this.value)">
-                  <option value="CO2_MAG" ${_newAssetForm.type === 'CO2_MAG' ? 'selected' : ''}>CO2/MAG Welding Robot</option>
-                  <option value="TIG" ${_newAssetForm.type === 'TIG' ? 'selected' : ''}>TIG Welding Robot</option>
+                  <option value="CO2_MAG" ${_newAssetForm.type === 'CO2_MAG' ? 'selected' : ''}>${I18n.t('type_co2_mag')}</option>
+                  <option value="TIG" ${_newAssetForm.type === 'TIG' ? 'selected' : ''}>${I18n.t('type_tig')}</option>
+                  <option value="REGULATOR" ${_newAssetForm.type === 'REGULATOR' ? 'selected' : ''}>${I18n.t('type_regulator')}</option>
+                  <option value="GRINDER" ${_newAssetForm.type === 'GRINDER' ? 'selected' : ''}>${I18n.t('type_grinder')}</option>
+                  <option value="BELT_GRINDER" ${_newAssetForm.type === 'BELT_GRINDER' ? 'selected' : ''}>${I18n.t('type_belt_grinder')}</option>
+                  <option value="SANDER" ${_newAssetForm.type === 'SANDER' ? 'selected' : ''}>${I18n.t('type_sander')}</option>
                 </select>
               </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-duedate">Next Inspection Due Date *</label>
+                <label class="inspector-input-label" for="reg-duedate">${isJp ? '次回点検日 (Due Date) *' : 'Next Inspection Due Date *'}</label>
                 <input id="reg-duedate" class="inspector-input" type="date" value="${_newAssetForm.dueDate}" onchange="AssetsView.onRegFormChange('dueDate', this.value)" />
               </div>
 
               <div class="form-group">
-                <label class="inspector-input-label" for="reg-template">Inspection Sheet Template *</label>
+                <label class="inspector-input-label" for="reg-template">${isJp ? '点検チェックシートのテンプレート *' : 'Inspection Sheet Template *'}</label>
                 <select id="reg-template" class="form-select" onchange="AssetsView.onRegTemplateSelect(this.value)">
-                  <option value="template-co2-mag" ${_newAssetForm.templateId === 'template-co2-mag' ? 'selected' : ''}>CO2/MAG Robots Template (12 items)</option>
-                  <option value="custom" ${_newAssetForm.templateId === 'custom' ? 'selected' : ''}>Create Custom Checksheet...</option>
+                  ${_availableTemplates.map(tpl => {
+                    let displayName = tpl.name;
+                    if (tpl.id === 'template-co2-mag') {
+                      displayName = isJp ? `溶接ロボット用テンプレート (${tpl.items.length}項目)` : `CO2/MAG Robots Template (${tpl.items.length} items)`;
+                    } else if (tpl.id === 'template-regulator') {
+                      displayName = isJp ? `ガス調整器用テンプレート (${tpl.items.length}項目)` : `Gas Regulators Template (${tpl.items.length} items)`;
+                    } else if (tpl.id === 'template-grinder') {
+                      displayName = isJp ? `グラインダー・サンダー用テンプレート (${tpl.items.length}項目)` : `Grinders & Sanders Template (${tpl.items.length} items)`;
+                    }
+                    return `<option value="${tpl.id}" ${_newAssetForm.templateId === tpl.id ? 'selected' : ''}>${displayName}</option>`;
+                  }).join('')}
+                  <option value="custom" ${_newAssetForm.templateId === 'custom' ? 'selected' : ''}>${isJp ? 'カスタムチェックシートの作成...' : 'Create Custom Checksheet...'}</option>
                 </select>
               </div>
             </div>
@@ -358,7 +420,10 @@ const AssetsView = (() => {
       if (typeof HomeView !== 'undefined') HomeView.refresh();
       if (typeof CalendarView !== 'undefined') CalendarView.init();
 
-      _showSuccessBanner(`Registered ${newAsset.name}`);
+      const msg = I18n.getLang() === 'jp'
+        ? `${newAsset.name} を登録しました`
+        : `Registered ${newAsset.name}`;
+      _showSuccessBanner(msg);
     });
   }
 
@@ -551,10 +616,14 @@ const AssetsView = (() => {
             </div>
 
             <div class="form-group">
-              <label class="inspector-input-label" for="edit-type">Machine Type *</label>
+              <label class="inspector-input-label" for="edit-type">${I18n.getLang() === 'jp' ? '設備分類 (Machine Type) *' : 'Machine Type *'}</label>
               <select id="edit-type" class="form-select" onchange="AssetsView.onEditFormChange('type', this.value)">
-                <option value="CO2_MAG" ${_editForm.type === 'CO2_MAG' ? 'selected' : ''}>CO2/MAG Welding Robot</option>
-                <option value="TIG" ${_editForm.type === 'TIG' ? 'selected' : ''}>TIG Welding Robot</option>
+                <option value="CO2_MAG" ${_editForm.type === 'CO2_MAG' ? 'selected' : ''}>${I18n.t('type_co2_mag')}</option>
+                <option value="TIG" ${_editForm.type === 'TIG' ? 'selected' : ''}>${I18n.t('type_tig')}</option>
+                <option value="REGULATOR" ${_editForm.type === 'REGULATOR' ? 'selected' : ''}>${I18n.t('type_regulator')}</option>
+                <option value="GRINDER" ${_editForm.type === 'GRINDER' ? 'selected' : ''}>${I18n.t('type_grinder')}</option>
+                <option value="BELT_GRINDER" ${_editForm.type === 'BELT_GRINDER' ? 'selected' : ''}>${I18n.t('type_belt_grinder')}</option>
+                <option value="SANDER" ${_editForm.type === 'SANDER' ? 'selected' : ''}>${I18n.t('type_sander')}</option>
               </select>
             </div>
           </div>
@@ -676,7 +745,11 @@ const AssetsView = (() => {
       refresh();
       if (typeof HomeView !== 'undefined') HomeView.refresh();
       if (typeof CalendarView !== 'undefined') CalendarView.init();
-      _showSuccessBanner(`Updated ${_editForm.name}`);
+
+      const msg = I18n.getLang() === 'jp'
+        ? `${_editForm.name} を更新しました`
+        : `Updated ${_editForm.name}`;
+      _showSuccessBanner(msg);
     });
   }
 
@@ -707,20 +780,21 @@ const AssetsView = (() => {
     if (existing) existing.remove();
 
     const inspector = _savedInspector();
+    const isJp = I18n.getLang() === 'jp';
 
     const modal = document.createElement('div');
     modal.id = 'inspection-modal';
     modal.className = 'inspection-modal-backdrop';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', `Inspection form for ${_activeAsset.name}`);
+    modal.setAttribute('aria-label', isJp ? `点検フォーム: ${_activeAsset.name}` : `Inspection form for ${_activeAsset.name}`);
 
     modal.innerHTML = `
       <div class="inspection-modal-panel">
         
         <!-- Header -->
         <header class="inspection-modal-header">
-          <h2 class="inspection-modal-title">Inspection: ${_activeAsset.name}</h2>
+          <h2 class="inspection-modal-title">${isJp ? '点検' : 'Inspection'}: ${_activeAsset.name}</h2>
           <button class="inspection-modal-close" onclick="AssetsView.closeInspection()" aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -732,19 +806,19 @@ const AssetsView = (() => {
           <!-- Inspector Info Sign-off -->
           <div class="inspector-sign-bar">
             <div class="inspector-input-group">
-              <label class="inspector-input-label" for="insp-name">Inspector (点検者)</label>
+              <label class="inspector-input-label" for="insp-name">${isJp ? '点検者 (Inspector)' : 'Inspector (点検者)'}</label>
               <input
                 id="insp-name"
                 class="inspector-input"
                 type="text"
-                placeholder="Enter your name"
+                placeholder="${isJp ? '名前を入力' : 'Enter your name'}"
                 value="${inspector}"
                 maxlength="30"
                 oninput="AssetsView.onInspectorNameChange(this.value)"
               />
             </div>
             <div class="inspector-input-group">
-              <label class="inspector-input-label" for="insp-duration">Duration (mins)</label>
+              <label class="inspector-input-label" for="insp-duration">${isJp ? '所要時間（分）' : 'Duration (mins)'}</label>
               <input
                 id="insp-duration"
                 class="inspector-input"
@@ -756,7 +830,7 @@ const AssetsView = (() => {
             </div>
           </div>
 
-          <h3 class="checklist-items-title">Inspection Checklist</h3>
+          <h3 class="checklist-items-title">${isJp ? '点検チェックリスト' : 'Inspection Checklist'}</h3>
           
           <!-- Checklist Items -->
           <div class="checklist-items" id="checklist-items-list">
@@ -767,9 +841,9 @@ const AssetsView = (() => {
 
         <!-- Footer -->
         <footer class="inspection-modal-footer">
-          <button class="btn-cancel" onclick="AssetsView.closeInspection()">Cancel</button>
+          <button class="btn-cancel" onclick="AssetsView.closeInspection()">${I18n.t('cancel')}</button>
           <button id="btn-submit-inspection" class="btn-submit" onclick="AssetsView.submitInspection()" disabled>
-            Submit Report
+            ${isJp ? '報告書を提出する' : 'Submit Report'}
           </button>
         </footer>
 
@@ -782,6 +856,7 @@ const AssetsView = (() => {
 
   function _renderChecklistItem(item) {
     const resolvedPath = _resolveImagePath(item.image);
+    const isJp = I18n.getLang() === 'jp';
 
     return `
       <div class="checklist-item-card" id="item-card-${item.id}">
@@ -817,12 +892,12 @@ const AssetsView = (() => {
 
         <!-- Details Row -->
         <div class="checklist-item-details">
-          <p class="checklist-item-desc">${item.desc || 'No detailed instructions.'}</p>
+          <p class="checklist-item-desc">${item.desc || (isJp ? '詳細な指示はありません。' : 'No detailed instructions.')}</p>
           ${resolvedPath ? `
             <div 
               class="ref-photo-wrapper" 
               onclick="AssetsView.openLightbox('${resolvedPath}', '${item.title}')"
-              title="View reference photo"
+              title="${isJp ? '基準写真を表示' : 'View reference photo'}"
             >
               <img src="${resolvedPath}" class="ref-photo-img" alt="${item.title} reference photo" />
               <div class="ref-photo-overlay">
@@ -838,14 +913,48 @@ const AssetsView = (() => {
 
         <!-- Hidden Fail Notes field -->
         <div class="checklist-item-fail-notes" id="fail-notes-${item.id}" style="display: none;">
-          <label class="inspector-input-label" style="color: var(--clr-priority-high);" for="notes-input-${item.id}">Defect Description (異常内容) *</label>
+          <label class="inspector-input-label" style="color: var(--clr-priority-high);" for="notes-input-${item.id}">${isJp ? '異常内容 (必須) *' : 'Defect Description (異常内容) *'}</label>
           <textarea
             id="notes-input-${item.id}"
             class="fail-notes-input"
-            placeholder="Please describe the issue..."
+            placeholder="${isJp ? '問題の詳細を入力してください...' : 'Please describe the issue...'}"
             rows="2"
             oninput="AssetsView.setItemNotes(${item.id}, this.value)"
           ></textarea>
+
+          <div class="defect-photo-upload-group" style="margin-top: var(--space-2);">
+            <label class="inspector-input-label" style="color: var(--clr-text-secondary);" for="photo-input-${item.id}">${isJp ? '写真添付 (アップロード)' : 'Photo Attachment (Photo upload)'}</label>
+            <div class="defect-photo-picker-row">
+              <input
+                id="photo-input-${item.id}"
+                class="defect-photo-file-input"
+                type="file"
+                accept="image/*"
+                onchange="AssetsView.onDefectPhotoSelected(${item.id}, this)"
+                style="display: none;"
+              />
+              <button
+                class="btn-photo-picker"
+                type="button"
+                onclick="document.getElementById('photo-input-${item.id}').click()"
+              >
+                📷 ${isJp ? '写真をアップロード' : 'Upload Photo'}
+              </button>
+              <span id="photo-filename-${item.id}" class="photo-filename-label">${isJp ? '写真未添付' : 'No photo attached'}</span>
+              <button
+                id="btn-photo-remove-${item.id}"
+                class="btn-photo-remove"
+                type="button"
+                onclick="AssetsView.removeDefectPhoto(${item.id})"
+                style="display: none;"
+              >
+                ✕ ${isJp ? '削除' : 'Remove'}
+              </button>
+            </div>
+            <div id="photo-preview-container-${item.id}" class="photo-preview-container" style="display: none; margin-top: var(--space-2);">
+              <img id="photo-preview-${item.id}" class="defect-photo-preview" src="" alt="Defect preview" style="max-height: 120px; border-radius: var(--radius-sm); border: 1px solid var(--clr-border);" />
+            </div>
+          </div>
         </div>
 
       </div>
@@ -875,6 +984,8 @@ const AssetsView = (() => {
       failBtn.classList.remove('active');
       notesDiv.style.display = 'none';
       card.classList.remove('has-error');
+      // Clear photo state and inputs
+      removeDefectPhoto(itemId);
     } else {
       failBtn.classList.add('active');
       passBtn.classList.remove('active');
@@ -929,7 +1040,8 @@ const AssetsView = (() => {
     const nameEl = document.getElementById('insp-name');
     const durEl = document.getElementById('insp-duration');
     const name = nameEl ? nameEl.value.trim() : 'Unknown';
-    const duration = durEl ? Number(durEl.value) || 25 : 25;
+    const duration = durEl ? Math.max(1, Number(durEl.value) || 25) : 25;
+    const isJp = I18n.getLang() === 'jp';
 
     if (!name) {
       if (nameEl) nameEl.classList.add('error');
@@ -940,8 +1052,8 @@ const AssetsView = (() => {
     const totalDefects = failedItems.length;
     
     let reportNotes = totalDefects === 0 
-      ? 'All items passed.' 
-      : `${totalDefects} issue(s) reported: `;
+      ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
+      : (isJp ? `${totalDefects}件の不具合が報告されました: ` : `${totalDefects} issue(s) reported: `);
     
     if (totalDefects > 0) {
       reportNotes += failedItems.map(item => `[${item.title}: ${item.notes}]`).join(', ');
@@ -966,23 +1078,31 @@ const AssetsView = (() => {
 
       // ── Auto-post a Defect notice for each failed checklist item ──
       if (failedItems.length > 0 && typeof NoticeStore !== 'undefined') {
-        const postPromises = failedItems.map(item =>
-          NoticeStore.post({
-            author: name,
-            category: 'defect',
-            message:
-              `[DEFECT FOUND] ${_activeAsset.name} — ${_activeAsset.location}\n` +
+        const postPromises = failedItems.map(item => {
+          const messageText = isJp
+            ? `【異常検知】 ${_activeAsset.name} — ${_activeAsset.location}\n` +
+              `不合格項目: ${item.title}\n` +
+              `異常内容: ${item.notes}\n` +
+              `報告点検: 定期点検 (${duration}分)`
+            : `[DEFECT FOUND] ${_activeAsset.name} — ${_activeAsset.location}\n` +
               `Failed Check: ${item.title}\n` +
               `Issue: ${item.notes}\n` +
-              `Reported during: Monthly Inspection (${duration} mins)`
-          })
-        );
+              `Reported during: Monthly Inspection (${duration} mins)`;
+
+          return NoticeStore.post({
+            author: name,
+            category: 'defect',
+            assetId: _activeAsset.id,
+            photo: item.photo || null,
+            message: messageText
+          });
+        });
         Promise.all(postPromises).then(() => {
-          if (typeof NoticeView !== 'undefined') NoticeView.init();
+          if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
         });
       }
 
-      AssetStore.completeInspection(_activeAsset.id).then(() => {
+      AssetStore.completeInspection(_activeAsset.id, new Date().toISOString().slice(0, 10), failedItems.length > 0).then(() => {
         closeInspection();
 
         refresh();
@@ -1094,6 +1214,85 @@ const AssetsView = (() => {
     });
   }
 
+  function onDefectPhotoSelected(itemId, inputEl) {
+    const file = inputEl.files[0];
+    if (!file) return;
+
+    const record = _checklistState.find(item => item.itemId === itemId);
+    if (!record) return;
+
+    const labelEl = document.getElementById(`photo-filename-${itemId}`);
+    const removeBtn = document.getElementById(`btn-photo-remove-${itemId}`);
+    const previewContainer = document.getElementById(`photo-preview-container-${itemId}`);
+    const previewImg = document.getElementById(`photo-preview-${itemId}`);
+
+    if (labelEl) labelEl.textContent = 'Compressing image...';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG at 80% quality (resulting in about 100-200KB Base64)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+        record.photo = compressedBase64;
+
+        if (labelEl) labelEl.textContent = file.name;
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+        if (previewImg) previewImg.src = compressedBase64;
+        if (previewContainer) previewContainer.style.display = 'block';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeDefectPhoto(itemId) {
+    const record = _checklistState.find(item => item.itemId === itemId);
+    if (record) {
+      delete record.photo;
+    }
+
+    const fileInput = document.getElementById(`photo-input-${itemId}`);
+    if (fileInput) fileInput.value = '';
+
+    const labelEl = document.getElementById(`photo-filename-${itemId}`);
+    if (labelEl) labelEl.textContent = 'No photo attached';
+
+    const removeBtn = document.getElementById(`btn-photo-remove-${itemId}`);
+    if (removeBtn) removeBtn.style.display = 'none';
+
+    const previewContainer = document.getElementById(`photo-preview-container-${itemId}`);
+    if (previewContainer) previewContainer.style.display = 'none';
+
+    const previewImg = document.getElementById(`photo-preview-${itemId}`);
+    if (previewImg) previewImg.src = '';
+  }
+
   function init() {
     refresh();
   }
@@ -1129,7 +1328,9 @@ const AssetsView = (() => {
     onInspectorNameChange,
     submitInspection,
     openLightbox,
-    closeLightbox
+    closeLightbox,
+    onDefectPhotoSelected,
+    removeDefectPhoto
   };
 
 })();

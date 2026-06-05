@@ -253,3 +253,89 @@
 .tasks-empty-icon {
   font-size: 40px;
 }
+
+/* ------- Dashboard Grid & Cards ------- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.dashboard-card {
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dashboard-card-icon {
+  font-size: var(--font-size-base);
+}
+
+.dashboard-card-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-card-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-text-primary);
+  margin: var(--space-1) 0 0;
+}
+
+.dashboard-card-meta {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-disabled);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Specific card accents */
+.card-defects--warning {
+  border-color: rgba(255, 77, 79, 0.4);
+  background: rgba(255, 77, 79, 0.02);
+}
+
+.card-defects--warning .dashboard-card-value {
+  color: var(--clr-priority-high);
+}
+
+.card-defects--warning .dashboard-card-meta {
+  color: var(--clr-priority-high);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Dashboard Progress bar */
+.dashboard-progress-wrap {
+  height: 4px;
+  background: var(--clr-border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.dashboard-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--clr-accent), #7b9fff);
+  border-radius: 99px;
+}
+
+.dashboard-progress-label {
+  color: var(--clr-text-secondary);
+  font-weight: var(--font-weight-medium);
+}

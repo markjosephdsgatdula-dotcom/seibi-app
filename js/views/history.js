@@ -27,9 +27,10 @@ const HistoryView = (() => {
     const yest  = new Date(today); yest.setDate(yest.getDate() - 1);
     const rec   = new Date(d); rec.setHours(0,0,0,0);
 
-    if (rec.getTime() === today.getTime()) return 'Today';
-    if (rec.getTime() === yest.getTime())  return 'Yesterday';
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    const isJp = I18n.getLang() === 'jp';
+    if (rec.getTime() === today.getTime()) return isJp ? '今日' : 'Today';
+    if (rec.getTime() === yest.getTime())  return isJp ? '昨日' : 'Yesterday';
+    return d.toLocaleDateString(isJp ? 'ja-JP' : 'en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   }
 
   function _timeStr(isoStr) {
@@ -54,11 +55,11 @@ const HistoryView = (() => {
           <div class="hist-card-top">
             <h3 class="hist-card-title">${rec.title}</h3>
             <div class="hist-card-top-right">
-              <span class="hist-card-duration">⏱ ${rec.durationMins}min</span>
+              <span class="hist-card-duration">⏱ ${rec.durationMins}${I18n.t('min')}</span>
               <button
                 class="hist-delete-btn"
                 onclick="HistoryView.deleteRecord('${rec.id}')"
-                title="Delete this record"
+                title="${I18n.getLang() === 'jp' ? 'このレコードを削除' : 'Delete this record'}"
                 aria-label="Delete record"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -88,6 +89,21 @@ const HistoryView = (() => {
             </span>
           </div>
           ${notesHtml}
+          ${(() => {
+            const photos = (rec.checklist || [])
+              .filter(item => item.status === 'fail' && item.photo)
+              .map(item => item.photo);
+            if (photos.length === 0) return '';
+            return `
+              <div class="hist-card-photos" style="margin-top: var(--space-2); display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                ${photos.map(p => `
+                  <div class="hist-photo-wrapper" onclick="AssetsView.openLightbox('${p}', 'Defect Photo')" style="border-radius: var(--radius-sm); border: 1px solid var(--clr-border); overflow: hidden; width: 64px; height: 48px; cursor: pointer; transition: border-color var(--transition-fast);">
+                    <img class="hist-photo-img" src="${p}" alt="History defect photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          })()}
         </div>
       </article>
     `;
@@ -106,11 +122,16 @@ const HistoryView = (() => {
 
     let html = '';
     for (const [key, recs] of groups) {
+      const labelKey = recs.length === 1 ? 'inspection' : 'inspections';
+      const countLabel = I18n.getLang() === 'jp'
+        ? `${recs.length}${I18n.t(labelKey)}`
+        : `${recs.length} ${I18n.t(labelKey)}`;
+
       html += `
         <div class="hist-group">
           <h2 class="hist-group-label">
             <span class="hist-group-day">${_dateLabel(key + 'T12:00:00')}</span>
-            <span class="hist-group-count">${recs.length} inspection${recs.length !== 1 ? 's' : ''}</span>
+            <span class="hist-group-count">${countLabel}</span>
           </h2>
           ${recs.map(_renderCard).join('')}
         </div>
@@ -141,6 +162,11 @@ const HistoryView = (() => {
     let html = '';
     for (const [assetId, { assetName, records: recs }] of sorted) {
       const lastDate = _dateLabel(recs[0].completedAt);
+      const labelKey = recs.length === 1 ? 'record' : 'records';
+      const countLabel = I18n.getLang() === 'jp'
+        ? `${recs.length}${I18n.t(labelKey)}`
+        : `${recs.length} ${I18n.t(labelKey)}`;
+
       html += `
         <div class="hist-group hist-machine-group" id="machine-${assetId}">
           <h2 class="hist-group-label hist-machine-label">
@@ -148,8 +174,8 @@ const HistoryView = (() => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
             </span>
             <span class="hist-group-day">${assetName}</span>
-            <span class="hist-group-count">${recs.length} record${recs.length !== 1 ? 's' : ''}</span>
-            <span class="hist-machine-last">Last: ${lastDate}</span>
+            <span class="hist-group-count">${countLabel}</span>
+            <span class="hist-machine-last">${I18n.t('last')}: ${lastDate}</span>
           </h2>
           ${recs.map(_renderCard).join('')}
         </div>
@@ -168,7 +194,7 @@ const HistoryView = (() => {
       container.innerHTML = `
         <div class="hist-empty">
           <div class="hist-empty-icon">📜</div>
-          <p>No completed inspections yet.</p>
+          <p>${I18n.t('hist_empty')}</p>
         </div>`;
       return;
     }
@@ -204,12 +230,19 @@ const HistoryView = (() => {
 
   function deleteRecord(id) {
     const rec = _records.find(r => r.id === id);
-    const label = rec ? rec.title : 'this record';
-    if (!confirm(`Delete "${label}"?\nThis cannot be undone.`)) return;
+    if (!rec) return;
+    if (!confirm(I18n.t('confirm_delete_history'))) return;
 
     HistoryStore.deleteRecord(id).then(() => {
       _records = _records.filter(r => r.id !== id);
       _renderList();
+
+      if (typeof MockDB !== 'undefined') {
+        MockDB.rollbackCompletedInspection(rec.assetId, rec.completedAt).then(() => {
+          if (typeof HomeView !== 'undefined') HomeView.refresh();
+          if (typeof CalendarView !== 'undefined') CalendarView.init();
+        });
+      }
     });
   }
 

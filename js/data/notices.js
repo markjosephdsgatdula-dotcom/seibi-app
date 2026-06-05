@@ -20,6 +20,7 @@ const NoticeStore = (() => {
     alert:      { label: 'Alert',      emoji: '🚨' },
     safety:     { label: 'Safety',     emoji: '⚠️' },
     update:     { label: 'Update',     emoji: '📢' },
+    defect:     { label: 'Defect',     emoji: '🔧' },
   };
 
   // ─── Seed data (shown only when localStorage is empty) ───────────────────

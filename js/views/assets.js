@@ -963,6 +963,25 @@ const AssetsView = (() => {
     };
 
     HistoryStore.addRecord(historyRecord).then(() => {
+
+      // ── Auto-post a Defect notice for each failed checklist item ──
+      if (failedItems.length > 0 && typeof NoticeStore !== 'undefined') {
+        const postPromises = failedItems.map(item =>
+          NoticeStore.post({
+            author: name,
+            category: 'defect',
+            message:
+              `[DEFECT FOUND] ${_activeAsset.name} — ${_activeAsset.location}\n` +
+              `Failed Check: ${item.title}\n` +
+              `Issue: ${item.notes}\n` +
+              `Reported during: Monthly Inspection (${duration} mins)`
+          })
+        );
+        Promise.all(postPromises).then(() => {
+          if (typeof NoticeView !== 'undefined') NoticeView.init();
+        });
+      }
+
       AssetStore.completeInspection(_activeAsset.id).then(() => {
         closeInspection();
 

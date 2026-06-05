@@ -73,6 +73,12 @@ const HistoryStore = (() => {
     return Promise.resolve(record);
   }
 
-  return { getAll, addRecord };
+  function deleteRecord(id) {
+    const records = _load().filter(r => r.id !== id);
+    _save(records);
+    return Promise.resolve();
+  }
+
+  return { getAll, addRecord, deleteRecord };
 
 })();

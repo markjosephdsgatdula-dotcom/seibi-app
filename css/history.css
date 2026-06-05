@@ -105,6 +105,41 @@
   gap: var(--space-2);
 }
 
+/* Right side of top row: duration badge + delete button */
+.hist-card-top-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Delete button */
+.hist-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-disabled);
+  opacity: 0;
+  transition: opacity var(--transition-instant),
+              color   var(--transition-instant),
+              background var(--transition-instant);
+  flex-shrink: 0;
+}
+
+/* Show delete button when hovering the card */
+.hist-card:hover .hist-delete-btn {
+  opacity: 1;
+}
+
+.hist-delete-btn:hover {
+  color: var(--clr-priority-high);
+  background: rgba(255, 77, 79, 0.12);
+}
+
+
 .hist-card-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);

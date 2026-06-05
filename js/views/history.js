@@ -53,7 +53,22 @@ const HistoryView = (() => {
         <div class="hist-card-body">
           <div class="hist-card-top">
             <h3 class="hist-card-title">${rec.title}</h3>
-            <span class="hist-card-duration">⏱ ${rec.durationMins}min</span>
+            <div class="hist-card-top-right">
+              <span class="hist-card-duration">⏱ ${rec.durationMins}min</span>
+              <button
+                class="hist-delete-btn"
+                onclick="HistoryView.deleteRecord('${rec.id}')"
+                title="Delete this record"
+                aria-label="Delete record"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="hist-card-meta">
             <span class="hist-meta-item">
@@ -185,6 +200,19 @@ const HistoryView = (() => {
     _renderList();
   }
 
+  // ─── Delete ───────────────────────────────────────────────────────────────
+
+  function deleteRecord(id) {
+    const rec = _records.find(r => r.id === id);
+    const label = rec ? rec.title : 'this record';
+    if (!confirm(`Delete "${label}"?\nThis cannot be undone.`)) return;
+
+    HistoryStore.deleteRecord(id).then(() => {
+      _records = _records.filter(r => r.id !== id);
+      _renderList();
+    });
+  }
+
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   function init() {
@@ -195,6 +223,6 @@ const HistoryView = (() => {
     });
   }
 
-  return { setSort, init };
+  return { setSort, init, deleteRecord };
 
 })();

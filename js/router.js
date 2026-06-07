@@ -22,6 +22,7 @@ const Router = (() => {
   const VIEWS = {
     home:    { tabId: 'tab-home',    panelId: 'view-home'    },
     assets:  { tabId: 'tab-assets',  panelId: 'view-assets'  },
+    wiremap: { tabId: 'tab-wiremap', panelId: 'view-wiremap' },
     history: { tabId: 'tab-history', panelId: 'view-history' },
     notice:  { tabId: 'tab-notice',  panelId: 'view-notice'  },
   };

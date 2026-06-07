@@ -173,6 +173,7 @@ const App = (() => {
     HistoryView.init();
     NoticeView.init();
     AssetsView.init();
+    WireMapView.init();
 
     // Initialise router last (it will activate the first view)
     Router.init();
@@ -189,6 +190,7 @@ const App = (() => {
       if (typeof HistoryView !== 'undefined') HistoryView.init();
       if (typeof NoticeView !== 'undefined') NoticeView.init();
       if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+      if (typeof WireMapView !== 'undefined') WireMapView.refresh();
     });
 
     console.log('[Seibi] App booted successfully.');
@@ -209,6 +211,7 @@ const App = (() => {
     HistoryView,
     NoticeView,
     AssetsView,
+    WireMapView,
   };
 
 })();

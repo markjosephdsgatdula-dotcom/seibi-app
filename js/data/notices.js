@@ -55,7 +55,7 @@ const NoticeStore = (() => {
    * Post a new notice.
    * @param {{ author: string, category: string, message: string }} data
    */
-  function post({ author, category, message, assetId = null, photo = null, incidentType = null, occurrenceTime = null }) {
+  function post({ author, category, message, assetId = null, assetName = null, photo = null, incidentType = null, occurrenceTime = null }) {
     const notices = _load();
     const initials = author
       .trim()

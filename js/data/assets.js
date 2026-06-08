@@ -420,6 +420,21 @@ const AssetStore = (() => {
     return Promise.resolve(asset);
   }
 
+  function setRepairStatus(id, status) {
+    const assets = _loadAssets();
+    const asset = assets.find(a => a.id === id);
+    if (!asset) return Promise.reject(new Error('Asset not found'));
+
+    asset.status = status;
+    _saveAssets(assets);
+
+    if (typeof AssetsView !== 'undefined') {
+      AssetsView.refresh();
+    }
+
+    return Promise.resolve(asset);
+  }
+
   return { 
     getAll, 
     getById, 
@@ -433,7 +448,8 @@ const AssetStore = (() => {
     updateAsset,
     updateTemplate,
     cloneTemplate,
-    resolveRepair
+    resolveRepair,
+    setRepairStatus
   };
 
 })();

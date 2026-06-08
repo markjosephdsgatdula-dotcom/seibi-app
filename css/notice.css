@@ -511,3 +511,27 @@
   object-fit: cover;
   display: block;
 }
+
+/* ------- Incident Alert styling ------- */
+.notice-card--incident-alert .notice-body {
+  border-color: var(--clr-priority-high);
+  background: rgba(239, 68, 68, 0.04);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.1);
+  position: relative;
+}
+
+.notice-card--incident-alert .notice-body::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  bottom: -1px;
+  width: 4px;
+  background: var(--clr-priority-high);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.notice-cat--incident {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ff7875 !important;
+}

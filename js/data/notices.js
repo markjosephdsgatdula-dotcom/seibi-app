@@ -17,10 +17,11 @@ const NoticeStore = (() => {
 
   const CATEGORIES = {
     info:       { label: 'Info',       emoji: 'ℹ️' },
-    alert:      { label: 'Alert',      emoji: '🚨' },
-    safety:     { label: 'Safety',     emoji: '⚠️' },
+    alert:      { label: 'Alert',      emoji: '⚠️' },
+    safety:     { label: 'Safety',     emoji: '🛡️' },
     update:     { label: 'Update',     emoji: '📢' },
     defect:     { label: 'Defect',     emoji: '🔧' },
+    incident:   { label: 'Incident',   emoji: '🚨' },
   };
 
   // ─── Seed data (shown only when localStorage is empty) ───────────────────
@@ -54,7 +55,7 @@ const NoticeStore = (() => {
    * Post a new notice.
    * @param {{ author: string, category: string, message: string }} data
    */
-  function post({ author, category, message, assetId = null, photo = null }) {
+  function post({ author, category, message, assetId = null, photo = null, incidentType = null, occurrenceTime = null }) {
     const notices = _load();
     const initials = author
       .trim()
@@ -69,13 +70,21 @@ const NoticeStore = (() => {
       initials,
       category,
       message: message.trim(),
-      timestamp: new Date().toISOString(),
+      timestamp: occurrenceTime || new Date().toISOString(),
       assetId,
-      photo
+      assetName,
+      photo,
+      incidentType
     };
 
     notices.push(notice);
     _save(notices);
+
+    // Bidirectional sync: if it is an incident or defect, update asset status to needs_repair
+    if (assetId && (category === 'incident' || category === 'defect') && typeof AssetStore !== 'undefined') {
+      AssetStore.setRepairStatus(assetId, 'needs_repair');
+    }
+
     return Promise.resolve(notice);
   }
 

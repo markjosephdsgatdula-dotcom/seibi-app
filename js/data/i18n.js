@@ -97,6 +97,26 @@ const I18n = (() => {
       'repair_notes_placeholder': 'What was done to fix it?',
       'confirm_delete_notice': 'Delete this notice?\nThis cannot be undone.',
       'confirm_delete_history': 'Delete this record?\nThis cannot be undone.',
+
+      // Incident reporting
+      'btn_report_incident': '🚨 Report Incident',
+      'modal_report_incident': 'Report Sudden Incident',
+      'label_machine': 'Affected Machine *',
+      'label_incident_type': 'Incident Type *',
+      'label_incident_time': 'Occurrence Time *',
+      'btn_submit_incident': 'Report Incident',
+      'placeholder_incident_notes': 'Describe the sudden stoppage, spark, abnormal sound, or other issue in detail...',
+      'inc_stoppage': 'Sudden Stoppage',
+      'inc_spark': 'Spark / Arc Error',
+      'inc_noise': 'Abnormal Noise / Vibration',
+      'inc_leak': 'Gas Leak / Odor',
+      'inc_overheat': 'Overheating',
+      'inc_other': 'Other',
+      'resolved_label': 'Resolved',
+      'btn_resolve_incident': '🔧 Resolve Incident',
+      'confirm_resolve_incident': '✅ Confirm Resolution',
+      'resolved_by_placeholder': 'Your name',
+      'resolution_notes_placeholder': 'What was done to resolve the incident?',
     },
     jp: {
       // Bottom Nav
@@ -185,6 +205,26 @@ const I18n = (() => {
       'repair_notes_placeholder': 'どのような修理を行いましたか？',
       'confirm_delete_notice': 'この投稿を削除しますか？\n元に戻すことはできません。',
       'confirm_delete_history': 'この履歴レコードを削除しますか？\n元に戻すことはできません。',
+
+      // Incident reporting
+      'btn_report_incident': '🚨 異常報告',
+      'modal_report_incident': '突発異常・アクシデント報告',
+      'label_machine': '発生した設備・機械 *',
+      'label_incident_type': '異常の種類 *',
+      'label_incident_time': '発生時間 *',
+      'btn_submit_incident': '異常を報告する',
+      'placeholder_incident_notes': '緊急停止、スパーク、異音、その他アクシデントの詳細を入力してください...',
+      'inc_stoppage': '緊急停止・動作停止',
+      'inc_spark': 'スパーク・アーク異常',
+      'inc_noise': '異音・異常振動',
+      'inc_leak': 'ガス漏れ・異臭',
+      'inc_overheat': '発熱・過熱',
+      'inc_other': 'その他',
+      'resolved_label': '解決済み',
+      'btn_resolve_incident': '🔧 解決済みにする',
+      'confirm_resolve_incident': '✅ 解決を確定する',
+      'resolved_by_placeholder': 'あなたの名前',
+      'resolution_notes_placeholder': 'どのような対処を行いましたか？',
     }
   };
 

@@ -102,10 +102,18 @@ const AssetsView = (() => {
           </div>
         </div>
 
-        <button class="asset-btn-secondary" onclick="AssetsView.openEditModal('${asset.id}')" style="margin-top: 12px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/></svg>
-          ${I18n.t('btn_edit_asset')}
-        </button>
+        <div class="asset-card-buttons" style="display: flex; gap: var(--space-2); margin-top: 12px;">
+          <button class="asset-btn-secondary" onclick="AssetsView.openEditModal('${asset.id}')" style="flex: 1; margin: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/></svg>
+            ${I18n.t('btn_edit_asset')}
+          </button>
+          ${!isDecom ? `
+            <button class="asset-btn-secondary btn-report-incident-action" onclick="AssetsView.reportIncidentTrigger('${asset.id}')" style="flex: 1; margin: 0; color: #f87171; border-color: rgba(248, 113, 113, 0.3);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+              ${I18n.t('btn_report_incident')}
+            </button>
+          ` : ''}
+        </div>
       </article>
     `;
   }
@@ -1293,6 +1301,17 @@ const AssetsView = (() => {
     if (previewImg) previewImg.src = '';
   }
 
+  function reportIncidentTrigger(assetId) {
+    if (typeof App !== 'undefined' && App.Nav) {
+      App.Nav.switchTo('notice');
+      setTimeout(() => {
+        if (typeof NoticeView !== 'undefined' && NoticeView.openIncidentModal) {
+          NoticeView.openIncidentModal(assetId);
+        }
+      }, 50);
+    }
+  }
+
   function init() {
     refresh();
   }
@@ -1300,6 +1319,7 @@ const AssetsView = (() => {
   return {
     init,
     refresh,
+    reportIncidentTrigger,
     openRegisterModal,
     onRegFormChange,
     onRegTemplateSelect,

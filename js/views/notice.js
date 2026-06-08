@@ -61,18 +61,24 @@ const NoticeView = (() => {
   function _renderRepairBanner(notice) {
     if (!notice.repaired) return '';
     const isJp = I18n.getLang() === 'jp';
+    const isIncident = notice.category === 'incident';
     const time = new Date(notice.repairedAt).toLocaleString(isJp ? 'ja-JP' : 'en-US', {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
     });
-    const label = isJp
-      ? `修理完了 · ${time} · 担当: ${_escapeHtml(notice.repairedBy)}`
-      : `Repaired · ${time} · by ${_escapeHtml(notice.repairedBy)}`;
+    
+    const resolvedTxt = isIncident
+      ? (isJp ? '解決済み' : 'Resolved')
+      : (isJp ? '修理完了' : 'Repaired');
+      
+    const byTxt = isJp ? '担当' : 'by';
+    
+    const label = `${resolvedTxt} · ${time} · ${byTxt} ${_escapeHtml(notice.repairedBy)}`;
 
     return `
-      <div class="notice-repaired-banner">
-        <span class="notice-repaired-icon">✅</span>
+      <div class="notice-repaired-banner" style="${isIncident ? 'border-color: var(--clr-success); background: rgba(16, 185, 129, 0.1);' : ''}">
+        <span class="notice-repaired-icon">${isIncident ? '✅' : '🔧'}</span>
         <div class="notice-repaired-info">
-          <span class="notice-repaired-label">${label}</span>
+          <span class="notice-repaired-label" style="${isIncident ? 'color: var(--clr-success);' : ''}">${label}</span>
           ${notice.repairNote ? `<span class="notice-repaired-note">${_escapeHtml(notice.repairNote)}</span>` : ''}
         </div>
       </div>
@@ -83,6 +89,8 @@ const NoticeView = (() => {
     const cat    = NoticeStore.CATEGORIES[notice.category] || NoticeStore.CATEGORIES.info;
     const colour = _avatarColour(notice.initials);
     const isDefect   = notice.category === 'defect';
+    const isIncident = notice.category === 'incident';
+    const isDefectOrIncident = isDefect || isIncident;
     const isRepaired = !!notice.repaired;
     const isJp = I18n.getLang() === 'jp';
 
@@ -91,17 +99,38 @@ const NoticeView = (() => {
       'alert': isJp ? '警告' : 'Alert',
       'safety': isJp ? '安全' : 'Safety',
       'update': isJp ? '連絡' : 'Updates',
-      'defect': isJp ? '異常' : 'Defect'
+      'defect': isJp ? '異常' : 'Defect',
+      'incident': isJp ? '突発異常' : 'Incident'
     }[notice.category] || cat.label;
 
-    const repairBtn = isDefect && !isRepaired
-      ? `<button class="notice-repair-btn" onclick="NoticeView.openRepairForm('${notice.id}')" title="${I18n.t('btn_mark_repaired')}">${I18n.t('btn_mark_repaired')}</button>`
+    const repairBtn = isDefectOrIncident && !isRepaired
+      ? `<button class="notice-repair-btn" onclick="NoticeView.openRepairForm('${notice.id}')" title="${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}">${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}</button>`
       : '';
 
     const formattedTime = new Date(notice.timestamp).toLocaleString(isJp ? 'ja-JP' : 'en-US');
 
+    // Incident details badge
+    let incidentDetailsHtml = '';
+    if (isIncident && notice.incidentType) {
+      const typeLabel = I18n.t(`inc_${notice.incidentType}`);
+      const assetLabel = notice.assetName || (isJp ? '不明な設備' : 'Unknown Machine');
+      incidentDetailsHtml = `
+        <div class="notice-incident-details" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 6px; margin-bottom: 8px;">
+          <span class="chip-incident-machine" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600;">
+            ⚙️ ${assetLabel}
+          </span>
+          <span class="chip-incident-type" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600;">
+            🚨 ${typeLabel}
+          </span>
+        </div>
+      `;
+    }
+
+    // Dynamic warning class for unresolved incidents
+    const incidentClass = isIncident && !isRepaired ? ' notice-card--incident-alert' : '';
+
     return `
-      <article class="notice-card" id="notice-${notice.id}">
+      <article class="notice-card${incidentClass}" id="notice-${notice.id}">
         <div class="notice-avatar" style="background:${colour}" aria-hidden="true">
           ${notice.initials}
         </div>
@@ -128,6 +157,7 @@ const NoticeView = (() => {
               </svg>
             </button>
           </div>
+          ${incidentDetailsHtml}
           <p class="notice-message">${_escapeHtml(notice.message)}</p>
           ${notice.photo ? `
             <div class="notice-photo-wrapper" onclick="AssetsView.openLightbox('${notice.photo}', 'Defect Photo')">
@@ -137,11 +167,11 @@ const NoticeView = (() => {
           ${_renderRepairBanner(notice)}
           ${repairBtn}
           <div class="notice-repair-form" id="repair-form-${notice.id}" style="display:none;">
-            <input id="repair-by-${notice.id}" class="repair-input" type="text" placeholder="${I18n.t('repair_by_placeholder')}" maxlength="40" />
-            <textarea id="repair-note-${notice.id}" class="repair-textarea" placeholder="${I18n.t('repair_notes_placeholder')}" rows="2" maxlength="300"></textarea>
+            <input id="repair-by-${notice.id}" class="repair-input" type="text" placeholder="${isIncident ? I18n.t('resolved_by_placeholder') : I18n.t('repair_by_placeholder')}" maxlength="40" />
+            <textarea id="repair-note-${notice.id}" class="repair-textarea" placeholder="${isIncident ? I18n.t('resolution_notes_placeholder') : I18n.t('repair_notes_placeholder')}" rows="2" maxlength="300"></textarea>
             <div class="repair-actions">
               <button class="repair-cancel-btn" onclick="NoticeView.closeRepairForm('${notice.id}')">${I18n.t('cancel')}</button>
-              <button class="repair-submit-btn" onclick="NoticeView.submitRepair('${notice.id}')">${I18n.t('confirm_repair')}</button>
+              <button class="repair-submit-btn" onclick="NoticeView.submitRepair('${notice.id}')">${isIncident ? I18n.t('confirm_resolve_incident') : I18n.t('confirm_repair')}</button>
             </div>
           </div>
         </div>
@@ -187,30 +217,38 @@ const NoticeView = (() => {
     const savedAuthor = _savedAuthor();
     const isJp = I18n.getLang() === 'jp';
 
-    const cats = Object.entries(NoticeStore.CATEGORIES).map(([key, val]) => {
-      const label = {
-        'info': isJp ? '情報' : 'Info',
-        'alert': isJp ? '警告' : 'Alert',
-        'safety': isJp ? '安全' : 'Safety',
-        'update': isJp ? '連絡' : 'Updates',
-        'defect': isJp ? '異常' : 'Defect'
-      }[key] || val.label;
-      return [key, { emoji: val.emoji, label }];
-    });
+    const cats = Object.entries(NoticeStore.CATEGORIES)
+      .filter(([key]) => key !== 'incident')
+      .map(([key, val]) => {
+        const label = {
+          'info': isJp ? '情報' : 'Info',
+          'alert': isJp ? '警告' : 'Alert',
+          'safety': isJp ? '安全' : 'Safety',
+          'update': isJp ? '連絡' : 'Updates',
+          'defect': isJp ? '異常' : 'Defect'
+        }[key] || val.label;
+        return [key, { emoji: val.emoji, label }];
+      });
 
     panel.innerHTML = `
       <div class="notice-view-inner">
         <!-- Search & Filter bar -->
-        <div class="notice-toolbar">
-          <div class="notice-search-wrap">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input
-              id="notice-search-input"
-              class="notice-search-input"
-              type="text"
-              placeholder="${isJp ? '掲示板を検索...' : 'Search notices...'}"
-              oninput="NoticeView.onSearchInput(this.value)"
-            />
+        <div class="notice-toolbar" style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-3); background: var(--clr-surface-raised); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: var(--space-3);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2);">
+            <div class="notice-search-wrap" style="flex: 1; max-width: 320px;">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                id="notice-search-input"
+                class="notice-search-input"
+                type="text"
+                placeholder="${isJp ? '掲示板を検索...' : 'Search notices...'}"
+                oninput="NoticeView.onSearchInput(this.value)"
+              />
+            </div>
+            <button class="cal-today-btn" style="background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; border: none; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25); display: flex; align-items: center; gap: var(--space-1); padding: 8px 16px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;" onclick="NoticeView.openIncidentModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+              ${I18n.t('btn_report_incident')}
+            </button>
           </div>
           <div class="notice-filter-chips" role="group" aria-label="Filter notices by category">
             <button class="filter-chip active" data-filter="all" onclick="NoticeView.setCategoryFilter('all')">${isJp ? 'すべて' : 'All'}</button>
@@ -219,6 +257,7 @@ const NoticeView = (() => {
             <button class="filter-chip" data-filter="safety" onclick="NoticeView.setCategoryFilter('safety')">${isJp ? '🛡️ 安全' : '🛡️ Safety'}</button>
             <button class="filter-chip" data-filter="update" onclick="NoticeView.setCategoryFilter('update')">${isJp ? '📢 連絡' : '📢 Updates'}</button>
             <button class="filter-chip" data-filter="defect" onclick="NoticeView.setCategoryFilter('defect')">${isJp ? '🔧 異常' : '🔧 Defects'}</button>
+            <button class="filter-chip" data-filter="incident" onclick="NoticeView.setCategoryFilter('incident')">${isJp ? '🚨 突発異常' : '🚨 Incidents'}</button>
           </div>
         </div>
 
@@ -419,6 +458,126 @@ const NoticeView = (() => {
     });
   }
 
+  function openIncidentModal(preSelectedAssetId = null) {
+    const existing = document.getElementById('incident-report-modal');
+    if (existing) existing.remove();
+
+    const isJp = I18n.getLang() === 'jp';
+    
+    AssetStore.getAll().then(assets => {
+      const activeAssets = assets.filter(a => a.status !== 'decommissioned');
+      
+      const now = new Date();
+      const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+      const modal = document.createElement('div');
+      modal.id = 'incident-report-modal';
+      modal.className = 'inspection-modal-backdrop';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-label', I18n.t('modal_report_incident'));
+
+      const incidentTypes = [
+        { value: 'stoppage', label: I18n.t('inc_stoppage') },
+        { value: 'spark',    label: I18n.t('inc_spark') },
+        { value: 'noise',    label: I18n.t('inc_noise') },
+        { value: 'leak',     label: I18n.t('inc_leak') },
+        { value: 'overheat', label: I18n.t('inc_overheat') },
+        { value: 'other',    label: I18n.t('inc_other') }
+      ];
+
+      modal.innerHTML = `
+        <div class="inspection-modal-panel" style="max-width: 500px;">
+          <header class="inspection-modal-header">
+            <h2 class="inspection-modal-title">${I18n.t('modal_report_incident')}</h2>
+            <button class="inspection-modal-close" onclick="NoticeView.closeIncidentModal()" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <form onsubmit="NoticeView.submitIncident(event)">
+            <div class="inspection-modal-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="inc-reporter">${I18n.t('placeholder_name')} *</label>
+                <input type="text" id="inc-reporter" required class="inspector-input" value="${_escapeHtml(_savedAuthor())}" placeholder="${I18n.t('placeholder_name')}" maxlength="40">
+              </div>
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="inc-machine">${I18n.t('label_machine')}</label>
+                <select id="inc-machine" required class="form-select" style="width: 100%;">
+                  <option value="" disabled ${!preSelectedAssetId ? 'selected' : ''}>-- ${isJp ? '設備を選択してください' : 'Select Equipment'} --</option>
+                  ${activeAssets.map(a => `
+                    <option value="${a.id}" ${preSelectedAssetId === a.id ? 'selected' : ''}>${a.name} (${a.location})</option>
+                  `).join('')}
+                </select>
+              </div>
+              <div class="inspector-sign-bar" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); border: none; padding: 0; background: none;">
+                <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                  <label class="inspector-input-label" for="inc-type">${I18n.t('label_incident_type')}</label>
+                  <select id="inc-type" required class="form-select" style="width: 100%;">
+                    ${incidentTypes.map(t => `
+                      <option value="${t.value}">${t.label}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                  <label class="inspector-input-label" for="inc-time">${I18n.t('label_incident_time')}</label>
+                  <input type="datetime-local" id="inc-time" required class="inspector-input" value="${localISO}">
+                </div>
+              </div>
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="inc-notes">${isJp ? '詳細・状況メモ *' : 'Details / Notes *'}</label>
+                <textarea id="inc-notes" required class="fail-notes-input" style="min-height: 80px;" placeholder="${I18n.t('placeholder_incident_notes')}" maxlength="400"></textarea>
+              </div>
+            </div>
+            <footer class="inspection-modal-footer" style="padding: var(--space-4); border-top: 1px solid var(--clr-border); display: flex; justify-content: flex-end; gap: var(--space-3); background: var(--clr-surface);">
+              <button type="button" class="btn-cancel" onclick="NoticeView.closeIncidentModal()">${I18n.t('cancel')}</button>
+              <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); border: none;">${I18n.t('btn_submit_incident')}</button>
+            </footer>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('app-shell').appendChild(modal);
+    });
+  }
+
+  function closeIncidentModal() {
+    const modal = document.getElementById('incident-report-modal');
+    if (modal) modal.remove();
+  }
+
+  function submitIncident(event) {
+    event.preventDefault();
+    const author = document.getElementById('inc-reporter').value.trim();
+    const assetId = document.getElementById('inc-machine').value;
+    const incidentType = document.getElementById('inc-type').value;
+    const occurrenceTime = new Date(document.getElementById('inc-time').value).toISOString();
+    const message = document.getElementById('inc-notes').value.trim();
+
+    if (!author || !assetId || !incidentType || !message) return;
+
+    _saveAuthor(author);
+
+    AssetStore.getById(assetId).then(asset => {
+      const assetName = asset ? asset.name : 'Unknown Equipment';
+      return NoticeStore.post({
+        author,
+        category: 'incident',
+        message,
+        assetId,
+        assetName,
+        incidentType,
+        occurrenceTime
+      });
+    }).then(() => {
+      closeIncidentModal();
+      setCategoryFilter('incident');
+      refreshFeed();
+      
+      if (typeof HomeView !== 'undefined') HomeView.refresh();
+      if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+    });
+  }
+
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   function init() {
@@ -430,6 +589,6 @@ const NoticeView = (() => {
     });
   }
 
-  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, submitRepair, refreshFeed, onSearchInput, setCategoryFilter };
+  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident };
 
 })();

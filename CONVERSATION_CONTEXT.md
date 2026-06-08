@@ -57,11 +57,15 @@ This file serves as a handoff context document for the next Antigravity AI codin
   * `gauge`, `color`, `length`, `condition` (Good / Fair / Poor), `notes`
 * **Known Pending Refinements:** User noted the map layout is "alright for now" — exact positions of some machines may need further fine-tuning to precisely match the hand-drawn workshop sketch shared in the home PC session. The sketch image is NOT stored in the repo — refer to the home PC conversation transcript if needed.
 
+### Stage 5: Sudden Incident Reporting (Completed in Phase 3 continued)
+* **Dedicated Logging Flow:** Added a prominent "Report Incident" modal button in the Notice Board toolbar and directly on each asset card in the Assets tab.
+* **Health & Notice Sync:** Logging an incident automatically flags the machine's status to `needs_repair` in the Asset registry and creates a red-flagged incident card in the notice feed. Resolving the incident from the notice board restores the machine status back to `healthy`.
+
 ---
 
 ## 📋 Database Schema & Keys
 
-* `seibi_app_version`: Tracks migration resets (`v8_clean`).
+* `seibi_app_version`: Tracks migration resets (`v9_clean`).
 * `seibi_assets`: Stores active/decommissioned equipment.
 * `seibi_templates`: Stores checklist templates (`template-co2-mag`, `template-regulator`, `template-grinder`, etc.).
 * `seibi_tasks`: Stores scheduled inspection tasks and custom work orders.

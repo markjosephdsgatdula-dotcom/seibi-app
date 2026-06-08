@@ -536,12 +536,17 @@ const NoticeView = (() => {
               </div>
               <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
                 <label class="inspector-input-label" for="inc-machine">${I18n.t('label_machine')}</label>
-                <select id="inc-machine" required class="form-select" style="width: 100%;">
+                <select id="inc-machine" required class="form-select" style="width: 100%;" onchange="NoticeView.onMachineSelectChange(this)">
                   <option value="" disabled ${!preSelectedAssetId ? 'selected' : ''}>-- ${isJp ? '設備を選択してください' : 'Select Equipment'} --</option>
                   ${activeAssets.map(a => `
                     <option value="${a.id}" ${preSelectedAssetId === a.id ? 'selected' : ''}>${a.name} (${a.location})</option>
                   `).join('')}
+                  <option value="custom" ${preSelectedAssetId === 'custom' ? 'selected' : ''}>-- ${isJp ? 'その他（直接入力）' : 'Other (Custom Input)'} --</option>
                 </select>
+              </div>
+              <div class="form-group" id="inc-custom-machine-container" style="display: ${preSelectedAssetId === 'custom' ? 'flex' : 'none'}; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="inc-custom-machine">${isJp ? '設備名（直接入力） *' : 'Custom Machine Name *'}</label>
+                <input type="text" id="inc-custom-machine" class="inspector-input" placeholder="${isJp ? '設備名を入力してください' : 'Enter machine name'}" maxlength="100" ${preSelectedAssetId === 'custom' ? 'required' : ''}>
               </div>
               <div class="inspector-sign-bar" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); border: none; padding: 0; background: none;">
                 <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
@@ -579,36 +584,123 @@ const NoticeView = (() => {
     if (modal) modal.remove();
   }
 
+  function onMachineSelectChange(select) {
+    const customContainer = document.getElementById('inc-custom-machine-container');
+    const customInput = document.getElementById('inc-custom-machine');
+    if (!customContainer || !customInput) return;
+    
+    if (select.value === 'custom') {
+      customContainer.style.display = 'flex';
+      customInput.required = true;
+      customInput.focus();
+    } else {
+      customContainer.style.display = 'none';
+      customInput.required = false;
+      customInput.value = '';
+    }
+  }
+
   function submitIncident(event) {
     event.preventDefault();
-    const author = document.getElementById('inc-reporter').value.trim();
-    const assetId = document.getElementById('inc-machine').value;
-    const incidentType = document.getElementById('inc-type').value;
-    const occurrenceTime = new Date(document.getElementById('inc-time').value).toISOString();
-    const message = document.getElementById('inc-notes').value.trim();
+    const reporterEl = document.getElementById('inc-reporter');
+    const machineEl = document.getElementById('inc-machine');
+    const typeEl = document.getElementById('inc-type');
+    const timeEl = document.getElementById('inc-time');
+    const notesEl = document.getElementById('inc-notes');
+    const customMachineEl = document.getElementById('inc-custom-machine');
 
-    if (!author || !assetId || !incidentType || !message) return;
+    const author = reporterEl ? reporterEl.value.trim() : '';
+    const assetId = machineEl ? machineEl.value : '';
+    const incidentType = typeEl ? typeEl.value : '';
+    const message = notesEl ? notesEl.value.trim() : '';
+    
+    let timeVal = timeEl ? timeEl.value : '';
+    let occurrenceTime = '';
+    if (timeVal) {
+      try {
+        occurrenceTime = new Date(timeVal).toISOString();
+      } catch (_) {}
+    }
+    if (!occurrenceTime) {
+      occurrenceTime = new Date().toISOString();
+    }
+
+    // Validation
+    let isValid = true;
+    if (!author) {
+      reporterEl.classList.add('compose-input--error');
+      setTimeout(() => reporterEl.classList.remove('compose-input--error'), 1200);
+      reporterEl.focus();
+      isValid = false;
+    }
+    if (!assetId) {
+      machineEl.classList.add('compose-input--error');
+      setTimeout(() => machineEl.classList.remove('compose-input--error'), 1200);
+      machineEl.focus();
+      isValid = false;
+    }
+    if (assetId === 'custom') {
+      const customName = customMachineEl ? customMachineEl.value.trim() : '';
+      if (!customName) {
+        customMachineEl.classList.add('compose-input--error');
+        setTimeout(() => customMachineEl.classList.remove('compose-input--error'), 1200);
+        customMachineEl.focus();
+        isValid = false;
+      }
+    }
+    if (!incidentType) {
+      typeEl.classList.add('compose-input--error');
+      setTimeout(() => typeEl.classList.remove('compose-input--error'), 1200);
+      typeEl.focus();
+      isValid = false;
+    }
+    if (!message) {
+      notesEl.classList.add('compose-input--error');
+      setTimeout(() => notesEl.classList.remove('compose-input--error'), 1200);
+      notesEl.focus();
+      isValid = false;
+    }
+
+    if (!isValid) return;
 
     _saveAuthor(author);
 
-    AssetStore.getById(assetId).then(asset => {
-      const assetName = asset ? asset.name : 'Unknown Equipment';
-      return NoticeStore.post({
+    let postPromise;
+    if (assetId === 'custom') {
+      const customName = customMachineEl.value.trim();
+      postPromise = NoticeStore.post({
         author,
         category: 'incident',
         message,
-        assetId,
-        assetName,
+        assetId: null,
+        assetName: customName,
         incidentType,
         occurrenceTime
       });
-    }).then(() => {
+    } else {
+      postPromise = AssetStore.getById(assetId).then(asset => {
+        const assetName = asset ? asset.name : 'Unknown Equipment';
+        return NoticeStore.post({
+          author,
+          category: 'incident',
+          message,
+          assetId,
+          assetName,
+          incidentType,
+          occurrenceTime
+        });
+      });
+    }
+
+    postPromise.then(() => {
       closeIncidentModal();
       setCategoryFilter('incident');
       refreshFeed();
       
       if (typeof HomeView !== 'undefined') HomeView.refresh();
       if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+    }).catch(err => {
+      console.error('Failed to submit incident:', err);
     });
   }
 
@@ -623,6 +715,6 @@ const NoticeView = (() => {
     });
   }
 
-  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident };
+  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident, onMachineSelectChange };
 
 })();

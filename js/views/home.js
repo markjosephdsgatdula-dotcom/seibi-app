@@ -120,9 +120,43 @@ const HomeView = (() => {
 
   function _renderCard(task) {
     const isDone = task.status === 'done';
-    const clickHandler = task.assetId && !isDone
-      ? `AssetsView.openInspection('${task.assetId}')`
-      : `HomeView.toggleDone('${task.id}')`;
+    const isRepair = task.id.startsWith('task-repair-') || (task.tags && task.tags.includes('repair'));
+    const isCustom = task.id.startsWith('task-custom-');
+    
+    // Card click: only active when task is pending/overdue
+    const cardClickHandler = isDone
+      ? ''
+      : (isRepair
+        ? `NoticeView.openRepairModal('${task.id.replace('task-repair-', '')}')`
+        : (task.assetId
+          ? `AssetsView.openInspection('${task.assetId}')`
+          : `HomeView.toggleDone('${task.id}')`));
+
+    // Checkbox click: can check/uncheck
+    const btnClickHandler = isDone
+      ? `HomeView.toggleDone('${task.id}')`
+      : (task.assetId && !isRepair
+        ? `AssetsView.openInspection('${task.assetId}')`
+        : `HomeView.toggleDone('${task.id}')`);
+
+    const deleteBtnHtml = isCustom
+      ? `<button
+           class="task-delete-btn"
+           onclick="event.stopPropagation(); HomeView.deleteCustomTask('${task.id}')"
+           title="${I18n.getLang() === 'jp' ? 'カスタム作業指示を削除' : 'Delete custom work order'}"
+           aria-label="Delete custom work order"
+           style="background:none; border:none; color:var(--clr-text-secondary); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; transition:color var(--transition-fast);"
+           onmouseover="this.style.color='#ef4444'"
+           onmouseout="this.style.color='var(--clr-text-secondary)'"
+         >
+           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+             <polyline points="3 6 5 6 21 6"/>
+             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+             <path d="M10 11v6M14 11v6"/>
+             <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+           </svg>
+         </button>`
+      : '';
 
     return `
       <article
@@ -130,8 +164,8 @@ const HomeView = (() => {
         id="card-${task.id}"
         data-task-id="${task.id}"
         aria-label="${task.title}"
-        onclick="${clickHandler}"
-        style="cursor: pointer;"
+        ${cardClickHandler ? `onclick="${cardClickHandler}"` : ''}
+        style="${isDone ? 'cursor: default;' : 'cursor: pointer;'}"
       >
         <!-- Left priority colour strip -->
         <div class="task-strip" aria-hidden="true"></div>
@@ -140,18 +174,21 @@ const HomeView = (() => {
           <!-- Row 1: Title + done button -->
           <div class="task-top-row">
             <h2 class="task-title ${isDone ? 'task-title--done' : ''}">${task.title}</h2>
-            <button
-              class="task-done-btn ${isDone ? 'task-done-btn--checked' : ''}"
-              aria-label="${isDone ? 'Mark as pending' : 'Mark as done'}: ${task.title}"
-              data-task-id="${task.id}"
-              onclick="event.stopPropagation(); ${clickHandler}"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                ${isDone
-                  ? '<circle cx="10" cy="10" r="9"/><polyline points="5.5,10.5 8.5,13.5 14.5,7"/>'
-                  : '<circle cx="10" cy="10" r="9"/>'}
-              </svg>
-            </button>
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+              ${deleteBtnHtml}
+              <button
+                class="task-done-btn ${isDone ? 'task-done-btn--checked' : ''}"
+                aria-label="${isDone ? 'Mark as pending' : 'Mark as done'}: ${task.title}"
+                data-task-id="${task.id}"
+                onclick="event.stopPropagation(); ${btnClickHandler}"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  ${isDone
+                    ? '<circle cx="10" cy="10" r="9"/><polyline points="5.5,10.5 8.5,13.5 14.5,7"/>'
+                    : '<circle cx="10" cy="10" r="9"/>'}
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Row 2: Asset name + location -->
@@ -237,7 +274,9 @@ const HomeView = (() => {
     if (!task) return;
 
     const isDone = task.status === 'done';
-    if (task.assetId && !isDone) {
+    const isRepair = taskId.startsWith('task-repair-') || (task.tags && task.tags.includes('repair'));
+
+    if (task.assetId && !isDone && !isRepair) {
       if (typeof AssetsView !== 'undefined') {
         AssetsView.openInspection(task.assetId);
       }
@@ -245,9 +284,26 @@ const HomeView = (() => {
     }
 
     if (isDone) {
-      MockDB.markPending(taskId).then(() => refresh());
+      MockDB.markPending(taskId).then(() => {
+        if (isRepair && typeof NoticeStore !== 'undefined') {
+          const noticeId = taskId.replace('task-repair-', '');
+          return NoticeStore.markUnresolved(noticeId).then(() => {
+            if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+          });
+        }
+      }).then(() => refresh());
     } else {
-      MockDB.markDone(taskId).then(() => refresh());
+      MockDB.markDone(taskId).then(() => {
+        if (isRepair && typeof NoticeStore !== 'undefined') {
+          const noticeId = taskId.replace('task-repair-', '');
+          return NoticeStore.markRepaired(noticeId, {
+            repairedBy: task.assignedTo && task.assignedTo !== 'Unassigned' ? task.assignedTo : (I18n.getLang() === 'jp' ? '作業員' : 'Operator'),
+            repairNote: I18n.getLang() === 'jp' ? 'デイリータスクのチェックリスト経由で解決済みに変更' : 'Resolved via Daily Tasks checklist'
+          }).then(() => {
+            if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+          });
+        }
+      }).then(() => refresh());
     }
   }
 
@@ -264,11 +320,20 @@ const HomeView = (() => {
     });
   }
 
+  function deleteCustomTask(id) {
+    const isJp = I18n.getLang() === 'jp';
+    if (!confirm(isJp ? 'このカスタム作業指示を削除しますか？' : 'Are you sure you want to delete this custom work order?')) return;
+    MockDB.deleteTask(id).then(() => {
+      refresh();
+      if (typeof CalendarView !== 'undefined') CalendarView.init();
+    });
+  }
+
   function init() {
     _updateMode(_currentMode);
     refresh();
   }
 
-  return { setMode, init, refresh, toggleDone };
+  return { setMode, init, refresh, toggleDone, deleteCustomTask };
 
 })();

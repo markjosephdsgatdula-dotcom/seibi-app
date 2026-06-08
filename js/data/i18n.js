@@ -40,7 +40,7 @@ const I18n = (() => {
       // Calendar View
       'btn_today': 'Today',
       'cal_empty': 'No tasks scheduled.',
-      'btn_new_work_order': '＋ Custom Work Order',
+      'btn_new_work_order': 'Custom Work Order',
       'modal_create_order': 'Create Custom Work Order',
       'label_title': 'Task Title *',
       'label_date': 'Due Date *',
@@ -148,7 +148,7 @@ const I18n = (() => {
       // Calendar View
       'btn_today': '今日',
       'cal_empty': '予定されているタスクはありません。',
-      'btn_new_work_order': '＋ 臨時点検・作業の追加',
+      'btn_new_work_order': '臨時点検・作業の追加',
       'modal_create_order': '臨時点検・作業の作成',
       'label_title': 'タスク名（必須）*',
       'label_date': '実施日（必須）*',

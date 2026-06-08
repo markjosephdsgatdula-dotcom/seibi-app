@@ -46,7 +46,9 @@ const CalendarView = (() => {
   }
 
   function _todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
   }
 
   function _tasksForDate(dateStr) {
@@ -168,17 +170,22 @@ const CalendarView = (() => {
     const existing = document.getElementById('cal-drawer');
     if (existing) existing.remove();
 
+    const isJp = I18n.getLang() === 'jp';
     const dayTasks = _tasksForDate(dateStr);
-    const label    = new Date(dateStr + 'T00:00:00').toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', {
+    const label    = new Date(dateStr + 'T00:00:00').toLocaleDateString(isJp ? 'ja-JP' : 'en-US', {
       weekday: 'long', month: 'long', day: 'numeric',
     });
 
     const tasksHtml = dayTasks.length
       ? dayTasks.map(t => {
-          const clickHandler = t.assetId
-            ? (t.status !== 'done' ? `onclick="AssetsView.openInspection('${t.assetId}'); CalendarView.closeDrawer();"` : '')
-            : `onclick="HomeView.toggleDone('${t.id}'); CalendarView.closeDrawer();"`;
-          const cursorStyle = (t.assetId && t.status !== 'done') || !t.assetId
+          const isRepair = t.id.startsWith('task-repair-') || (t.tags && t.tags.includes('repair'));
+          const isCustom = t.id.startsWith('task-custom-');
+          const clickHandler = isRepair && t.status !== 'done'
+            ? `onclick="NoticeView.openRepairModal('${t.id.replace('task-repair-', '')}'); CalendarView.closeDrawer();"`
+            : (t.assetId && !isRepair
+              ? (t.status !== 'done' ? `onclick="AssetsView.openInspection('${t.assetId}'); CalendarView.closeDrawer();"` : '')
+              : `onclick="HomeView.toggleDone('${t.id}'); CalendarView.closeDrawer();"`);
+          const cursorStyle = (t.assetId && !isRepair && t.status !== 'done') || !(t.assetId && !isRepair)
             ? 'style="cursor: pointer;"'
             : '';
 
@@ -191,14 +198,37 @@ const CalendarView = (() => {
           
           const assetName = t.assetId ? t.assetName : (I18n.getLang() === 'jp' ? '臨時点検・作業' : 'Custom');
 
+          const deleteBtnHtml = isCustom
+            ? `<button
+                 class="drawer-task-delete"
+                 onclick="event.stopPropagation(); CalendarView.deleteCustomTask('${t.id}', '${dateStr}')"
+                 title="${isJp ? 'カスタム作業指示を削除' : 'Delete custom work order'}"
+                 style="background:none; border:none; color:var(--clr-text-secondary); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; margin-left:var(--space-2); transition:color var(--transition-fast);"
+                 onmouseover="this.style.color='#ef4444'"
+                 onmouseout="this.style.color='var(--clr-text-secondary)'"
+               >
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                   <polyline points="3 6 5 6 21 6"/>
+                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                   <path d="M10 11v6M14 11v6"/>
+                   <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                 </svg>
+               </button>`
+            : '';
+
           return `
-            <div class="drawer-task-row priority-row--${t.priority}" ${clickHandler} ${cursorStyle}>
-              <div class="drawer-task-strip"></div>
-              <div class="drawer-task-info">
-                <div class="drawer-task-title">${t.title}</div>
-                <div class="drawer-task-meta">${t.dueTime} · ${assetName} · ${t.assignedTo}</div>
+            <div class="drawer-task-row priority-row--${t.priority}" ${clickHandler} ${cursorStyle} style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; flex:1; min-width:0;">
+                <div class="drawer-task-strip"></div>
+                <div class="drawer-task-info" style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;">
+                  <div class="drawer-task-title">${t.title}</div>
+                  <div class="drawer-task-meta">${t.dueTime} · ${assetName} · ${t.assignedTo}</div>
+                </div>
               </div>
-              <span class="chip chip-status--${t.status}">${statusLabel}</span>
+              <div style="display:flex; align-items:center;">
+                <span class="chip chip-status--${t.status}">${statusLabel}</span>
+                ${deleteBtnHtml}
+              </div>
             </div>`;
         }).join('')
       : `<p class="drawer-empty">${I18n.t('cal_empty')}</p>`;
@@ -509,6 +539,19 @@ const CalendarView = (() => {
 
   // ─── Init ─────────────────────────────────────────────────────────────────
 
+  function deleteCustomTask(id, dateStr) {
+    const isJp = I18n.getLang() === 'jp';
+    if (!confirm(isJp ? 'このカスタム作業指示を削除しますか？' : 'Are you sure you want to delete this custom work order?')) return;
+    MockDB.deleteTask(id).then(() => {
+      MockDB.getAllTasks().then(tasks => {
+        _tasks = tasks;
+        _render();
+        openDayDetail(dateStr);
+        if (typeof HomeView !== 'undefined') HomeView.refresh();
+      });
+    });
+  }
+
   function init() {
     // If a modal or drawer is open, close them to avoid state overlap during hot reload
     closeDrawer();
@@ -520,7 +563,7 @@ const CalendarView = (() => {
     });
   }
 
-  return { init, prevMonth, nextMonth, goToToday, openDayDetail, closeDrawer, openCreateOrderModal, closeCreateOrderModal, createCustomOrder };
+  return { init, prevMonth, nextMonth, goToToday, openDayDetail, closeDrawer, openCreateOrderModal, closeCreateOrderModal, createCustomOrder, deleteCustomTask };
 
 })();
 

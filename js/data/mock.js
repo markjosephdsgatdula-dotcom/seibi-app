@@ -128,13 +128,18 @@ const MockDB = (() => {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw);
     } catch (_) {}
-    _save(_seed);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(_seed));
+    } catch (_) {}
     return [..._seed];
   }
 
   function _save(tasks) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      if (typeof firebaseDb !== 'undefined') {
+        firebaseDb.ref('tasks').set(tasks);
+      }
     } catch (_) {}
   }
 
@@ -150,7 +155,8 @@ const MockDB = (() => {
 
   function getTodaysTasks() {
     const now = new Date(); now.setHours(0, 0, 0, 0);
-    const todayStr = now.toISOString().slice(0, 10);
+    const offset = now.getTimezoneOffset() * 60000;
+    const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
 
     return Promise.resolve(
       _load()
@@ -180,7 +186,8 @@ const MockDB = (() => {
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.status = STATUS.DONE;
-      task.dueDate = new Date().toISOString().slice(0, 10);
+      const offset = new Date().getTimezoneOffset() * 60000;
+      task.dueDate = new Date(Date.now() - offset).toISOString().slice(0, 10);
       _save(tasks);
     }
     return Promise.resolve(task);
@@ -239,10 +246,12 @@ const MockDB = (() => {
     const dueTime   = referenceTask ? referenceTask.dueTime   : '09:00';
     const estMins   = referenceTask ? referenceTask.estimatedMins : 25;
 
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const localTodayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
     activeTasks.forEach(t => {
       t.status = STATUS.DONE;
       t.originalDueDate = t.originalDueDate || t.dueDate;
-      t.dueDate = new Date().toISOString().slice(0, 10);
+      t.dueDate = localTodayStr;
     });
 
     // 2. Schedule the next check on the calendar
@@ -313,6 +322,54 @@ const MockDB = (() => {
     tasks.push(newTask);
     _save(tasks);
     return Promise.resolve(newTask);
+  }
+
+  function scheduleRepairTask({ noticeId, assetId, assetName, category, message }) {
+    const tasks = _load();
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
+    const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+    
+    // Check if task already exists to prevent duplicates
+    const taskId = `task-repair-${noticeId}`;
+    const exists = tasks.some(t => t.id === taskId);
+    if (exists) return Promise.resolve();
+
+    const titlePrefix = category === 'incident' 
+      ? (isJp ? '修理（突発）: ' : 'Repair (Incident): ')
+      : (isJp ? '修理（異常）: ' : 'Repair (Defect): ');
+
+    const newTask = {
+      id: taskId,
+      title: `${titlePrefix}${assetName}`,
+      assetId: assetId || null,
+      assetName: assetName,
+      location: 'Workshop',
+      priority: PRIORITY.HIGH,
+      status: STATUS.PENDING,
+      dueDate: todayStr,
+      dueTime: '09:00',
+      estimatedMins: 30,
+      assignedTo: 'Unassigned',
+      tags: ['repair', 'work-order'],
+      notes: message
+    };
+
+    if (assetId && typeof AssetStore !== 'undefined') {
+      return AssetStore.getById(assetId).then(asset => {
+        if (asset) {
+          newTask.location = asset.location;
+          newTask.assetName = asset.name;
+        }
+        tasks.push(newTask);
+        _save(tasks);
+        return newTask;
+      });
+    } else {
+      tasks.push(newTask);
+      _save(tasks);
+      return Promise.resolve(newTask);
+    }
   }
 
   function syncAssetDetails(assetId, assetName, location) {
@@ -397,6 +454,12 @@ const MockDB = (() => {
     return Promise.resolve();
   }
 
-  return { getTodaysTasks, getAllTasks, getTaskById, markDone, markPending, reschedule, syncCompletedInspection, scheduleInspectionTask, syncAssetDetails, rollbackCompletedInspection, scheduleCustomTask, PRIORITY, STATUS };
+  function deleteTask(id) {
+    const tasks = _load().filter(t => t.id !== id);
+    _save(tasks);
+    return Promise.resolve();
+  }
+
+  return { getTodaysTasks, getAllTasks, getTaskById, markDone, markPending, reschedule, syncCompletedInspection, scheduleInspectionTask, syncAssetDetails, rollbackCompletedInspection, scheduleCustomTask, scheduleRepairTask, deleteTask, PRIORITY, STATUS };
 
 })();

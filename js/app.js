@@ -50,6 +50,12 @@ const App = (() => {
       // 1. Revert completed tasks with no history back to pending
       const updatedTasks = tasks.map(task => {
         if (task.status === 'done') {
+          // Exclude repair and custom tasks from inspection task verification
+          const isRepairOrCustom = task.id.startsWith('task-repair-') || task.id.startsWith('task-custom-') || (task.tags && (task.tags.includes('repair') || task.tags.includes('custom')));
+          if (isRepairOrCustom) {
+            return task;
+          }
+
           const completionDay = task.dueDate;
           const hasHistory = (historyByAsset[task.assetId] || []).some(rec => 
             rec.completedAt.slice(0, 10) === completionDay
@@ -69,6 +75,12 @@ const App = (() => {
       // 2. Remove future duplicate tasks generated when the now-reverted task was done
       const finalTasks = [];
       updatedTasks.forEach(task => {
+        const isRepairOrCustom = task.id.startsWith('task-repair-') || task.id.startsWith('task-custom-') || (task.tags && (task.tags.includes('repair') || task.tags.includes('custom')));
+        if (isRepairOrCustom) {
+          finalTasks.push(task);
+          return;
+        }
+
         const isFuturePending = task.status === 'pending' && 
                                 (!historyByAsset[task.assetId] || historyByAsset[task.assetId].length === 0);
         
@@ -151,7 +163,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v9_clean';
+    const APP_VERSION = 'v14_firebase_sync';
     try {
       if (localStorage.getItem('seibi_app_version') !== APP_VERSION) {
         localStorage.removeItem('seibi_notices');
@@ -160,7 +172,10 @@ const App = (() => {
         localStorage.removeItem('seibi_tasks');
         localStorage.removeItem('seibi_templates');
         localStorage.setItem('seibi_app_version', APP_VERSION);
-        console.log('[Seibi] LocalStorage cleared for clean data seed.');
+        if (typeof firebaseDb !== 'undefined') {
+          firebaseDb.ref().remove();
+        }
+        console.log('[Seibi] LocalStorage and Firebase cleared for clean data seed.');
       }
     } catch (_) {}
 
@@ -174,6 +189,11 @@ const App = (() => {
     NoticeView.init();
     AssetsView.init();
     WireMapView.init();
+
+    // Start Firebase Sync before router starts so initial views can render updated synced data
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.start();
+    }
 
     // Initialise router last (it will activate the first view)
     Router.init();

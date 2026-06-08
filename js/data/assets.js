@@ -178,13 +178,18 @@ const AssetStore = (() => {
       const raw = localStorage.getItem(TEMPLATES_KEY);
       if (raw) return JSON.parse(raw);
     } catch (_) {}
-    _saveTemplates(_templatesSeed);
+    try {
+      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(_templatesSeed));
+    } catch (_) {}
     return [..._templatesSeed];
   }
 
   function _saveTemplates(templates) {
     try {
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+      if (typeof firebaseDb !== 'undefined') {
+        firebaseDb.ref('templates').set(templates);
+      }
     } catch (_) {}
   }
 
@@ -223,19 +228,25 @@ const AssetStore = (() => {
       const raw = localStorage.getItem(ASSETS_KEY);
       if (raw) return JSON.parse(raw);
     } catch (_) {}
-    _saveAssets(_assetsSeed);
+    try {
+      localStorage.setItem(ASSETS_KEY, JSON.stringify(_assetsSeed));
+    } catch (_) {}
     return [..._assetsSeed];
   }
 
   function _saveAssets(assets) {
     try {
       localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+      if (typeof firebaseDb !== 'undefined') {
+        firebaseDb.ref('assets').set(assets);
+      }
     } catch (_) {}
   }
 
   function getAll() {
     const assets = _loadAssets();
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
     let changed = false;
 
     const updated = assets.map(asset => {
@@ -276,7 +287,8 @@ const AssetStore = (() => {
         templateId: resolvedTemplateId
       };
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const offset = new Date().getTimezoneOffset() * 60000;
+      const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
       if (dueDate && dueDate <= todayStr) {
         newAsset.status = 'inspection_due';
       }
@@ -292,7 +304,7 @@ const AssetStore = (() => {
     });
   }
 
-  function completeInspection(id, completedDateStr = new Date().toISOString().slice(0, 10), hasFailures = false) {
+  function completeInspection(id, completedDateStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), hasFailures = false) {
     const assets = _loadAssets();
     const asset = assets.find(a => a.id === id);
     if (!asset) return Promise.reject(new Error('Asset not found'));
@@ -404,7 +416,8 @@ const AssetStore = (() => {
     const asset = assets.find(a => a.id === id);
     if (!asset) return Promise.reject(new Error('Asset not found'));
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
     if (asset.dueDate && asset.dueDate <= todayStr) {
       asset.status = 'inspection_due';
     } else {

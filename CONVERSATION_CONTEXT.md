@@ -57,11 +57,16 @@ This file serves as a handoff context document for the next Antigravity AI codin
   * `gauge`, `color`, `length`, `condition` (Good / Fair / Poor), `notes`
 * **Known Pending Refinements:** User noted the map layout is "alright for now" — exact positions of some machines may need further fine-tuning to precisely match the hand-drawn workshop sketch shared in the home PC session. The sketch image is NOT stored in the repo — refer to the home PC conversation transcript if needed.
 
-### Stage 5: Sudden Incident Reporting (Completed in Phase 3 continued & Refined)
+### Stage 5: Sudden Incident Reporting & Auto-Generation of Repair Tasks (Completed & Refined)
 * **Dedicated Logging Flow:** Added a prominent "Report Incident" modal button in the Notice Board toolbar and directly on each asset card in the Assets tab.
 * **Custom Equipment Input:** Added an "Other (Custom Input)" option to the affected machine selector. Selecting this reveals an inline text field to enter a custom machine name. Custom machine logs are posted as incidents with `assetId: null` and the entered `assetName`, seamlessly integrating into the notices layout without requiring pre-registered assets.
 * **Robust Form Validation:** Fixed a potential JavaScript crash caused by invalid or empty date strings, and resolved silent form submission failure by implementing full validation across all modal fields. If any field is invalid, it is visually highlighted with a red border and shake animation, and the focus is directed to it.
 * **Health & Notice Sync:** Logging an incident for a registered asset automatically flags the machine's status to `needs_repair` in the Asset registry and creates a red-flagged incident card in the notice feed. Resolving the incident from the notice board restores the machine status back to `healthy`.
+* **Auto-generated Repair Work Orders**: When an incident or defect is logged (either via sudden incident reporting or failed checklist items), the system automatically schedules a **High-Priority Repair Work Order** on today's calendar and daily tasks checklist.
+* **Bidirectional Task & Notice Sync**: 
+  - Resolving an incident on the notice board automatically checks off the corresponding repair task on the daily tasks checklist and calendar.
+  - Toggling a repair task complete on the home tasks checklist automatically resolves the corresponding notice on the notice board (using default resolution notes) and restores the asset status back to `healthy`.
+  - Toggling a completed repair task back to pending re-opens the notice board issue and reverts the asset status to `needs_repair`.
 
 ---
 

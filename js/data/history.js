@@ -42,13 +42,18 @@ const HistoryStore = (() => {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw);
     } catch (_) {}
-    _save(_seed);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(_seed));
+    } catch (_) {}
     return [..._seed];
   }
 
   function _save(records) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      if (typeof firebaseDb !== 'undefined') {
+        firebaseDb.ref('history').set(records);
+      }
     } catch (_) {}
   }
 

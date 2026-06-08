@@ -1110,7 +1110,7 @@ const AssetsView = (() => {
         });
       }
 
-      AssetStore.completeInspection(_activeAsset.id, new Date().toISOString().slice(0, 10), failedItems.length > 0).then(() => {
+      AssetStore.completeInspection(_activeAsset.id, new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), failedItems.length > 0).then(() => {
         closeInspection();
 
         refresh();

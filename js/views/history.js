@@ -38,19 +38,27 @@ const HistoryView = (() => {
   }
 
   function _dayKey(isoStr) {
-    return new Date(isoStr).toISOString().slice(0, 10);
+    const d = new Date(isoStr);
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().slice(0, 10);
   }
 
   // ─── Card renderer ────────────────────────────────────────────────────────
 
   function _renderCard(rec) {
+    const isRepair = rec.type === 'repair';
+    const isJp = I18n.getLang() === 'jp';
     const notesHtml = rec.notes
-      ? `<p class="hist-card-notes">"${rec.notes}"</p>`
+      ? `<p class="hist-card-notes">${isRepair ? `🔧 <strong>${isJp ? '対処・修理ノート: ' : 'Action Note: '}</strong>` : ''}"${rec.notes}"</p>`
+      : '';
+
+    const reportNotesHtml = isRepair && rec.reportNotes
+      ? `<p class="hist-card-notes" style="margin-bottom: var(--space-1); color: var(--clr-text-secondary); font-size: var(--font-size-xs);">🚨 <strong>${I18n.getLang() === 'jp' ? '発生時の詳細: ' : 'Reported Issue: '}</strong>"${rec.reportNotes}"</p>`
       : '';
 
     return `
-      <article class="hist-card priority-${rec.priority}" id="hist-${rec.id}">
-        <div class="hist-strip"></div>
+      <article class="hist-card priority-${rec.priority} ${isRepair ? 'hist-card--repair' : ''}" id="hist-${rec.id}">
+        <div class="hist-strip" style="${isRepair ? 'background: var(--clr-success);' : ''}"></div>
         <div class="hist-card-body">
           <div class="hist-card-top">
             <h3 class="hist-card-title">${rec.title}</h3>
@@ -88,19 +96,30 @@ const HistoryView = (() => {
               ✅ ${_timeStr(rec.completedAt)}
             </span>
           </div>
+          ${reportNotesHtml}
           ${notesHtml}
           ${(() => {
-            const photos = (rec.checklist || [])
-              .filter(item => item.status === 'fail' && item.photo)
-              .map(item => item.photo);
+            let photos = [];
+            if (rec.checklist) {
+              photos = rec.checklist
+                .filter(item => item.status === 'fail' && item.photo)
+                .map(item => item.photo);
+            } else {
+              if (rec.reportPhoto) photos.push({ url: rec.reportPhoto, label: isJp ? '発生状況写真' : 'Report Photo' });
+              if (rec.repairPhoto) photos.push({ url: rec.repairPhoto, label: isJp ? '対応・修理写真' : 'Resolution Photo' });
+            }
             if (photos.length === 0) return '';
             return `
               <div class="hist-card-photos" style="margin-top: var(--space-2); display: flex; gap: var(--space-2); flex-wrap: wrap;">
-                ${photos.map(p => `
-                  <div class="hist-photo-wrapper" onclick="AssetsView.openLightbox('${p}', 'Defect Photo')" style="border-radius: var(--radius-sm); border: 1px solid var(--clr-border); overflow: hidden; width: 64px; height: 48px; cursor: pointer; transition: border-color var(--transition-fast);">
-                    <img class="hist-photo-img" src="${p}" alt="History defect photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-                  </div>
-                `).join('')}
+                ${photos.map(p => {
+                  const url = typeof p === 'string' ? p : p.url;
+                  const label = typeof p === 'string' ? 'Photo' : p.label;
+                  return `
+                    <div class="hist-photo-wrapper" onclick="AssetsView.openLightbox('${url}', '${label}')" style="border-radius: var(--radius-sm); border: 1px solid var(--clr-border); overflow: hidden; width: 64px; height: 48px; cursor: pointer; transition: border-color var(--transition-fast);">
+                      <img class="hist-photo-img" src="${url}" alt="History photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+                    </div>
+                  `;
+                }).join('')}
               </div>
             `;
           })()}
@@ -122,7 +141,7 @@ const HistoryView = (() => {
 
     let html = '';
     for (const [key, recs] of groups) {
-      const labelKey = recs.length === 1 ? 'inspection' : 'inspections';
+      const labelKey = recs.length === 1 ? 'record' : 'records';
       const countLabel = I18n.getLang() === 'jp'
         ? `${recs.length}${I18n.t(labelKey)}`
         : `${recs.length} ${I18n.t(labelKey)}`;
@@ -146,10 +165,12 @@ const HistoryView = (() => {
     // Group by assetId
     const groups = new Map();
     for (const rec of records) {
-      if (!groups.has(rec.assetId)) {
-        groups.set(rec.assetId, { assetName: rec.assetName, records: [] });
+      const grpId = rec.assetId || 'custom-mach';
+      const grpName = rec.assetId ? rec.assetName : (I18n.getLang() === 'jp' ? '臨時点検・作業' : 'Custom / Unregistered');
+      if (!groups.has(grpId)) {
+        groups.set(grpId, { assetName: grpName, records: [] });
       }
-      groups.get(rec.assetId).records.push(rec);
+      groups.get(grpId).records.push(rec);
     }
 
     // Sort groups by most recent activity
@@ -237,11 +258,26 @@ const HistoryView = (() => {
       _records = _records.filter(r => r.id !== id);
       _renderList();
 
-      if (typeof MockDB !== 'undefined') {
-        MockDB.rollbackCompletedInspection(rec.assetId, rec.completedAt).then(() => {
-          if (typeof HomeView !== 'undefined') HomeView.refresh();
-          if (typeof CalendarView !== 'undefined') CalendarView.init();
-        });
+      if (rec.type === 'repair') {
+        const noticeId = id.replace('hist-repair-', '');
+        if (typeof NoticeStore !== 'undefined') {
+          NoticeStore.markUnresolved(noticeId).then(() => {
+            if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+          });
+        }
+        if (typeof MockDB !== 'undefined') {
+          MockDB.markPending(`task-repair-${noticeId}`).then(() => {
+            if (typeof HomeView !== 'undefined') HomeView.refresh();
+            if (typeof CalendarView !== 'undefined') CalendarView.init();
+          });
+        }
+      } else {
+        if (typeof MockDB !== 'undefined') {
+          MockDB.rollbackCompletedInspection(rec.assetId, rec.completedAt).then(() => {
+            if (typeof HomeView !== 'undefined') HomeView.refresh();
+            if (typeof CalendarView !== 'undefined') CalendarView.init();
+          });
+        }
       }
     });
   }

@@ -566,6 +566,16 @@ const NoticeView = (() => {
                 <label class="inspector-input-label" for="inc-notes">${isJp ? '詳細・状況メモ *' : 'Details / Notes *'}</label>
                 <textarea id="inc-notes" required class="fail-notes-input" style="min-height: 80px;" placeholder="${I18n.t('placeholder_incident_notes')}" maxlength="400"></textarea>
               </div>
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <span class="inspector-input-label">📷 ${isJp ? '写真を添付 (任意)' : 'Attach photo (optional)'}</span>
+                <input type="file" id="inc-photo" accept="image/*" style="display:none;"
+                  onchange="NoticeView.onIncidentPhotoSelected(this)">
+                <div class="repair-photo-trigger" onclick="document.getElementById('inc-photo').click()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span id="inc-photo-name" class="repair-photo-placeholder">${isJp ? '写真を選択...' : 'Choose photo...'}</span>
+                </div>
+                <img id="inc-photo-preview" class="repair-photo-preview" style="display:none; margin-top: 5px;" alt="Preview" />
+              </div>
             </div>
             <footer class="inspection-modal-footer" style="padding: var(--space-4); border-top: 1px solid var(--clr-border); display: flex; justify-content: flex-end; gap: var(--space-3); background: var(--clr-surface);">
               <button type="button" class="btn-cancel" onclick="NoticeView.closeIncidentModal()">${I18n.t('cancel')}</button>
@@ -600,6 +610,22 @@ const NoticeView = (() => {
     }
   }
 
+  function onIncidentPhotoSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nameEl  = document.getElementById('inc-photo-name');
+    const preview = document.getElementById('inc-photo-preview');
+    if (nameEl) nameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (preview) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   function submitIncident(event) {
     event.preventDefault();
     const reporterEl = document.getElementById('inc-reporter');
@@ -608,11 +634,13 @@ const NoticeView = (() => {
     const timeEl = document.getElementById('inc-time');
     const notesEl = document.getElementById('inc-notes');
     const customMachineEl = document.getElementById('inc-custom-machine');
+    const previewEl = document.getElementById('inc-photo-preview');
 
     const author = reporterEl ? reporterEl.value.trim() : '';
     const assetId = machineEl ? machineEl.value : '';
     const incidentType = typeEl ? typeEl.value : '';
     const message = notesEl ? notesEl.value.trim() : '';
+    const photo = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
     
     let timeVal = timeEl ? timeEl.value : '';
     let occurrenceTime = '';
@@ -675,7 +703,8 @@ const NoticeView = (() => {
         assetId: null,
         assetName: customName,
         incidentType,
-        occurrenceTime
+        occurrenceTime,
+        photo
       });
     } else {
       postPromise = AssetStore.getById(assetId).then(asset => {
@@ -687,7 +716,8 @@ const NoticeView = (() => {
           assetId,
           assetName,
           incidentType,
-          occurrenceTime
+          occurrenceTime,
+          photo
         });
       });
     }
@@ -704,6 +734,148 @@ const NoticeView = (() => {
     });
   }
 
+  function openRepairModal(noticeId) {
+    const existing = document.getElementById('repair-modal');
+    if (existing) existing.remove();
+
+    const isJp = I18n.getLang() === 'jp';
+    
+    NoticeStore.getAll().then(notices => {
+      const notice = notices.find(n => n.id === noticeId);
+      if (!notice) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'repair-modal';
+      modal.className = 'inspection-modal-backdrop';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-label', notice.category === 'incident' ? I18n.t('modal_report_incident') : I18n.t('btn_mark_repaired'));
+
+      const categoryLabel = notice.category === 'incident'
+        ? (isJp ? '突発異常' : 'Incident')
+        : (isJp ? '異常検知' : 'Defect');
+
+      const title = notice.category === 'incident'
+        ? I18n.t('btn_resolve_incident')
+        : I18n.t('btn_mark_repaired');
+
+      modal.innerHTML = `
+        <div class="inspection-modal-panel" style="max-width: 500px;">
+          <header class="inspection-modal-header">
+            <h2 class="inspection-modal-title">${title}</h2>
+            <button class="inspection-modal-close" onclick="document.getElementById('repair-modal').remove()" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+          <form onsubmit="NoticeView.submitRepairModal(event, '${notice.id}')">
+            <div class="inspection-modal-body" style="display: flex; flex-direction: column; gap: var(--space-3);">
+              
+              <!-- Incident Details Card -->
+              <div style="background: var(--clr-surface-raised); border: 1px solid var(--clr-border); border-radius: var(--radius-sm); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: 600; font-size: 13px; color: var(--clr-text-primary);">${categoryLabel} details:</span>
+                  <span style="font-size: 11px; color: var(--clr-text-secondary);">${new Date(notice.timestamp).toLocaleString(isJp ? 'ja-JP' : 'en-US')}</span>
+                </div>
+                <div style="font-size: 13px; line-height: 1.5; color: var(--clr-text-secondary); word-break: break-word;">
+                  ${_escapeHtml(notice.message)}
+                </div>
+                ${notice.photo ? `
+                  <div class="notice-photo-wrapper" style="margin-top: 5px; max-width: 150px; max-height: 112px;" onclick="AssetsView.openLightbox('${notice.photo}', 'Report Photo')">
+                    <img class="notice-photo-img" src="${notice.photo}" alt="Report photo" />
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Form Inputs -->
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="modal-repair-by">${notice.category === 'incident' ? I18n.t('resolved_by_placeholder') : I18n.t('repair_by_placeholder')} *</label>
+                <input type="text" id="modal-repair-by" required class="inspector-input" placeholder="${notice.category === 'incident' ? I18n.t('resolved_by_placeholder') : I18n.t('repair_by_placeholder')}" maxlength="40">
+              </div>
+              
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <label class="inspector-input-label" for="modal-repair-note">${notice.category === 'incident' ? I18n.t('resolution_notes_placeholder') : I18n.t('repair_notes_placeholder')} *</label>
+                <textarea id="modal-repair-note" required class="fail-notes-input" style="min-height: 80px;" placeholder="${notice.category === 'incident' ? I18n.t('resolution_notes_placeholder') : I18n.t('repair_notes_placeholder')}" maxlength="300"></textarea>
+              </div>
+
+              <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
+                <span class="inspector-input-label">📷 ${isJp ? '写真を添付 (任意)' : 'Attach photo (optional)'}</span>
+                <input type="file" id="modal-repair-photo" accept="image/*" style="display:none;"
+                  onchange="NoticeView.onModalRepairPhotoSelected(this)">
+                <div class="repair-photo-trigger" onclick="document.getElementById('modal-repair-photo').click()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span id="modal-repair-photo-name" class="repair-photo-placeholder">${isJp ? '写真を選択...' : 'Choose photo...'}</span>
+                </div>
+                <img id="modal-repair-photo-preview" class="repair-photo-preview" style="display:none; margin-top: 5px;" alt="Preview" />
+              </div>
+
+            </div>
+            <footer class="inspection-modal-footer" style="padding: var(--space-4); border-top: 1px solid var(--clr-border); display: flex; justify-content: flex-end; gap: var(--space-3); background: var(--clr-surface);">
+              <button type="button" class="btn-cancel" onclick="document.getElementById('repair-modal').remove()">${I18n.t('cancel')}</button>
+              <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); border: none;">${notice.category === 'incident' ? I18n.t('confirm_resolve_incident') : I18n.t('confirm_repair')}</button>
+            </footer>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('app-shell').appendChild(modal);
+      
+      // Focus on repair-by field and prefill if author exists
+      const byEl = document.getElementById('modal-repair-by');
+      if (byEl) {
+        byEl.value = localStorage.getItem('seibi_notice_author') || '';
+        byEl.focus();
+      }
+    });
+  }
+
+  function onModalRepairPhotoSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nameEl  = document.getElementById('modal-repair-photo-name');
+    const preview = document.getElementById('modal-repair-photo-preview');
+    if (nameEl) nameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (preview) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function submitRepairModal(event, noticeId) {
+    event.preventDefault();
+    const byEl = document.getElementById('modal-repair-by');
+    const noteEl = document.getElementById('modal-repair-note');
+    const previewEl = document.getElementById('modal-repair-photo-preview');
+
+    const repairedBy = byEl ? byEl.value.trim() : '';
+    const repairNote = noteEl ? noteEl.value.trim() : '';
+    const repairPhoto = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
+
+    if (!repairedBy) {
+      byEl.classList.add('compose-input--error');
+      setTimeout(() => byEl.classList.remove('compose-input--error'), 1200);
+      byEl.focus();
+      return;
+    }
+    if (!repairNote) {
+      noteEl.classList.add('compose-input--error');
+      setTimeout(() => noteEl.classList.remove('compose-input--error'), 1200);
+      noteEl.focus();
+      return;
+    }
+
+    _saveAuthor(repairedBy);
+
+    NoticeStore.markRepaired(noticeId, { repairedBy, repairNote, repairPhoto }).then(() => {
+      const modal = document.getElementById('repair-modal');
+      if (modal) modal.remove();
+      refreshFeed();
+    });
+  }
+
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   function init() {
@@ -715,6 +887,6 @@ const NoticeView = (() => {
     });
   }
 
-  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident, onMachineSelectChange };
+  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident, onMachineSelectChange, onIncidentPhotoSelected, openRepairModal, onModalRepairPhotoSelected, submitRepairModal };
 
 })();

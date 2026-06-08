@@ -105,14 +105,15 @@ const NoticeStore = (() => {
    * @param {string} id
    * @param {{ repairedBy: string, repairNote: string }} data
    */
-  function markRepaired(id, { repairedBy, repairNote }) {
+  function markRepaired(id, { repairedBy, repairNote, repairPhoto = null }) {
     const notices = _load();
     const notice = notices.find(n => n.id === id);
     if (!notice) return Promise.resolve();
-    notice.repaired   = true;
-    notice.repairedBy = repairedBy.trim();
-    notice.repairedAt = new Date().toISOString();
-    notice.repairNote = repairNote.trim();
+    notice.repaired    = true;
+    notice.repairedBy  = repairedBy.trim();
+    notice.repairedAt  = new Date().toISOString();
+    notice.repairNote  = repairNote.trim();
+    notice.repairPhoto = repairPhoto || null;
     _save(notices);
 
     // Sync back to AssetStore: resolve the asset's repair status!

@@ -80,6 +80,11 @@ const NoticeView = (() => {
         <div class="notice-repaired-info">
           <span class="notice-repaired-label" style="${isIncident ? 'color: var(--clr-success);' : ''}">${label}</span>
           ${notice.repairNote ? `<span class="notice-repaired-note">${_escapeHtml(notice.repairNote)}</span>` : ''}
+          ${notice.repairPhoto ? `
+            <div class="repair-photo-display" onclick="AssetsView.openLightbox('${notice.repairPhoto}', '${isJp ? '解決写真' : 'Resolution Photo'}')">
+              <img class="repair-photo-thumb" src="${notice.repairPhoto}" alt="Resolution photo" />
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -169,6 +174,16 @@ const NoticeView = (() => {
           <div class="notice-repair-form" id="repair-form-${notice.id}" style="display:none;">
             <input id="repair-by-${notice.id}" class="repair-input" type="text" placeholder="${isIncident ? I18n.t('resolved_by_placeholder') : I18n.t('repair_by_placeholder')}" maxlength="40" />
             <textarea id="repair-note-${notice.id}" class="repair-textarea" placeholder="${isIncident ? I18n.t('resolution_notes_placeholder') : I18n.t('repair_notes_placeholder')}" rows="2" maxlength="300"></textarea>
+            <div class="repair-photo-row">
+              <span class="repair-photo-label">📷 ${isJp ? '写真を添付 (任意)' : 'Attach photo (optional)'}</span>
+              <input type="file" id="repair-photo-${notice.id}" accept="image/*" style="display:none;"
+                onchange="NoticeView.onRepairPhotoSelected('${notice.id}', this)">
+              <div class="repair-photo-trigger" onclick="document.getElementById('repair-photo-${notice.id}').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span id="repair-photo-name-${notice.id}" class="repair-photo-placeholder">${isJp ? '写真を選択...' : 'Choose photo...'}</span>
+              </div>
+              <img id="repair-photo-preview-${notice.id}" class="repair-photo-preview" style="display:none;" alt="Preview" />
+            </div>
             <div class="repair-actions">
               <button class="repair-cancel-btn" onclick="NoticeView.closeRepairForm('${notice.id}')">${I18n.t('cancel')}</button>
               <button class="repair-submit-btn" onclick="NoticeView.submitRepair('${notice.id}')">${isIncident ? I18n.t('confirm_resolve_incident') : I18n.t('confirm_repair')}</button>
@@ -391,6 +406,22 @@ const NoticeView = (() => {
     if (form) form.style.display = 'none';
   }
 
+  function onRepairPhotoSelected(id, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nameEl  = document.getElementById(`repair-photo-name-${id}`);
+    const preview = document.getElementById(`repair-photo-preview-${id}`);
+    if (nameEl) nameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (preview) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   function submitRepair(id) {
     const byEl   = document.getElementById(`repair-by-${id}`);
     const noteEl = document.getElementById(`repair-note-${id}`);
@@ -404,7 +435,10 @@ const NoticeView = (() => {
       return;
     }
 
-    NoticeStore.markRepaired(id, { repairedBy, repairNote }).then(() => {
+    const previewEl   = document.getElementById(`repair-photo-preview-${id}`);
+    const repairPhoto  = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
+
+    NoticeStore.markRepaired(id, { repairedBy, repairNote, repairPhoto }).then(() => {
       refreshFeed();
     });
   }
@@ -589,6 +623,6 @@ const NoticeView = (() => {
     });
   }
 
-  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident };
+  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident };
 
 })();

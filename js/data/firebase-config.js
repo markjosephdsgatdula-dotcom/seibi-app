@@ -81,61 +81,107 @@ const FirebaseSync = (() => {
     // 1. Assets sync
     db.ref('assets').on('value', snapshot => {
       const data = snapshot.val();
+      const syncedKey = 'seibi_sync_assets_done';
       if (data) {
         localStorage.setItem('seibi_assets', JSON.stringify(data));
+        localStorage.setItem(syncedKey, 'true');
         if (typeof AssetsView !== 'undefined') AssetsView.refresh();
         if (typeof HomeView !== 'undefined') HomeView.refresh();
       } else {
-        const local = localStorage.getItem('seibi_assets');
-        if (local) db.ref('assets').set(JSON.parse(local));
+        const isSynced = localStorage.getItem(syncedKey) === 'true';
+        if (!isSynced) {
+          const local = localStorage.getItem('seibi_assets');
+          if (local) db.ref('assets').set(JSON.parse(local));
+          localStorage.setItem(syncedKey, 'true');
+        } else {
+          localStorage.setItem('seibi_assets', '[]');
+          if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+          if (typeof HomeView !== 'undefined') HomeView.refresh();
+        }
       }
     }, handleErr('assets'));
 
     // 2. Templates sync
     db.ref('templates').on('value', snapshot => {
       const data = snapshot.val();
+      const syncedKey = 'seibi_sync_templates_done';
       if (data) {
         localStorage.setItem('seibi_templates', JSON.stringify(data));
+        localStorage.setItem(syncedKey, 'true');
       } else {
-        const local = localStorage.getItem('seibi_templates');
-        if (local) db.ref('templates').set(JSON.parse(local));
+        const isSynced = localStorage.getItem(syncedKey) === 'true';
+        if (!isSynced) {
+          const local = localStorage.getItem('seibi_templates');
+          if (local) db.ref('templates').set(JSON.parse(local));
+          localStorage.setItem(syncedKey, 'true');
+        } else {
+          localStorage.setItem('seibi_templates', '[]');
+        }
       }
     }, handleErr('templates'));
 
     // 3. Notices sync
     db.ref('notices').on('value', snapshot => {
       const data = snapshot.val();
+      const syncedKey = 'seibi_sync_notices_done';
       if (data) {
         localStorage.setItem('seibi_notices', JSON.stringify(data));
+        localStorage.setItem(syncedKey, 'true');
         if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
       } else {
-        const local = localStorage.getItem('seibi_notices');
-        if (local) db.ref('notices').set(JSON.parse(local));
+        const isSynced = localStorage.getItem(syncedKey) === 'true';
+        if (!isSynced) {
+          const local = localStorage.getItem('seibi_notices');
+          if (local) db.ref('notices').set(JSON.parse(local));
+          localStorage.setItem(syncedKey, 'true');
+        } else {
+          localStorage.setItem('seibi_notices', '[]');
+          if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+        }
       }
     }, handleErr('notices'));
 
     // 4. Tasks sync
     db.ref('tasks').on('value', snapshot => {
       const data = snapshot.val();
+      const syncedKey = 'seibi_sync_tasks_done';
       if (data) {
         localStorage.setItem('seibi_tasks', JSON.stringify(data));
+        localStorage.setItem(syncedKey, 'true');
         if (typeof HomeView !== 'undefined') HomeView.refresh();
         if (typeof CalendarView !== 'undefined') CalendarView.init();
       } else {
-        const local = localStorage.getItem('seibi_tasks');
-        if (local) db.ref('tasks').set(JSON.parse(local));
+        const isSynced = localStorage.getItem(syncedKey) === 'true';
+        if (!isSynced) {
+          const local = localStorage.getItem('seibi_tasks');
+          if (local) db.ref('tasks').set(JSON.parse(local));
+          localStorage.setItem(syncedKey, 'true');
+        } else {
+          localStorage.setItem('seibi_tasks', '[]');
+          if (typeof HomeView !== 'undefined') HomeView.refresh();
+          if (typeof CalendarView !== 'undefined') CalendarView.init();
+        }
       }
     }, handleErr('tasks'));
 
     // 5. History sync
     db.ref('history').on('value', snapshot => {
       const data = snapshot.val();
+      const syncedKey = 'seibi_sync_history_done';
       if (data) {
         localStorage.setItem('seibi_history', JSON.stringify(data));
+        localStorage.setItem(syncedKey, 'true');
         if (typeof HistoryView !== 'undefined') HistoryView.init();
       } else {
-        const local = localStorage.getItem('seibi_history');
-        if (local) db.ref('history').set(JSON.parse(local));
+        const isSynced = localStorage.getItem(syncedKey) === 'true';
+        if (!isSynced) {
+          const local = localStorage.getItem('seibi_history');
+          if (local) db.ref('history').set(JSON.parse(local));
+          localStorage.setItem(syncedKey, 'true');
+        } else {
+          localStorage.setItem('seibi_history', '[]');
+          if (typeof HistoryView !== 'undefined') HistoryView.init();
+        }
       }
     }, handleErr('history'));
 

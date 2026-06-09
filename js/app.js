@@ -163,7 +163,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v15_database_reset';
+    const APP_VERSION = 'v16_database_reset_fixed';
     try {
       if (localStorage.getItem('seibi_app_version') !== APP_VERSION) {
         localStorage.removeItem('seibi_notices');

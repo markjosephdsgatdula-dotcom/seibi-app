@@ -163,7 +163,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v17_sequential_reset';
+    const APP_VERSION = 'v18_sequential_reset_status';
 
     function proceedBoot() {
       // Clean up any old completed tasks that are missing history logs

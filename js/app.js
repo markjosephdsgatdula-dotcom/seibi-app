@@ -163,7 +163,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v19_prevent_resurrection';
+    const APP_VERSION = 'v20_safe_migration';
 
     function proceedBoot() {
       // Clean up any old completed tasks that are missing history logs
@@ -187,8 +187,10 @@ const App = (() => {
     }
 
     try {
-      if (localStorage.getItem('seibi_app_version') !== APP_VERSION) {
-        // Remove all localStorage keys starting with seibi_ to clear states and sync flags
+      const currentVer = localStorage.getItem('seibi_app_version');
+      if (currentVer !== APP_VERSION) {
+        console.log(`[Seibi] App version changed from ${currentVer} to ${APP_VERSION}. Clearing local cache...`);
+        // Remove all localStorage keys starting with seibi_ to clear old states and sync flags
         for (let i = localStorage.length - 1; i >= 0; i--) {
           const key = localStorage.key(i);
           if (key && key.startsWith('seibi_')) {
@@ -196,19 +198,6 @@ const App = (() => {
           }
         }
         localStorage.setItem('seibi_app_version', APP_VERSION);
-        if (typeof firebaseDb !== 'undefined') {
-          console.log('[Seibi] Clearing Firebase for version reset...');
-          firebaseDb.ref().remove()
-            .then(() => {
-              console.log('[Seibi] Firebase cleared. Seeding database...');
-              proceedBoot();
-            })
-            .catch(err => {
-              console.error('[Seibi] Failed to clear Firebase:', err);
-              proceedBoot();
-            });
-          return;
-        }
       }
     } catch (_) {}
 

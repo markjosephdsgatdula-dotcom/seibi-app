@@ -52,9 +52,12 @@ const HistoryStore = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
       if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('history').set(records);
+        firebaseDb.ref('history').set(records).catch(err => {
+          console.error('[Firebase] Write error on history:', err);
+        });
       }
     } catch (_) {}
+    return Promise.resolve();
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────

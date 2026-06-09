@@ -45,7 +45,9 @@ const NoticeStore = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notices));
       if (typeof firebaseDb !== 'undefined') {
-        return firebaseDb.ref('notices').set(notices);
+        firebaseDb.ref('notices').set(notices).catch(err => {
+          console.error('[Firebase] Write error on notices:', err);
+        });
       }
     } catch (_) {}
     return Promise.resolve();

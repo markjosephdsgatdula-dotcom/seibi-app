@@ -188,7 +188,9 @@ const AssetStore = (() => {
     try {
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
       if (typeof firebaseDb !== 'undefined') {
-        return firebaseDb.ref('templates').set(templates);
+        firebaseDb.ref('templates').set(templates).catch(err => {
+          console.error('[Firebase] Write error on templates:', err);
+        });
       }
     } catch (_) {}
     return Promise.resolve();
@@ -239,7 +241,9 @@ const AssetStore = (() => {
     try {
       localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
       if (typeof firebaseDb !== 'undefined') {
-        return firebaseDb.ref('assets').set(assets);
+        firebaseDb.ref('assets').set(assets).catch(err => {
+          console.error('[Firebase] Write error on assets:', err);
+        });
       }
     } catch (_) {}
     return Promise.resolve();

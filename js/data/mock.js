@@ -138,7 +138,9 @@ const MockDB = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
       if (typeof firebaseDb !== 'undefined') {
-        return firebaseDb.ref('tasks').set(tasks);
+        firebaseDb.ref('tasks').set(tasks).catch(err => {
+          console.error('[Firebase] Write error on tasks:', err);
+        });
       }
     } catch (_) {}
     return Promise.resolve();

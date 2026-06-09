@@ -163,7 +163,29 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v16_database_reset_fixed';
+    const APP_VERSION = 'v17_sequential_reset';
+
+    function proceedBoot() {
+      // Clean up any old completed tasks that are missing history logs
+      _cleanOrphanedCompletedTasks();
+
+      // Initialise view controllers
+      HomeView.init();
+      CalendarView.init();
+      HistoryView.init();
+      NoticeView.init();
+      AssetsView.init();
+      WireMapView.init();
+
+      // Start Firebase Sync before router starts so initial views can render updated synced data
+      if (typeof FirebaseSync !== 'undefined') {
+        FirebaseSync.start();
+      }
+
+      // Initialise router last (it will activate the first view)
+      Router.init();
+    }
+
     try {
       if (localStorage.getItem('seibi_app_version') !== APP_VERSION) {
         localStorage.removeItem('seibi_notices');
@@ -173,30 +195,22 @@ const App = (() => {
         localStorage.removeItem('seibi_templates');
         localStorage.setItem('seibi_app_version', APP_VERSION);
         if (typeof firebaseDb !== 'undefined') {
-          firebaseDb.ref().remove();
+          console.log('[Seibi] Clearing Firebase for version reset...');
+          firebaseDb.ref().remove()
+            .then(() => {
+              console.log('[Seibi] Firebase cleared. Seeding database...');
+              proceedBoot();
+            })
+            .catch(err => {
+              console.error('[Seibi] Failed to clear Firebase:', err);
+              proceedBoot();
+            });
+          return;
         }
-        console.log('[Seibi] LocalStorage and Firebase cleared for clean data seed.');
       }
     } catch (_) {}
 
-    // Clean up any old completed tasks that are missing history logs
-    _cleanOrphanedCompletedTasks();
-
-    // Initialise view controllers
-    HomeView.init();
-    CalendarView.init();
-    HistoryView.init();
-    NoticeView.init();
-    AssetsView.init();
-    WireMapView.init();
-
-    // Start Firebase Sync before router starts so initial views can render updated synced data
-    if (typeof FirebaseSync !== 'undefined') {
-      FirebaseSync.start();
-    }
-
-    // Initialise router last (it will activate the first view)
-    Router.init();
+    proceedBoot();
 
     // Set up language change listener to dynamically redraw active views
     window.addEventListener('seibi_language_changed', (e) => {

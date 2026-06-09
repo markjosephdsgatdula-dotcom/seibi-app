@@ -12,7 +12,7 @@ const firebaseConfig = {
   messagingSenderId: "469528639419",
   appId: "1:469528639419:web:cc1f4261b1c9e20150f69e",
   measurementId: "G-CPRLTXF9WW",
-  databaseURL: "https://seibi-app-default-rtdb.firebaseio.com"
+  databaseURL: "https://seibi-app-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 // Initialize Firebase

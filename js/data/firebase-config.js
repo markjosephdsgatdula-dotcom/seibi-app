@@ -25,6 +25,16 @@ const FirebaseSync = (() => {
 
   let _started = false;
 
+  function updateStatusUI(status, text) {
+    const el = document.getElementById('firebase-status-indicator');
+    const dot = el ? el.querySelector('.status-dot') : null;
+    const txt = document.getElementById('firebase-status-text');
+    if (dot && txt) {
+      dot.className = `status-dot status-dot--${status}`;
+      txt.textContent = text;
+    }
+  }
+
   function start() {
     if (_started) return;
     _started = true;
@@ -51,6 +61,9 @@ const FirebaseSync = (() => {
       console.error(`[Firebase] Sync error on node '${name}':`, err);
       if (err.code === 'PERMISSION_DENIED') {
         console.error('[Firebase] Permission Denied! Please update your Realtime Database rules in the Firebase Console to allow read/write.');
+        updateStatusUI('disconnected', 'Permission Error');
+      } else {
+        updateStatusUI('disconnected', 'Sync Error');
       }
     };
 
@@ -58,8 +71,10 @@ const FirebaseSync = (() => {
     db.ref('.info/connected').on('value', snapshot => {
       if (snapshot.val() === true) {
         console.log('[Firebase] Successfully connected to the cloud database.');
+        updateStatusUI('connected', 'Cloud Sync Active');
       } else {
         console.warn('[Firebase] Disconnected from the cloud database.');
+        updateStatusUI('connecting', 'Connecting...');
       }
     });
 

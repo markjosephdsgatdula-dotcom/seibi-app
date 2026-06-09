@@ -132,9 +132,13 @@ const FirebaseSync = (() => {
         const isSynced = localStorage.getItem(syncedKey) === 'true';
         if (!isSynced) {
           const local = localStorage.getItem('seibi_notices');
-          if (local) db.ref('notices').set(JSON.parse(local));
+          if (local) {
+            console.log('[Firebase] Empty cloud notices detected (First-run). Seeding Firebase with local notices:', JSON.parse(local));
+            db.ref('notices').set(JSON.parse(local));
+          }
           localStorage.setItem(syncedKey, 'true');
         } else {
+          console.log('[Firebase] Cloud notices is empty. Clearing local notices to match.');
           localStorage.setItem('seibi_notices', '[]');
           if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
         }

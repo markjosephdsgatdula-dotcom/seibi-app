@@ -45,6 +45,7 @@ const NoticeStore = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notices));
       if (typeof firebaseDb !== 'undefined') {
+        console.log('[NoticeStore] Saving notices to Firebase:', notices);
         firebaseDb.ref('notices').set(notices).catch(err => {
           console.error('[Firebase] Write error on notices:', err);
         });
@@ -114,9 +115,13 @@ const NoticeStore = (() => {
    * Clears corresponding repair tasks, history records, and resets asset repair status if appropriate.
    */
   function deleteNotice(id) {
+    console.log('[NoticeStore] Deleting notice with ID:', id);
     const notices = _load();
     const notice = notices.find(n => n.id === id);
-    if (!notice) return Promise.resolve();
+    if (!notice) {
+      console.warn('[NoticeStore] Notice not found for deletion:', id);
+      return Promise.resolve();
+    }
 
     const updatedNotices = notices.filter(n => n.id !== id);
     _save(updatedNotices);

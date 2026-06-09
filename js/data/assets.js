@@ -33,9 +33,11 @@ const AssetStore = (() => {
     { id: 3, title: 'Check abnormal sounds', desc: '溶接機電源を入れ異音が無いか確認（ファン等）', freq: 'monthly', image: 'image3.jpeg' },
     { id: 4, title: 'Test emergency stop button', desc: '非常停止ボタンを押して作動するか確認（運転準備を入れて行う）', freq: 'monthly', image: 'image4.jpeg' },
     { id: 5, title: 'Inspect electrical wiring', desc: '電気配線の破損確認（目視による亀裂等の有無）', freq: 'monthly', image: 'image5.jpeg' },
-    { id: 6, title: 'Check torch nozzle & tip', desc: 'トーチノズル、チップ、Sワッシャーの有無・清掃・緩み確認', freq: 'monthly', image: 'image7.jpeg' },
+    // Temporarily set aside for other machine
+    // { id: 6, title: 'Check torch nozzle & tip', desc: 'トーチノズル、チップ、Sワッシャーの有無・清掃・緩み確認', freq: 'monthly', image: 'image7.jpeg' },
     { id: 7, title: 'Verify gas button test', desc: '溶接機左下のガスチェックボタンを押し、清掃したトーチからガスが出るか確認', freq: 'monthly', image: 'image6.jpeg' },
-    { id: 8, title: 'Clean feeding rollers', desc: '送給装置のローラーにエアーブローする（送給圧は3.5に調整）', freq: 'monthly', image: 'image9.jpeg' },
+    // Temporarily set aside for other machine
+    // { id: 8, title: 'Clean feeding rollers', desc: '送給装置のローラーにエアーブローする（送給圧は3.5に調整）', freq: 'monthly', image: 'image9.jpeg' },
     { id: 9, title: 'Verify robot alignment', desc: 'ロボットと定盤の位置出し確認（定盤A、B、C）', freq: 'monthly', image: 'image10.jpeg' },
     { id: 10, title: 'Blow air inside machine', desc: '溶接機内のエアブロー清掃', freq: 'annual', image: 'image12.jpeg' },
     { id: 11, title: 'Clean conduit hose', desc: 'コンジットホース内のアルコール清掃', freq: 'semi-annual', image: 'image11.jpeg' }

@@ -31,7 +31,7 @@ const FirebaseSync = (() => {
     const txt = document.getElementById('firebase-status-text');
     if (dot && txt) {
       dot.className = `status-dot status-dot--${status}`;
-      txt.textContent = `${text} (v21)`;
+      txt.textContent = `${text} (v22)`;
     }
   }
 

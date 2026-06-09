@@ -165,7 +165,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v21_timezone_history_fix';
+    const APP_VERSION = 'v22_remove_items_6_8';
 
     function proceedBoot() {
       // Clean up any old completed tasks that are missing history logs
@@ -200,6 +200,12 @@ const App = (() => {
           }
         }
         localStorage.setItem('seibi_app_version', APP_VERSION);
+
+        // One-time templates re-seed in Firebase
+        if (typeof firebaseDb !== 'undefined') {
+          console.log('[Seibi] Version update: Wiping Firebase templates to force re-seed...');
+          firebaseDb.ref('templates').remove();
+        }
       }
     } catch (_) {}
 

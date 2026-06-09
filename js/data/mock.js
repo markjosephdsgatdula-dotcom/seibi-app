@@ -391,7 +391,8 @@ const MockDB = (() => {
 
   function rollbackCompletedInspection(assetId, completedAtStr) {
     const tasks = _load();
-    const completionDay = completedAtStr.slice(0, 10);
+    const d = new Date(completedAtStr);
+    const completionDay = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
     // 1. Find the task that was completed for this asset on that completion day
     const completedTasks = tasks.filter(t => 
@@ -430,12 +431,14 @@ const MockDB = (() => {
           // Find the previous history record for this asset to restore lastInspected date
           if (typeof HistoryStore !== 'undefined') {
             HistoryStore.getAll().then(records => {
-              const remainingForAsset = records.filter(r => 
-                r.assetId === assetId && 
-                r.completedAt.slice(0, 10) !== completionDay
-              );
+              const remainingForAsset = records.filter(r => {
+                const rd = new Date(r.completedAt);
+                const rDay = new Date(rd.getTime() - rd.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+                return r.assetId === assetId && rDay !== completionDay;
+              });
               if (remainingForAsset.length > 0) {
-                asset.lastInspected = remainingForAsset[0].completedAt.slice(0, 10);
+                const r0d = new Date(remainingForAsset[0].completedAt);
+                asset.lastInspected = new Date(r0d.getTime() - r0d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
               } else {
                 asset.lastInspected = null;
               }

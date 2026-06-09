@@ -57,9 +57,11 @@ const App = (() => {
           }
 
           const completionDay = task.dueDate;
-          const hasHistory = (historyByAsset[task.assetId] || []).some(rec => 
-            rec.completedAt.slice(0, 10) === completionDay
-          );
+          const hasHistory = (historyByAsset[task.assetId] || []).some(rec => {
+            const rd = new Date(rec.completedAt);
+            const rDay = new Date(rd.getTime() - rd.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+            return rDay === completionDay;
+          });
 
           if (!hasHistory) {
             task.status = 'pending';
@@ -163,7 +165,7 @@ const App = (() => {
     }
 
     // Migration check: Reset local storage keys if on an older version
-    const APP_VERSION = 'v20_safe_migration';
+    const APP_VERSION = 'v21_timezone_history_fix';
 
     function proceedBoot() {
       // Clean up any old completed tasks that are missing history logs

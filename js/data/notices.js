@@ -45,9 +45,10 @@ const NoticeStore = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notices));
       if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('notices').set(notices);
+        return firebaseDb.ref('notices').set(notices);
       }
     } catch (_) {}
+    return Promise.resolve();
   }
 
   // ─── Public API ──────────────────────────────────────────────────────────
@@ -83,16 +84,18 @@ const NoticeStore = (() => {
     };
 
     notices.push(notice);
-    _save(notices);
+    const saveNoticePromise = _save(notices);
 
     // Bidirectional sync: if it is an incident or defect, update asset status to needs_repair
+    let assetPromise = Promise.resolve();
     if (assetId && (category === 'incident' || category === 'defect') && typeof AssetStore !== 'undefined') {
-      AssetStore.setRepairStatus(assetId, 'needs_repair');
+      assetPromise = AssetStore.setRepairStatus(assetId, 'needs_repair');
     }
 
     // Auto-generate Repair Work Order Task
+    let taskPromise = Promise.resolve();
     if ((category === 'incident' || category === 'defect') && typeof MockDB !== 'undefined') {
-      MockDB.scheduleRepairTask({
+      taskPromise = MockDB.scheduleRepairTask({
         noticeId: notice.id,
         assetId: assetId,
         assetName: assetName || (I18n.getLang() === 'jp' ? '不明な設備' : 'Unknown Machine'),
@@ -101,7 +104,7 @@ const NoticeStore = (() => {
       });
     }
 
-    return Promise.resolve(notice);
+    return Promise.all([saveNoticePromise, assetPromise, taskPromise]).then(() => notice);
   }
 
   /**

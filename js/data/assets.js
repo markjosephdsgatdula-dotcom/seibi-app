@@ -188,9 +188,10 @@ const AssetStore = (() => {
     try {
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
       if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('templates').set(templates);
+        return firebaseDb.ref('templates').set(templates);
       }
     } catch (_) {}
+    return Promise.resolve();
   }
 
   function getTemplates() {
@@ -238,9 +239,10 @@ const AssetStore = (() => {
     try {
       localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
       if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('assets').set(assets);
+        return firebaseDb.ref('assets').set(assets);
       }
     } catch (_) {}
+    return Promise.resolve();
   }
 
   function getAll() {
@@ -316,13 +318,14 @@ const AssetStore = (() => {
     asset.lastInspected = completedDateStr;
     asset.dueDate = nextDueDate;
 
-    _saveAssets(assets);
+    const savePromise = _saveAssets(assets);
 
+    let syncPromise = Promise.resolve();
     if (typeof MockDB !== 'undefined') {
-      MockDB.syncCompletedInspection(id, nextDueDate);
+      syncPromise = MockDB.syncCompletedInspection(id, nextDueDate);
     }
 
-    return Promise.resolve(asset);
+    return Promise.all([savePromise, syncPromise]).then(() => asset);
   }
 
   /**

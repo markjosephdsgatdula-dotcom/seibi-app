@@ -1085,6 +1085,7 @@ const AssetsView = (() => {
     HistoryStore.addRecord(historyRecord).then(() => {
 
       // ── Auto-post a Defect notice for each failed checklist item ──
+      let noticePromise = Promise.resolve();
       if (failedItems.length > 0 && typeof NoticeStore !== 'undefined') {
         const postPromises = failedItems.map(item => {
           const messageText = isJp
@@ -1105,21 +1106,24 @@ const AssetsView = (() => {
             message: messageText
           });
         });
-        Promise.all(postPromises).then(() => {
+        noticePromise = Promise.all(postPromises).then(() => {
           if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
         });
       }
 
-      AssetStore.completeInspection(_activeAsset.id, new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), failedItems.length > 0).then(() => {
-        closeInspection();
-
-        refresh();
-        if (typeof HomeView !== 'undefined') HomeView.refresh();
-        if (typeof CalendarView !== 'undefined') CalendarView.init();
-        if (typeof HistoryView !== 'undefined') HistoryView.init();
-
-        _showSuccessBanner(historyRecord.assetName);
+      return noticePromise.then(() => {
+        const todayStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        return AssetStore.completeInspection(_activeAsset.id, todayStr, failedItems.length > 0);
       });
+    }).then(() => {
+      closeInspection();
+
+      refresh();
+      if (typeof HomeView !== 'undefined') HomeView.refresh();
+      if (typeof CalendarView !== 'undefined') CalendarView.init();
+      if (typeof HistoryView !== 'undefined') HistoryView.init();
+
+      _showSuccessBanner(historyRecord.assetName);
     });
   }
 

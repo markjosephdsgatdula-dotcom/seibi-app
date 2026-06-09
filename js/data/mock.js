@@ -138,9 +138,10 @@ const MockDB = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
       if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('tasks').set(tasks);
+        return firebaseDb.ref('tasks').set(tasks);
       }
     } catch (_) {}
+    return Promise.resolve();
   }
 
   function _computeStatus(task) {
@@ -271,8 +272,7 @@ const MockDB = (() => {
     };
 
     tasks.push(newTask);
-    _save(tasks);
-    return Promise.resolve();
+    return _save(tasks);
   }
 
   function scheduleInspectionTask(assetId, assetName, location, dueDate) {
@@ -362,13 +362,11 @@ const MockDB = (() => {
           newTask.assetName = asset.name;
         }
         tasks.push(newTask);
-        _save(tasks);
-        return newTask;
+        return _save(tasks).then(() => newTask);
       });
     } else {
       tasks.push(newTask);
-      _save(tasks);
-      return Promise.resolve(newTask);
+      return _save(tasks).then(() => newTask);
     }
   }
 

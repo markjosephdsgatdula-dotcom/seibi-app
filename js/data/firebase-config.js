@@ -4,7 +4,59 @@
 
 'use strict';
 
-const firebaseConfig = {
+// Detect environment: Check query string ?env=staging or check the hash segment for env=staging
+let isStaging = false;
+
+if (typeof window !== 'undefined') {
+  const searchParams = new URLSearchParams(window.location.search);
+  if (searchParams.get('env') === 'staging') {
+    isStaging = true;
+  } else if (window.location.hash.includes('env=staging')) {
+    isStaging = true;
+    // Normalize the URL: Move ?env=staging to standard search param and clean hash
+    const cleanHash = window.location.hash.replace(/\?env=staging/i, '').replace(/&env=staging/i, '');
+    const searchPart = window.location.search ? `${window.location.search}&env=staging` : '?env=staging';
+    window.history.replaceState(null, '', `${searchPart}${cleanHash}`);
+  }
+} else if (typeof self !== 'undefined' && self.location) {
+  // Service Worker context
+  const searchParams = new URLSearchParams(self.location.search);
+  if (searchParams.get('env') === 'staging' || self.location.hostname.includes('staging')) {
+    isStaging = true;
+  }
+}
+
+const SEIBI_ENV = isStaging ? 'staging' : 'production';
+
+// Intercept localStorage to isolate staging environment data from production data
+if (SEIBI_ENV === 'staging' && typeof localStorage !== 'undefined') {
+  const origGetItem = localStorage.getItem;
+  const origSetItem = localStorage.setItem;
+  const origRemoveItem = localStorage.removeItem;
+  const origKey = localStorage.key;
+
+  localStorage.getItem = function(key) {
+    return origGetItem.call(localStorage, key && key.startsWith('seibi_') ? `staging_${key}` : key);
+  };
+
+  localStorage.setItem = function(key, value) {
+    origSetItem.call(localStorage, key && key.startsWith('seibi_') ? `staging_${key}` : key, value);
+  };
+
+  localStorage.removeItem = function(key) {
+    origRemoveItem.call(localStorage, key && key.startsWith('seibi_') ? `staging_${key}` : key);
+  };
+
+  localStorage.key = function(index) {
+    const realKey = origKey.call(localStorage, index);
+    if (realKey && realKey.startsWith('staging_seibi_')) {
+      return realKey.substring(8); // Remove 'staging_' prefix for virtual key matching
+    }
+    return realKey;
+  };
+}
+
+const prodConfig = {
   apiKey: "AIzaSyA8Of3keXXlECF3ADaNQe6EOOvAIifYJ5Q",
   authDomain: "seibi-app.firebaseapp.com",
   projectId: "seibi-app",
@@ -15,11 +67,32 @@ const firebaseConfig = {
   databaseURL: "https://seibi-app-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+const stagingConfig = {
+  apiKey: "AIzaSyByW32vjzjWFbrsnghcOan2DNAkcI6vYdM",
+  authDomain: "seibi-app-staging.firebaseapp.com",
+  databaseURL: "https://seibi-app-staging-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "seibi-app-staging",
+  storageBucket: "seibi-app-staging.firebasestorage.app",
+  messagingSenderId: "1071070088047",
+  appId: "1:1071070088047:web:699fa3afd7c7ba4a4b769a",
+  measurementId: "G-SQ94K29CZX"
+};
 
-// Expose database reference globally
-const firebaseDb = firebase.database();
+let firebaseApp;
+let firebaseDb;
+let firebaseMessaging;
+if (typeof firebase !== 'undefined') {
+  const config = SEIBI_ENV === 'staging' ? stagingConfig : prodConfig;
+  firebaseApp = firebase.initializeApp(config);
+  if (typeof firebaseApp.database === 'function') {
+    firebaseDb = firebaseApp.database();
+  }
+  try {
+    firebaseMessaging = firebaseApp.messaging();
+  } catch (e) {
+    console.warn('[Firebase] Messaging not supported or setup failed.', e);
+  }
+}
 
 const FirebaseSync = (() => {
 
@@ -31,7 +104,8 @@ const FirebaseSync = (() => {
     const txt = document.getElementById('firebase-status-text');
     if (dot && txt) {
       dot.className = `status-dot status-dot--${status}`;
-      txt.textContent = `${text} (v22)`;
+      const envText = SEIBI_ENV === 'staging' ? ' · STAGING' : '';
+      txt.textContent = `${text} (v24${envText})`;
     }
   }
 

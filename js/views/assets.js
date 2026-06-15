@@ -127,6 +127,7 @@ const AssetsView = (() => {
 
     const robots = active.filter(a => a.type === 'CO2_MAG' || a.type === 'TIG');
     const regulators = active.filter(a => a.type === 'REGULATOR');
+    const utilities = active.filter(a => a.type === 'UTILITY');
     const tools = active.filter(a => a.type === 'GRINDER' || a.type === 'BELT_GRINDER' || a.type === 'SANDER');
 
     container.innerHTML = `
@@ -160,6 +161,19 @@ const AssetsView = (() => {
           </h2>
           <div class="asset-grid">
             ${regulators.map(_renderCard).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Facility Utilities Section -->
+      ${utilities.length > 0 ? `
+        <div class="assets-section" style="margin-top: 32px;">
+          <h2 class="assets-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/><line x1="9" y1="16" x2="15" y2="16"/><path d="M8 6h2v2H8V6zm0 4h2v2H8v-2zm0 4h2v2H8v-2zm8-8h2v2h-2V6zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/></svg>
+            ${I18n.t('section_active_utilities')} (${utilities.length})
+          </h2>
+          <div class="asset-grid">
+            ${utilities.map(_renderCard).join('')}
           </div>
         </div>
       ` : ''}
@@ -275,6 +289,7 @@ const AssetsView = (() => {
                   <option value="CO2_MAG" ${_newAssetForm.type === 'CO2_MAG' ? 'selected' : ''}>${I18n.t('type_co2_mag')}</option>
                   <option value="TIG" ${_newAssetForm.type === 'TIG' ? 'selected' : ''}>${I18n.t('type_tig')}</option>
                   <option value="REGULATOR" ${_newAssetForm.type === 'REGULATOR' ? 'selected' : ''}>${I18n.t('type_regulator')}</option>
+                  <option value="UTILITY" ${_newAssetForm.type === 'UTILITY' ? 'selected' : ''}>${I18n.t('type_utility')}</option>
                   <option value="GRINDER" ${_newAssetForm.type === 'GRINDER' ? 'selected' : ''}>${I18n.t('type_grinder')}</option>
                   <option value="BELT_GRINDER" ${_newAssetForm.type === 'BELT_GRINDER' ? 'selected' : ''}>${I18n.t('type_belt_grinder')}</option>
                   <option value="SANDER" ${_newAssetForm.type === 'SANDER' ? 'selected' : ''}>${I18n.t('type_sander')}</option>
@@ -297,6 +312,8 @@ const AssetsView = (() => {
                       displayName = isJp ? `溶接ロボット用テンプレート (${tpl.items.length}項目)` : `CO2/MAG Robots Template (${tpl.items.length} items)`;
                     } else if (tpl.id === 'template-regulator') {
                       displayName = isJp ? `ガス調整器用テンプレート (${tpl.items.length}項目)` : `Gas Regulators Template (${tpl.items.length} items)`;
+                    } else if (tpl.id === 'template-utility-gas') {
+                      displayName = isJp ? `主要ガスユーティリティテンプレート (${tpl.items.length}項目)` : `Main Gas Utility Template (${tpl.items.length} items)`;
                     } else if (tpl.id === 'template-grinder') {
                       displayName = isJp ? `グラインダー・サンダー用テンプレート (${tpl.items.length}項目)` : `Grinders & Sanders Template (${tpl.items.length} items)`;
                     }
@@ -629,6 +646,7 @@ const AssetsView = (() => {
                 <option value="CO2_MAG" ${_editForm.type === 'CO2_MAG' ? 'selected' : ''}>${I18n.t('type_co2_mag')}</option>
                 <option value="TIG" ${_editForm.type === 'TIG' ? 'selected' : ''}>${I18n.t('type_tig')}</option>
                 <option value="REGULATOR" ${_editForm.type === 'REGULATOR' ? 'selected' : ''}>${I18n.t('type_regulator')}</option>
+                <option value="UTILITY" ${_editForm.type === 'UTILITY' ? 'selected' : ''}>${I18n.t('type_utility')}</option>
                 <option value="GRINDER" ${_editForm.type === 'GRINDER' ? 'selected' : ''}>${I18n.t('type_grinder')}</option>
                 <option value="BELT_GRINDER" ${_editForm.type === 'BELT_GRINDER' ? 'selected' : ''}>${I18n.t('type_belt_grinder')}</option>
                 <option value="SANDER" ${_editForm.type === 'SANDER' ? 'selected' : ''}>${I18n.t('type_sander')}</option>
@@ -871,11 +889,14 @@ const AssetsView = (() => {
         
         <!-- Top Row (Title + Actions) -->
         <div class="checklist-item-header">
-          <div class="checklist-item-title-row">
+          <div class="checklist-item-title-row" style="flex-wrap: wrap; gap: var(--space-2); align-items: center;">
             <span class="checklist-item-num-title">
-              ${_circleNumber(item.id)} ${item.title}
+              ${_circleNumber(item.id)} ${isJp ? (item.title_jp || item.title) : (item.title_en || item.title)}
             </span>
             <span class="checklist-item-freq">${item.freq}</span>
+            <button class="btn-howto-link" onclick="AssetsView.openManualGuide('${_escapeQuote(item.title)}')" style="background: none; border: none; padding: 0; color: var(--clr-accent); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline;">
+              📖 ${I18n.t('manual_howto')}
+            </button>
           </div>
           
           <div class="checklist-item-actions">
@@ -900,7 +921,7 @@ const AssetsView = (() => {
 
         <!-- Details Row -->
         <div class="checklist-item-details">
-          <p class="checklist-item-desc">${item.desc || (isJp ? '詳細な指示はありません。' : 'No detailed instructions.')}</p>
+          <p class="checklist-item-desc">${isJp ? (item.desc_jp || item.desc) : (item.desc_en || item.desc || item.desc_jp) || (isJp ? '詳細な指示はありません。' : 'No detailed instructions.')}</p>
           ${resolvedPath ? `
             <div 
               class="ref-photo-wrapper" 
@@ -970,7 +991,7 @@ const AssetsView = (() => {
   }
 
   function _circleNumber(num) {
-    const circles = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫'];
+    const circles = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮'];
     return circles[num - 1] || `${num}.`;
   }
 
@@ -1042,6 +1063,8 @@ const AssetsView = (() => {
     if (modal) modal.remove();
     _activeAsset = null;
     _checklistState = [];
+    const banner = document.getElementById('return-inspection-banner');
+    if (banner) banner.remove();
   }
 
   function submitInspection() {
@@ -1316,6 +1339,82 @@ const AssetsView = (() => {
     }
   }
 
+  function openManualGuide(itemTitle) {
+    const modal = document.getElementById('inspection-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      _renderReturnToInspectionBanner();
+    }
+
+    if (typeof App !== 'undefined' && App.Nav) {
+      App.Nav.switchTo('manual');
+      if (typeof ManualView !== 'undefined' && ManualView.scrollToGuide) {
+        ManualView.scrollToGuide(itemTitle);
+      }
+    }
+  }
+
+  function _renderReturnToInspectionBanner() {
+    const existing = document.getElementById('return-inspection-banner');
+    if (existing) existing.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'return-inspection-banner';
+    banner.style.position = 'fixed';
+    banner.style.bottom = '72px';
+    banner.style.right = '16px';
+    banner.style.zIndex = '9999';
+    banner.style.display = 'flex';
+    banner.style.alignItems = 'center';
+
+    const isJp = I18n.getLang() === 'jp';
+    const btnText = isJp
+      ? `🔧 ${_activeAsset.name} の点検に戻る`
+      : `🔧 Return to Inspection of ${_activeAsset.name}`;
+
+    banner.innerHTML = `
+      <button onclick="AssetsView.resumeInspection()" style="
+        background: var(--clr-accent);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 12px 20px;
+        font-family: var(--font-family);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-bold);
+        box-shadow: 0 4px 16px rgba(79, 124, 255, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform var(--transition-fast), background var(--transition-fast);
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        ${btnText}
+      </button>
+    `;
+
+    document.getElementById('app-shell').appendChild(banner);
+  }
+
+  function resumeInspection() {
+    const banner = document.getElementById('return-inspection-banner');
+    if (banner) banner.remove();
+
+    const modal = document.getElementById('inspection-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
+
+    if (typeof App !== 'undefined' && App.Nav) {
+      App.Nav.switchTo('assets');
+    }
+  }
+
+  function _escapeQuote(str) {
+    if (!str) return '';
+    return str.replace(/'/g, "\\'");
+  }
+
   function init() {
     refresh();
   }
@@ -1354,7 +1453,9 @@ const AssetsView = (() => {
     openLightbox,
     closeLightbox,
     onDefectPhotoSelected,
-    removeDefectPhoto
+    removeDefectPhoto,
+    openManualGuide,
+    resumeInspection
   };
 
 })();

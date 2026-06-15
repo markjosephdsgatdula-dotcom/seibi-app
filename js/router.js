@@ -25,6 +25,7 @@ const Router = (() => {
     wiremap: { tabId: 'tab-wiremap', panelId: 'view-wiremap' },
     history: { tabId: 'tab-history', panelId: 'view-history' },
     notice:  { tabId: 'tab-notice',  panelId: 'view-notice'  },
+    manual:  { tabId: 'tab-manual',  panelId: 'view-manual'  },
   };
 
   const DEFAULT_VIEW = 'home';

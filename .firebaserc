@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "seibi-app"
+    "default": "seibi-app",
+    "staging": "seibi-app-staging"
   }
 }

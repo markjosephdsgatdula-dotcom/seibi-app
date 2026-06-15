@@ -117,6 +117,14 @@ const I18n = (() => {
       'confirm_resolve_incident': '✅ Confirm Resolution',
       'resolved_by_placeholder': 'Your name',
       'resolution_notes_placeholder': 'What was done to resolve the incident?',
+      'section_active_utilities': 'Facility Utilities',
+      'type_utility': 'Facility Utility',
+      'nav_manual': 'Manual',
+      'manual_title': 'Maintenance Manual',
+      'manual_howto': 'How to?',
+      'manual_search': 'Search manuals...',
+      'manual_step': 'Step',
+      'manual_safety': 'Safety Note',
     },
     jp: {
       // Bottom Nav
@@ -225,6 +233,14 @@ const I18n = (() => {
       'confirm_resolve_incident': '✅ 解決を確定する',
       'resolved_by_placeholder': 'あなたの名前',
       'resolution_notes_placeholder': 'どのような対処を行いましたか？',
+      'section_active_utilities': '設備ユーティリティ',
+      'type_utility': '設備ユーティリティ',
+      'nav_manual': 'マニュアル',
+      'manual_title': 'メンテナンスマニュアル',
+      'manual_howto': '手順を見る',
+      'manual_search': 'マニュアルを検索...',
+      'manual_step': '手順',
+      'manual_safety': '安全上の注意',
     }
   };
 

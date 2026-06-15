@@ -71,5 +71,17 @@ This file serves as a handoff context document for the next Antigravity AI codin
 
 1. **Wire Map Refinements**:
    * Add interactive wire editing or rename wire labels (e.g. W-001 -> A1/B1) if required by the user.
-2. **Task Reminders & Notifications (Phase 5)**:
-   * Alert operators via email or push notifications when maintenance tasks are overdue.
+
+---
+
+### Stage 7: PWA, Manual View, & Push Notifications
+* **Manual View:** Added a dedicated PDF manual viewer tab in the main navigation.
+* **Progressive Web App (PWA):** Created `manifest.json` and `sw.js` to enable "Add to Home Screen" installation and offline asset caching (stale-while-revalidate strategy).
+* **Push Notifications (FCM):**
+  * Created `firebase-messaging-sw.js` and `js/services/notifications.js`.
+  * Set up `vapidKey` for both production and staging environments to uniquely identify Chrome pushes.
+  * Added UI banner to politely request notification permissions on login.
+* **Cloud Functions & Staging Environment:**
+  * Created a Firebase Cloud Function `dailyMaintenanceReminder` scheduled for 8:30 AM JST.
+  * Created a test HTTP endpoint `testNotification` to manually trigger the reminder broadcast for testing.
+  * Deployed a separate `seibi-app-staging` project for development and isolated testing of FCM endpoints.

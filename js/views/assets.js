@@ -882,7 +882,10 @@ const AssetsView = (() => {
     const isJp = I18n.getLang() === 'jp';
 
     // Fallback translation lookup in case the DB template lost its JP strings
-    const defaultItem = _defaultChecklistItems.find(d => d.id === item.id) || {};
+    let defaultItem = _defaultChecklistItems.find(d => d.id === item.id) || {};
+    if (defaultItem.title !== item.title && defaultItem.title_en !== item.title) {
+      defaultItem = {}; // Prevent cross-template fallback (e.g. regulator ID 1 pulling robot ID 1)
+    }
     const titleJp = item.title_jp || defaultItem.title_jp || item.title;
     const titleEn = item.title_en || defaultItem.title_en || item.title;
     const descJp = item.desc_jp || defaultItem.desc_jp || item.desc;

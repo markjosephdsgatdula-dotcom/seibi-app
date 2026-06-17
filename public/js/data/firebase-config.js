@@ -112,7 +112,8 @@ const FirebaseSync = (() => {
     { id: 'task-robot-06', title: 'Welding Robot #6 — Monthly Inspection', title_jp: '溶接ロボット 6号機 — 月次点検', assetId: 'asset-robot-06', assetName: 'Welding Robot #6', assetName_jp: '溶接ロボット 6号機', location: 'Bay C', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '13:00', estimatedMins: 25, assignedTo: 'Unassigned', tags: ['robot', 'welding'] },
     { id: 'task-robot-tig-01', title: 'TIG Welding Robot #1 — Monthly Inspection', title_jp: 'TIG溶接ロボット 1号機 — 月次点検', assetId: 'asset-robot-tig-01', assetName: 'TIG Welding Robot #1', assetName_jp: 'TIG溶接ロボット 1号機', location: 'Bay D', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '14:00', estimatedMins: 25, assignedTo: 'Unassigned', tags: ['robot', 'welding'] },
     { id: 'task-regulator-01', title: 'Regulator Pillar Left — Monthly Inspection', title_jp: 'ガス調整器 (左柱) — 月次点検', assetId: 'asset-regulator-01', assetName: 'Regulator Pillar Left', assetName_jp: 'ガス調整器 (左柱)', location: 'Pillar Left', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '15:00', estimatedMins: 15, assignedTo: 'Unassigned', tags: ['regulator', 'gas'] },
-    { id: 'task-regulator-02', title: 'Regulator Pillar Right — Monthly Inspection', title_jp: 'ガス調整器 (右柱) — 月次点検', assetId: 'asset-regulator-02', assetName: 'Regulator Pillar Right', assetName_jp: 'ガス調整器 (右柱)', location: 'Pillar Right', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '16:00', estimatedMins: 15, assignedTo: 'Unassigned', tags: ['regulator', 'gas'] }
+    { id: 'task-regulator-02', title: 'Regulator Pillar Right — Monthly Inspection', title_jp: 'ガス調整器 (右柱) — 月次点検', assetId: 'asset-regulator-02', assetName: 'Regulator Pillar Right', assetName_jp: 'ガス調整器 (右柱)', location: 'Pillar Right', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '16:00', estimatedMins: 15, assignedTo: 'Unassigned', tags: ['regulator', 'gas'] },
+    { id: 'task-utility-gas-01', title: 'Main Gas Utility — Monthly Inspection', title_jp: 'メインガス供給設備 — 月次点検', assetId: 'asset-utility-gas-01', assetName: 'Main Gas Utility', assetName_jp: 'メインガス供給設備', location: '1F Courtyard', priority: 'high', status: 'pending', dueDate: '2026-06-10', dueTime: '17:00', estimatedMins: 20, assignedTo: 'Unassigned', tags: ['utility', 'gas'] }
   ];
 
   // Templates seed is kept in assets.js (the _templatesSeed constant)
@@ -238,12 +239,39 @@ const FirebaseSync = (() => {
     // 3. Tasks sync
     db.ref('tasks').on('value', snapshot => {
       const data = snapshot.val();
+      let tasksList = [];
       if (data) {
-        cache.tasks = Array.isArray(data) ? data : Object.values(data);
+        tasksList = Array.isArray(data) ? data : Object.values(data);
       } else {
-        db.ref('tasks').set(_tasksSeed);
-        cache.tasks = [..._tasksSeed];
+        tasksList = [..._tasksSeed];
       }
+
+      // Auto-reconcile: If 'asset-utility-gas-01' has no task in the list, seed it
+      const hasUtilityTask = tasksList.some(t => t.assetId === 'asset-utility-gas-01');
+      if (!hasUtilityTask) {
+        console.log('[FirebaseSync] Main Gas Utility task is missing. Adding it to tasks...');
+        const utilityTask = {
+          id: 'task-utility-gas-01',
+          title: 'Main Gas Utility — Monthly Inspection',
+          title_jp: 'メインガス供給設備 — 月次点検',
+          assetId: 'asset-utility-gas-01',
+          assetName: 'Main Gas Utility',
+          assetName_jp: 'メインガス供給設備',
+          location: '1F Courtyard',
+          priority: 'high',
+          status: 'pending',
+          dueDate: '2026-06-10',
+          dueTime: '17:00',
+          estimatedMins: 20,
+          assignedTo: 'Unassigned',
+          tags: ['utility', 'gas']
+        };
+        tasksList.push(utilityTask);
+        // Save back to firebase
+        db.ref('tasks').set(tasksList);
+      }
+
+      cache.tasks = tasksList;
       _markReady('tasks');
       if (typeof HomeView !== 'undefined') HomeView.refresh();
       if (typeof CalendarView !== 'undefined') CalendarView.init();

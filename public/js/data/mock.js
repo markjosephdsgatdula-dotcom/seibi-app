@@ -292,16 +292,17 @@ const MockDB = (() => {
 
     // 3. Find and delete the future task that was scheduled for this asset
     const filteredTasks = tasks.filter(t => {
-      const isFuturePending = t.assetId === assetId && t.status === STATUS.PENDING && t.dueDate > completionDay;
+      const isFuturePending = t.assetId === assetId && t.status !== STATUS.DONE && t.dueDate > completionDay;
       return !isFuturePending;
     });
 
     // Save the updated tasks
-    _save(filteredTasks);
+    const saveTasksPromise = _save(filteredTasks);
 
     // 4. Update the asset registry state
+    let saveAssetPromise = Promise.resolve();
     if (typeof AssetStore !== 'undefined') {
-      AssetStore.getAll().then(assets => {
+      saveAssetPromise = AssetStore.getAll().then(assets => {
         const asset = assets.find(a => a.id === assetId);
         if (asset) {
           asset.status = 'inspection_due';
@@ -309,7 +310,7 @@ const MockDB = (() => {
 
           // Find the previous history record for this asset to restore lastInspected date
           if (typeof HistoryStore !== 'undefined') {
-            HistoryStore.getAll().then(records => {
+            return HistoryStore.getAll().then(records => {
               const remainingForAsset = records.filter(r => {
                 const rd = new Date(r.completedAt);
                 const rDay = new Date(rd.getTime() - rd.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -321,17 +322,17 @@ const MockDB = (() => {
               } else {
                 asset.lastInspected = null;
               }
-              AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
+              return AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
             });
           } else {
             asset.lastInspected = null;
-            AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
+            return AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
           }
         }
       });
     }
 
-    return Promise.resolve();
+    return Promise.all([saveTasksPromise, saveAssetPromise]).then(() => {});
   }
 
   function deleteTask(id) {

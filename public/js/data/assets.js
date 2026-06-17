@@ -369,24 +369,28 @@ const AssetStore = (() => {
     return Promise.resolve(filtered);
   }
 
-  function updateAsset(id, { name, model, location, type, templateId }) {
+  function updateAsset(id, updates) {
     const assets = _loadAssets();
     const asset = assets.find(a => a.id === id);
     if (!asset) return Promise.reject(new Error('Asset not found'));
 
-    if (name !== undefined) asset.name = name.trim();
-    if (model !== undefined) asset.model = model.trim();
-    if (location !== undefined) asset.location = location.trim();
-    if (type !== undefined) asset.type = type;
-    if (templateId !== undefined) asset.templateId = templateId;
+    if (updates.name !== undefined) asset.name = updates.name.trim();
+    if (updates.model !== undefined) asset.model = updates.model.trim();
+    if (updates.location !== undefined) asset.location = updates.location.trim();
+    if (updates.type !== undefined) asset.type = updates.type;
+    if (updates.templateId !== undefined) asset.templateId = updates.templateId;
+    if (updates.status !== undefined) asset.status = updates.status;
+    if (updates.lastInspected !== undefined) asset.lastInspected = updates.lastInspected;
+    if (updates.dueDate !== undefined) asset.dueDate = updates.dueDate;
 
-    _saveAssets(assets);
+    const savePromise = _saveAssets(assets);
 
-    if (typeof MockDB !== 'undefined') {
-      MockDB.syncAssetDetails(id, asset.name, asset.location);
+    let syncPromise = Promise.resolve();
+    if (typeof MockDB !== 'undefined' && (updates.name !== undefined || updates.location !== undefined)) {
+      syncPromise = MockDB.syncAssetDetails(id, asset.name, asset.location);
     }
 
-    return Promise.resolve(asset);
+    return Promise.all([savePromise, syncPromise]).then(() => asset);
   }
 
   function updateTemplate(templateId, items) {

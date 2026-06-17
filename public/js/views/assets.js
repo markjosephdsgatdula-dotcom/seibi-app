@@ -502,7 +502,7 @@ const AssetsView = (() => {
     const customValue = isStandard ? '' : imageValue;
 
     return `
-      <div class="image-select-wrapper">
+      <div class="image-select-wrapper" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
         <select class="form-select" style="min-height:30px; padding:2px;" onchange="${onchangeSelect}(${index}, this.value)">
           ${standardOptions.map(opt => `
             <option value="${opt}" ${selectedOption === opt ? 'selected' : ''}>${optionLabels[opt] || opt}</option>
@@ -512,10 +512,16 @@ const AssetsView = (() => {
         <input 
           type="text" 
           class="editor-input" 
-          placeholder="e.g. image1.jpeg" 
+          placeholder="e.g. images/reference/my-image.jpg or Base64" 
           style="display: ${selectedOption === 'custom' ? 'block' : 'none'}; min-height: 24px; padding: 2px 6px; font-size: 11px;"
           value="${_escapeHtml(customValue)}"
           oninput="${onchangeCustomInput}(${index}, this.value)"
+        />
+        <input 
+          type="file" 
+          accept="image/*" 
+          style="display: ${selectedOption === 'custom' ? 'block' : 'none'}; font-size: 10px; margin-top: 2px; border: none; background: transparent; padding: 0; max-width: 100%;"
+          onchange="AssetsView.handleImageUpload(event, ${index}, '${onchangeCustomInput}')"
         />
       </div>
     `;
@@ -523,15 +529,18 @@ const AssetsView = (() => {
 
   // Helper callbacks for Registration Modal Image Picker
   function onRegImageSelectChange(index, value) {
+    const textInput = document.querySelector(`#register-modal #editor-row-${index} .image-select-wrapper input[type="text"]`);
+    const fileInput = document.querySelector(`#register-modal #editor-row-${index} .image-select-wrapper input[type="file"]`);
+    
     if (value === 'custom') {
-      const input = document.querySelector(`#register-modal #editor-row-${index} .image-select-wrapper input`);
-      if (input) {
-        input.style.display = 'block';
-        _newAssetForm.customTemplateItems[index].image = input.value.trim() || 'generic-check.png';
+      if (textInput) {
+        textInput.style.display = 'block';
+        _newAssetForm.customTemplateItems[index].image = textInput.value.trim() || 'generic-check.png';
       }
+      if (fileInput) fileInput.style.display = 'block';
     } else {
-      const input = document.querySelector(`#register-modal #editor-row-${index} .image-select-wrapper input`);
-      if (input) input.style.display = 'none';
+      if (textInput) textInput.style.display = 'none';
+      if (fileInput) fileInput.style.display = 'none';
       _newAssetForm.customTemplateItems[index].image = value;
     }
     _validateRegForm();
@@ -544,15 +553,18 @@ const AssetsView = (() => {
 
   // Helper callbacks for Edit Modal Image Picker
   function onEditImageSelectChange(index, value) {
+    const textInput = document.querySelector(`#edit-asset-modal #editor-row-${index} .image-select-wrapper input[type="text"]`);
+    const fileInput = document.querySelector(`#edit-asset-modal #editor-row-${index} .image-select-wrapper input[type="file"]`);
+    
     if (value === 'custom') {
-      const input = document.querySelector(`#edit-asset-modal #editor-row-${index} .image-select-wrapper input`);
-      if (input) {
-        input.style.display = 'block';
-        _editForm.items[index].image = input.value.trim() || 'generic-check.png';
+      if (textInput) {
+        textInput.style.display = 'block';
+        _editForm.items[index].image = textInput.value.trim() || 'generic-check.png';
       }
+      if (fileInput) fileInput.style.display = 'block';
     } else {
-      const input = document.querySelector(`#edit-asset-modal #editor-row-${index} .image-select-wrapper input`);
-      if (input) input.style.display = 'none';
+      if (textInput) textInput.style.display = 'none';
+      if (fileInput) fileInput.style.display = 'none';
       _editForm.items[index].image = value;
     }
     _validateEditForm();
@@ -561,6 +573,33 @@ const AssetsView = (() => {
   function onEditImageCustomInputChange(index, value) {
     _editForm.items[index].image = value.trim() || 'generic-check.png';
     _validateEditForm();
+  }
+
+  function handleImageUpload(event, index, customInputCallbackName) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Url = e.target.result;
+      
+      // Update text input value visually
+      const wrapper = event.target.closest('.image-select-wrapper');
+      if (wrapper) {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        if (textInput) {
+          textInput.value = base64Url;
+        }
+      }
+      
+      // Call appropriate callback to update internal state
+      if (customInputCallbackName === 'AssetsView.onRegImageCustomInputChange') {
+        onRegImageCustomInputChange(index, base64Url);
+      } else if (customInputCallbackName === 'AssetsView.onEditImageCustomInputChange') {
+        onEditImageCustomInputChange(index, base64Url);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   // ─── Edit Asset & Checklist Modal ─────────────────────────────────────────
@@ -1448,6 +1487,7 @@ const AssetsView = (() => {
     onRegImageCustomInputChange,
     onEditImageSelectChange,
     onEditImageCustomInputChange,
+    handleImageUpload,
     openInspection,
     closeInspection,
     setItemStatus,

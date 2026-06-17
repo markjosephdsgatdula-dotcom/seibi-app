@@ -156,7 +156,8 @@ const ManualView = (() => {
                     ${step.image && step.image !== 'generic-check.png' ? `
                       <img 
                         class="manual-step-image" 
-                        src="${step.image}" 
+                        data-src="${step.image}"
+                        src="${isExpanded ? step.image : ''}" 
                         alt="Step ${step.step} - ${title}"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                       />
@@ -185,11 +186,23 @@ const ManualView = (() => {
 
   function toggleGuide(itemTitle) {
     _expandedGuides[itemTitle] = !_expandedGuides[itemTitle];
+    const isExpanded = _expandedGuides[itemTitle];
     
     // Find element and toggle classes manually for instantaneous response
     const el = document.getElementById(`manual-card-${_domId(itemTitle)}`);
     if (el) {
-      el.classList.toggle('is-expanded', _expandedGuides[itemTitle]);
+      el.classList.toggle('is-expanded', isExpanded);
+      
+      // Lazy-load images inside this card when expanded
+      if (isExpanded) {
+        const imgs = el.querySelectorAll('.manual-step-image');
+        imgs.forEach(img => {
+          const ds = img.getAttribute('data-src');
+          if (ds && !img.getAttribute('src')) {
+            img.setAttribute('src', ds);
+          }
+        });
+      }
     }
   }
 

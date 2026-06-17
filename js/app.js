@@ -74,7 +74,21 @@ const App = (() => {
     const APP_VERSION = 'v26_checklist_and_i18n';
 
     function proceedBoot() {
-      // Initialize PWA Reminders
+      // Initialize PWA Reminders (using Service Worker for background push notifications)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => {
+            console.log('[App] ServiceWorker registered with scope:', reg.scope);
+            if (typeof ReminderStore !== 'undefined') {
+              ReminderStore.setServiceWorker(reg);
+            }
+          })
+          .catch(err => {
+            console.warn('[App] ServiceWorker registration failed:', err);
+          });
+      }
+
+      // Initialize PWA Reminders (using Notification API directly without SW)
       if (typeof NotificationService !== 'undefined') {
         NotificationService.init();
       }

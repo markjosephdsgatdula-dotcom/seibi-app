@@ -131,6 +131,11 @@ const I18n = (() => {
       'manual_search': 'Search manuals...',
       'manual_step': 'Step',
       'manual_safety': 'Safety Note',
+      'notif_prompt_text': 'Enable push notifications for maintenance alerts?',
+      'notif_prompt_allow': 'Allow',
+      'notif_title': 'Seibi Maintenance Reminder',
+      'notif_body_tasks': 'You have {count} task(s) due today.',
+      'notif_body_overdue': ' ({count} overdue!)',
     },
     jp: {
       // Frequencies
@@ -253,6 +258,11 @@ const I18n = (() => {
       'manual_search': 'マニュアルを検索...',
       'manual_step': '手順',
       'manual_safety': '安全上の注意',
+      'notif_prompt_text': '点検アラートのプッシュ通知を有効にしますか？',
+      'notif_prompt_allow': '許可する',
+      'notif_title': '整備点検リマインダー',
+      'notif_body_tasks': '本日期限のタスクが {count} 件あります。',
+      'notif_body_overdue': '（期限超過 {count} 件！）',
     }
   };
 
@@ -271,6 +281,10 @@ const I18n = (() => {
     try {
       localStorage.setItem(STORAGE_KEY, lang);
     } catch (_) {}
+
+    if (typeof NotificationService !== 'undefined') {
+      NotificationService.updateTokenLang(lang);
+    }
 
     // Dispatch a global custom event so views know to refresh
     window.dispatchEvent(new CustomEvent('seibi_language_changed', { detail: lang }));

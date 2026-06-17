@@ -44,36 +44,52 @@ exports.dailyMaintenanceReminder = onSchedule({
     }
 
     const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
-    let body = `You have ${dueTasks.length} task(s) to complete today.`;
-    if (overdueCount > 0) {
-      body += ` (${overdueCount} overdue!)`;
-    }
 
     const tokensSnap = await admin.database().ref('fcmTokens').once('value');
     const tokensData = tokensSnap.val() || {};
-    const tokens = Object.keys(tokensData);
+    
+    // Group tokens by language preference
+    const groups = { en: [], jp: [] };
+    Object.entries(tokensData).forEach(([token, data]) => {
+      const lang = (data && data.lang) === 'jp' ? 'jp' : 'en';
+      groups[lang].push(token);
+    });
 
-    if (tokens.length === 0) {
-      console.log('No registered FCM tokens found. Skipping notification.');
-      return;
-    }
+    for (const [lang, tokens] of Object.entries(groups)) {
+      if (tokens.length === 0) continue;
 
-    const message = {
-      notification: {
-        title: 'Seibi Daily Maintenance',
-        body: body
-      },
-      tokens: tokens,
-      webpush: {
-        notification: {
-          icon: '/images/icon.svg',
-          vibrate: [200, 100, 200]
+      let title, body;
+      if (lang === 'jp') {
+        title = '本日の整備点検スケジュール';
+        body = `本日実施予定の点検が ${dueTasks.length} 件あります。`;
+        if (overdueCount > 0) {
+          body += `（期限超過 ${overdueCount} 件！）`;
+        }
+      } else {
+        title = 'Seibi Daily Maintenance';
+        body = `You have ${dueTasks.length} task(s) to complete today.`;
+        if (overdueCount > 0) {
+          body += ` (${overdueCount} overdue!)`;
         }
       }
-    };
 
-    const response = await admin.messaging().sendEachForMulticast(message);
-    console.log(`Successfully sent daily message. Success count: ${response.successCount}, Failure count: ${response.failureCount}`);
+      const message = {
+        notification: {
+          title: title,
+          body: body
+        },
+        tokens: tokens,
+        webpush: {
+          notification: {
+            icon: '/images/icon.svg',
+            vibrate: [200, 100, 200]
+          }
+        }
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`Successfully sent daily message in '${lang}'. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+    }
     
   } catch (error) {
     console.error('Error in dailyMaintenanceReminder:', error);
@@ -105,30 +121,45 @@ exports.weeklyMaintenanceReminder = onSchedule({
       return;
     }
 
-    const body = `You have ${upcomingTasks.length} task(s) scheduled for this week.`;
-
     const tokensSnap = await admin.database().ref('fcmTokens').once('value');
     const tokensData = tokensSnap.val() || {};
-    const tokens = Object.keys(tokensData);
+    
+    // Group tokens by language preference
+    const groups = { en: [], jp: [] };
+    Object.entries(tokensData).forEach(([token, data]) => {
+      const lang = (data && data.lang) === 'jp' ? 'jp' : 'en';
+      groups[lang].push(token);
+    });
 
-    if (tokens.length === 0) return;
+    for (const [lang, tokens] of Object.entries(groups)) {
+      if (tokens.length === 0) continue;
 
-    const message = {
-      notification: {
-        title: 'Seibi Weekly Forecast',
-        body: body
-      },
-      tokens: tokens,
-      webpush: {
-        notification: {
-          icon: '/images/icon.svg',
-          vibrate: [200, 100, 200]
-        }
+      let title, body;
+      if (lang === 'jp') {
+        title = '週次メンテナンス予定';
+        body = `今週実施予定の点検が ${upcomingTasks.length} 件あります。`;
+      } else {
+        title = 'Seibi Weekly Forecast';
+        body = `You have ${upcomingTasks.length} task(s) scheduled for this week.`;
       }
-    };
 
-    const response = await admin.messaging().sendEachForMulticast(message);
-    console.log(`Successfully sent weekly message. Success count: ${response.successCount}, Failure count: ${response.failureCount}`);
+      const message = {
+        notification: {
+          title: title,
+          body: body
+        },
+        tokens: tokens,
+        webpush: {
+          notification: {
+            icon: '/images/icon.svg',
+            vibrate: [200, 100, 200]
+          }
+        }
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`Successfully sent weekly message in '${lang}'. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+    }
     
   } catch (error) {
     console.error('Error in weeklyMaintenanceReminder:', error);
@@ -156,36 +187,55 @@ exports.testNotification = onRequest({ cors: true }, async (req, res) => {
     }
 
     const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
-    let body = `You have ${dueTasks.length} task(s) to complete today.`;
-    if (overdueCount > 0) {
-      body += ` (${overdueCount} overdue!)`;
-    }
 
     const tokensSnap = await admin.database().ref('fcmTokens').once('value');
     const tokensData = tokensSnap.val() || {};
-    const tokens = Object.keys(tokensData);
+    
+    // Group tokens by language preference
+    const groups = { en: [], jp: [] };
+    Object.entries(tokensData).forEach(([token, data]) => {
+      const lang = (data && data.lang) === 'jp' ? 'jp' : 'en';
+      groups[lang].push(token);
+    });
 
-    if (tokens.length === 0) {
-      res.status(200).send('No registered FCM tokens found. Skipping notification.');
-      return;
-    }
+    let results = [];
+    for (const [lang, tokens] of Object.entries(groups)) {
+      if (tokens.length === 0) continue;
 
-    const message = {
-      notification: {
-        title: 'Seibi Daily Maintenance (TEST)',
-        body: body
-      },
-      tokens: tokens,
-      webpush: {
-        notification: {
-          icon: '/images/icon.svg',
-          vibrate: [200, 100, 200]
+      let title, body;
+      if (lang === 'jp') {
+        title = '本日の整備点検スケジュール (テスト)';
+        body = `本日実施予定の点検が ${dueTasks.length} 件あります。`;
+        if (overdueCount > 0) {
+          body += `（期限超過 ${overdueCount} 件！）`;
+        }
+      } else {
+        title = 'Seibi Daily Maintenance (TEST)';
+        body = `You have ${dueTasks.length} task(s) to complete today.`;
+        if (overdueCount > 0) {
+          body += ` (${overdueCount} overdue!)`;
         }
       }
-    };
 
-    const response = await admin.messaging().sendEachForMulticast(message);
-    res.status(200).send(`Successfully sent message. Success count: ${response.successCount}, Failure count: ${response.failureCount}`);
+      const message = {
+        notification: {
+          title: title,
+          body: body
+        },
+        tokens: tokens,
+        webpush: {
+          notification: {
+            icon: '/images/icon.svg',
+            vibrate: [200, 100, 200]
+          }
+        }
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      results.push(`Sent '${lang}' messages. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+    }
+
+    res.status(200).send(results.join('\n') || 'No registered FCM tokens found.');
   } catch (error) {
     console.error('Error in testNotification:', error);
     res.status(500).send('Internal Server Error: ' + error.message);

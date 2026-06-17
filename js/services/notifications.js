@@ -3,8 +3,13 @@
 const NotificationService = (() => {
   let isSupported = 'Notification' in window && 'serviceWorker' in navigator;
   let hasGranted = isSupported && Notification.permission === 'granted';
+  let _currentToken = null;
 
   function init() {
+    try {
+      _currentToken = localStorage.getItem('seibi_fcm_token');
+    } catch (_) {}
+
     if (!isSupported) {
       console.warn('[Notifications] Not supported in this browser.');
       return;
@@ -41,10 +46,10 @@ const NotificationService = (() => {
     
     banner.innerHTML = `
       <span style="display:flex; align-items:center; gap:var(--space-2); font-weight:var(--font-weight-medium); color:#ffffff;">
-        <span style="font-size:16px;">🔔</span> Enable push notifications for maintenance alerts?
+        <span style="font-size:16px;">🔔</span> \${I18n.t('notif_prompt_text')}
       </span>
       <div style="display:flex; align-items:center; gap:var(--space-3);">
-        <button id="btn-notif-allow" style="background:#4f7cff; color:#ffffff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:var(--font-weight-bold); font-size:var(--font-size-xs); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Allow</button>
+        <button id="btn-notif-allow" style="background:#4f7cff; color:#ffffff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:var(--font-weight-bold); font-size:var(--font-size-xs); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">\${I18n.t('notif_prompt_allow')}</button>
         <button id="btn-notif-dismiss" style="background:none; border:none; color:#a1a8c9; cursor:pointer; padding:4px; font-size:16px; font-weight:bold;">✕</button>
       </div>
     `;
@@ -115,12 +120,30 @@ const NotificationService = (() => {
   }
 
   function _saveTokenToDb(token) {
+    _currentToken = token;
+    try {
+      localStorage.setItem('seibi_fcm_token', token);
+    } catch (_) {}
+
     if (typeof firebaseDb !== 'undefined') {
-      // Store token with device info/timestamp
+      // Store token with device info/timestamp and current language preference
       firebaseDb.ref('fcmTokens/' + token).set({
         timestamp: Date.now(),
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        lang: typeof I18n !== 'undefined' ? I18n.getLang() : 'en'
       }).catch(e => console.error('[FCM] Error saving token:', e));
+    }
+  }
+
+  function updateTokenLang(lang) {
+    if (!_currentToken) {
+      try {
+        _currentToken = localStorage.getItem('seibi_fcm_token');
+      } catch (_) {}
+    }
+    if (_currentToken && typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref(`fcmTokens/${_currentToken}/lang`).set(lang)
+        .catch(e => console.error('[FCM] Error updating token lang:', e));
     }
   }
 
@@ -132,9 +155,11 @@ const NotificationService = (() => {
         const dueTasks = tasks.filter(t => t.status === 'pending' || t.status === 'overdue');
         if (dueTasks.length > 0) {
           const overdueCount = dueTasks.filter(t => t.status === 'overdue').length;
-          let title = 'Seibi Maintenance Reminder';
-          let body = `You have ${dueTasks.length} task(s) due today.`;
-          if (overdueCount > 0) body += ` (${overdueCount} overdue!)`;
+          let title = I18n.t('notif_title');
+          let body = I18n.t('notif_body_tasks').replace('{count}', dueTasks.length);
+          if (overdueCount > 0) {
+            body += I18n.t('notif_body_overdue').replace('{count}', overdueCount);
+          }
 
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({
@@ -149,5 +174,5 @@ const NotificationService = (() => {
     }, 2000);
   }
 
-  return { init, checkDueTasks: _checkAndNotifyDueTasks };
+  return { init, checkDueTasks: _checkAndNotifyDueTasks, updateTokenLang };
 })();

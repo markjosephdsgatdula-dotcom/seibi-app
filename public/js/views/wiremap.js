@@ -238,6 +238,10 @@ const WireMapView = (() => {
         el.releasePointerCapture(e.pointerId);
         _draggedId = null;
       });
+
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+      });
     }
 
     return el;

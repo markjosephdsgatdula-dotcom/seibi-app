@@ -18,9 +18,9 @@
 const WireMapView = (() => {
 
   // Canvas & room bounds
-  const W = 1060, H = 545;
-  const R = { x1:14, y1:22, x2:1046, y2:396 };   // main room
-  const E = { x1:14, y1:396, x2:169, y2:526 };   // extension
+  const W = 1160, H = 630;
+  const R = { x1:14, y1:22, x2:1146, y2:478 };   // main room
+  const E = { x1:14, y1:478, x2:169, y2:608 };   // extension
 
   let _sel = null; // currently selected equipment id in view mode
   let _editMode = false;
@@ -59,16 +59,16 @@ const WireMapView = (() => {
     const isLeft = x <= (169 + 50); // allow slightly wider transition margin
     
     if (isLeft) {
-      x = Math.max(14 + halfW, Math.min(1046 - halfW, x));
-      // If x is positioned within extension bounds, let y go down to 526
+      x = Math.max(14 + halfW, Math.min(1146 - halfW, x));
+      // If x is positioned within extension bounds, let y go down to 608
       if (x <= 169 - halfW) {
-        y = Math.max(22 + halfH, Math.min(526 - halfH, y));
+        y = Math.max(22 + halfH, Math.min(608 - halfH, y));
       } else {
-        y = Math.max(22 + halfH, Math.min(396 - halfH, y));
+        y = Math.max(22 + halfH, Math.min(478 - halfH, y));
       }
     } else {
-      x = Math.max(14 + halfW, Math.min(1046 - halfW, x));
-      y = Math.max(22 + halfH, Math.min(396 - halfH, y));
+      x = Math.max(14 + halfW, Math.min(1146 - halfW, x));
+      y = Math.max(22 + halfH, Math.min(478 - halfH, y));
     }
     
     return { x, y };

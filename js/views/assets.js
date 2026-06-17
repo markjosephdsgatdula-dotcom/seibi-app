@@ -224,11 +224,13 @@ const AssetsView = (() => {
       AssetStore.getChecklistTemplate(11)
     ]).then(([templates, defaultItems]) => {
       _availableTemplates = templates;
-      _newAssetForm.customTemplateItems = defaultItems.map(item => ({
-        title: item.title,
-        desc: item.desc,
-        freq: item.freq,
-        image: item.image
+      _newAssetForm.customTemplateItems = defaultItems.map((item, idx) => ({
+        ...item,
+        id: idx + 1,
+        title: (item.title || '').trim() || `Check #${idx + 1}`,
+        desc: (item.desc || '').trim() || '',
+        freq: item.freq || 'monthly',
+        image: item.image || 'generic-check.png'
       }));
       _renderRegisterModal();
     });
@@ -587,12 +589,7 @@ const AssetsView = (() => {
         location: asset.location,
         type: asset.type,
         templateId: asset.templateId,
-        items: template.map(item => ({
-          title: item.title,
-          desc: item.desc,
-          freq: item.freq,
-          image: item.image
-        }))
+        items: template.map(item => ({ ...item }))
       };
       _renderEditModal();
     });

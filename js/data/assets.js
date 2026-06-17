@@ -483,9 +483,10 @@ const AssetStore = (() => {
     if (!tpl) return Promise.reject(new Error('Template not found'));
 
     tpl.items = items.map((item, idx) => ({
+      ...item,
       id: idx + 1,
-      title: item.title.trim() || `Check #${idx + 1}`,
-      desc: item.desc.trim() || '',
+      title: (item.title || '').trim() || `Check #${idx + 1}`,
+      desc: (item.desc || '').trim() || '',
       freq: item.freq || 'monthly',
       image: item.image || 'generic-check.png'
     }));

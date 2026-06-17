@@ -1,9 +1,8 @@
 /**
  * data/notices.js — Notice Board data store
  *
- * Persists to localStorage so posts survive page refreshes.
- * Shape is backend-ready: swap localStorage.getItem/setItem for
- * fetch('/api/notices') when a server is introduced.
+ * Reads/writes directly to Firebase Realtime Database via FirebaseSync cache.
+ * No localStorage persistence.
  *
  * Notice schema:
  *  { id, author, initials, category, message, timestamp (ISO string) }
@@ -12,8 +11,6 @@
 'use strict';
 
 const NoticeStore = (() => {
-
-  const STORAGE_KEY = 'seibi_notices';
 
   const CATEGORIES = {
     info:       { label: 'Info',       emoji: 'ℹ️' },
@@ -24,33 +21,21 @@ const NoticeStore = (() => {
     incident:   { label: 'Incident',   emoji: '🚨' },
   };
 
-  // ─── Seed data (shown only when localStorage is empty) ───────────────────
-  const _seed = [];
-
   // ─── Internal load/save ──────────────────────────────────────────────────
 
   function _load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    // First load: seed the store
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(_seed));
-    } catch (_) {}
-    return [..._seed];
+    return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.notices) || [];
   }
 
   function _save(notices) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notices));
-      if (typeof firebaseDb !== 'undefined') {
-        console.log('[NoticeStore] Saving notices to Firebase:', notices);
-        firebaseDb.ref('notices').set(notices).catch(err => {
-          console.error('[Firebase] Write error on notices:', err);
-        });
-      }
-    } catch (_) {}
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.notices = notices;
+    }
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('notices').set(notices).catch(err => {
+        console.error('[Firebase] Write error on notices:', err);
+      });
+    }
     return Promise.resolve();
   }
 
@@ -60,12 +45,8 @@ const NoticeStore = (() => {
     return Promise.resolve(_load());
   }
 
-  /**
-   * Post a new notice.
-   * @param {{ author: string, category: string, message: string }} data
-   */
   function post({ author, category, message, assetId = null, assetName = null, photo = null, incidentType = null, occurrenceTime = null }) {
-    const notices = _load();
+    const notices = _load().slice(); // clone
     const initials = author
       .trim()
       .split(/\s+/)
@@ -110,10 +91,6 @@ const NoticeStore = (() => {
     return Promise.all([saveNoticePromise, assetPromise, taskPromise]).then(() => notice);
   }
 
-  /**
-   * Delete a notice and clean up all associated side-effects.
-   * Clears corresponding repair tasks, history records, and resets asset repair status if appropriate.
-   */
   function deleteNotice(id) {
     console.log('[NoticeStore] Deleting notice with ID:', id);
     const notices = _load();
@@ -138,7 +115,7 @@ const NoticeStore = (() => {
       promises.push(HistoryStore.deleteRecord(`hist-repair-${id}`));
     }
 
-    // Bidirectional sync: if notice was unresolved and has assetId, reset repair status on the asset if no other unresolved notices exist for it
+    // Bidirectional sync: if notice was unresolved and has assetId, reset repair status
     if (notice.assetId && !notice.repaired && typeof AssetStore !== 'undefined') {
       const otherUnresolved = updatedNotices.some(n => n.assetId === notice.assetId && !n.repaired && (n.category === 'incident' || n.category === 'defect'));
       if (!otherUnresolved) {
@@ -153,19 +130,13 @@ const NoticeStore = (() => {
     });
   }
 
-  /**
-   * Clear all notices from storage.
-   */
   function clearAll() {
     _save([]);
     return Promise.resolve();
   }
 
-  /**
-   * Mark a notice as repaired/resolved.
-   */
   function markRepaired(id, { repairedBy, repairNote, repairPhoto = null }) {
-    const notices = _load();
+    const notices = _load().slice(); // clone
     const notice = notices.find(n => n.id === id);
     if (!notice) return Promise.resolve();
     notice.repaired    = true;
@@ -238,7 +209,7 @@ const NoticeStore = (() => {
   }
 
   function markUnresolved(id) {
-    const notices = _load();
+    const notices = _load().slice(); // clone
     const notice = notices.find(n => n.id === id);
     if (!notice) return Promise.resolve();
     

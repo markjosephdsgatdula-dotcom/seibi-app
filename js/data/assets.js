@@ -278,25 +278,18 @@ const AssetStore = (() => {
   // ─── Templates database operations ──────────────────────────────────────────
 
   function _loadTemplates() {
-    try {
-      const raw = localStorage.getItem(TEMPLATES_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    try {
-      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(_templatesSeed));
-    } catch (_) {}
-    return [..._templatesSeed];
+    return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.templates) || [];
   }
 
   function _saveTemplates(templates) {
-    try {
-      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
-      if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('templates').set(templates).catch(err => {
-          console.error('[Firebase] Write error on templates:', err);
-        });
-      }
-    } catch (_) {}
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.templates = templates;
+    }
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('templates').set(templates).catch(err => {
+        console.error('[Firebase] Write error on templates:', err);
+      });
+    }
     return Promise.resolve();
   }
 
@@ -331,25 +324,18 @@ const AssetStore = (() => {
   // ─── Assets database operations ─────────────────────────────────────────────
 
   function _loadAssets() {
-    try {
-      const raw = localStorage.getItem(ASSETS_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    try {
-      localStorage.setItem(ASSETS_KEY, JSON.stringify(_assetsSeed));
-    } catch (_) {}
-    return [..._assetsSeed];
+    return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.assets) || [];
   }
 
   function _saveAssets(assets) {
-    try {
-      localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
-      if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('assets').set(assets).catch(err => {
-          console.error('[Firebase] Write error on assets:', err);
-        });
-      }
-    } catch (_) {}
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.assets = assets;
+    }
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('assets').set(assets).catch(err => {
+        console.error('[Firebase] Write error on assets:', err);
+      });
+    }
     return Promise.resolve();
   }
 
@@ -562,6 +548,21 @@ const AssetStore = (() => {
     return Promise.resolve(asset);
   }
 
+  function updateDueDate(id, newDate) {
+    const assets = _loadAssets();
+    const asset = assets.find(a => a.id === id);
+    if (!asset) return Promise.reject(new Error('Asset not found'));
+
+    asset.dueDate = newDate;
+    _saveAssets(assets);
+
+    if (typeof AssetsView !== 'undefined') {
+      AssetsView.refresh();
+    }
+
+    return Promise.resolve(asset);
+  }
+
   return { 
     getAll, 
     getById, 
@@ -576,7 +577,8 @@ const AssetStore = (() => {
     updateTemplate,
     cloneTemplate,
     resolveRepair,
-    setRepairStatus
+    setRepairStatus,
+    updateDueDate
   };
 
 })();

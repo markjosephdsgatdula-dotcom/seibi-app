@@ -1,15 +1,14 @@
 /**
- * data/mock.js — Task data store with LocalStorage persistence for Seibi
+ * data/mock.js — Task data store
  *
  * Manages active/scheduled inspection tasks plotted on the calendar and
- * checklist views.
+ * checklist views. Reads/writes directly to Firebase Realtime Database
+ * via FirebaseSync cache. No localStorage persistence.
  */
 
 'use strict';
 
 const MockDB = (() => {
-
-  const STORAGE_KEY = 'seibi_tasks';
 
   /** @type {'high'|'medium'|'low'} */
   const PRIORITY = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
@@ -21,128 +20,19 @@ const MockDB = (() => {
     OVERDUE: 'overdue',
   };
 
-  // Seed tasks: Active robots due on Wednesday of next week (2026-06-10)
-  const _seed = [
-    {
-      id: 'task-robot-03',
-      title: 'Welding Robot #3 — Monthly Inspection',
-      assetId: 'asset-robot-03',
-      assetName: 'Welding Robot #3',
-      location: 'Bay B',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '09:00',
-      estimatedMins: 25,
-      assignedTo: 'Unassigned',
-      tags: ['robot', 'welding'],
-    },
-    {
-      id: 'task-robot-04',
-      title: 'Welding Robot #4 — Monthly Inspection',
-      assetId: 'asset-robot-04',
-      assetName: 'Welding Robot #4',
-      location: 'Bay B',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '10:00',
-      estimatedMins: 25,
-      assignedTo: 'Unassigned',
-      tags: ['robot', 'welding'],
-    },
-    {
-      id: 'task-robot-05',
-      title: 'Welding Robot #5 — Monthly Inspection',
-      assetId: 'asset-robot-05',
-      assetName: 'Welding Robot #5',
-      location: 'Bay C',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '11:00',
-      estimatedMins: 25,
-      assignedTo: 'Unassigned',
-      tags: ['robot', 'welding'],
-    },
-    {
-      id: 'task-robot-06',
-      title: 'Welding Robot #6 — Monthly Inspection',
-      assetId: 'asset-robot-06',
-      assetName: 'Welding Robot #6',
-      location: 'Bay C',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '13:00',
-      estimatedMins: 25,
-      assignedTo: 'Unassigned',
-      tags: ['robot', 'welding'],
-    },
-    {
-      id: 'task-robot-tig-01',
-      title: 'TIG Welding Robot #1 — Monthly Inspection',
-      assetId: 'asset-robot-tig-01',
-      assetName: 'TIG Welding Robot #1',
-      location: 'Bay D',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '14:00',
-      estimatedMins: 25,
-      assignedTo: 'Unassigned',
-      tags: ['robot', 'welding'],
-    },
-    {
-      id: 'task-regulator-01',
-      title: 'Regulator Pillar Left — Monthly Inspection',
-      assetId: 'asset-regulator-01',
-      assetName: 'Regulator Pillar Left',
-      location: 'Pillar Left',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '15:00',
-      estimatedMins: 15,
-      assignedTo: 'Unassigned',
-      tags: ['regulator', 'gas'],
-    },
-    {
-      id: 'task-regulator-02',
-      title: 'Regulator Pillar Right — Monthly Inspection',
-      assetId: 'asset-regulator-02',
-      assetName: 'Regulator Pillar Right',
-      location: 'Pillar Right',
-      priority: PRIORITY.HIGH,
-      status: STATUS.PENDING,
-      dueDate: '2026-06-10',
-      dueTime: '16:00',
-      estimatedMins: 15,
-      assignedTo: 'Unassigned',
-      tags: ['regulator', 'gas'],
-    }
-  ];
-
   function _load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(_seed));
-    } catch (_) {}
-    return [..._seed];
+    return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.tasks) || [];
   }
 
   function _save(tasks) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-      if (typeof firebaseDb !== 'undefined') {
-        firebaseDb.ref('tasks').set(tasks).catch(err => {
-          console.error('[Firebase] Write error on tasks:', err);
-        });
-      }
-    } catch (_) {}
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.tasks = tasks;
+    }
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('tasks').set(tasks).catch(err => {
+        console.error('[Firebase] Write error on tasks:', err);
+      });
+    }
     return Promise.resolve();
   }
 
@@ -185,7 +75,7 @@ const MockDB = (() => {
   }
 
   function markDone(id) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.status = STATUS.DONE;
@@ -197,7 +87,7 @@ const MockDB = (() => {
   }
 
   function markPending(id) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.status = STATUS.PENDING;
@@ -207,7 +97,7 @@ const MockDB = (() => {
   }
 
   function reschedule(id, newDate) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.dueDate = newDate;
@@ -215,18 +105,7 @@ const MockDB = (() => {
       
       // Bidirectional Sync with AssetStore: update next due date on the Asset registry card
       if (task.assetId && typeof AssetStore !== 'undefined') {
-        AssetStore.getAll().then(assets => {
-          const asset = assets.find(a => a.id === task.assetId);
-          if (asset) {
-            asset.dueDate = newDate;
-            try {
-              localStorage.setItem('seibi_assets', JSON.stringify(assets));
-            } catch (_) {}
-            
-            // Refresh assets view dynamically if initialized
-            if (typeof AssetsView !== 'undefined') AssetsView.refresh();
-          }
-        });
+        AssetStore.updateDueDate(task.assetId, newDate);
       }
     }
     return Promise.resolve(task);
@@ -237,7 +116,7 @@ const MockDB = (() => {
    * Marks the pending check as done, and creates a new pending task for the next Wednesday date.
    */
   function syncCompletedInspection(assetId, nextDueDate) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
 
     // 1. Mark existing pending/overdue task for this asset as completed today
     const activeTasks = tasks.filter(t => t.assetId === assetId && t.status !== STATUS.DONE);
@@ -278,7 +157,7 @@ const MockDB = (() => {
   }
 
   function scheduleInspectionTask(assetId, assetName, location, dueDate) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const exists = tasks.some(t => t.assetId === assetId && t.dueDate === dueDate && t.status !== STATUS.DONE);
     if (exists) return Promise.resolve();
 
@@ -303,7 +182,7 @@ const MockDB = (() => {
   }
 
   function scheduleCustomTask({ title, dueDate, dueTime, assignedTo, priority, notes }) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const newTask = {
       id: `task-custom-${Date.now()}`,
       title: title.trim(),
@@ -327,7 +206,7 @@ const MockDB = (() => {
   }
 
   function scheduleRepairTask({ noticeId, assetId, assetName, category, message }) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const offset = new Date().getTimezoneOffset() * 60000;
     const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
     const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
@@ -373,7 +252,7 @@ const MockDB = (() => {
   }
 
   function syncAssetDetails(assetId, assetName, location) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     let changed = false;
     tasks.forEach(t => {
       if (t.assetId === assetId) {
@@ -390,7 +269,7 @@ const MockDB = (() => {
   }
 
   function rollbackCompletedInspection(assetId, completedAtStr) {
-    const tasks = _load();
+    const tasks = _load().slice(); // clone
     const d = new Date(completedAtStr);
     const completionDay = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
@@ -442,13 +321,11 @@ const MockDB = (() => {
               } else {
                 asset.lastInspected = null;
               }
-              localStorage.setItem('seibi_assets', JSON.stringify(assets));
-              if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+              AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
             });
           } else {
             asset.lastInspected = null;
-            localStorage.setItem('seibi_assets', JSON.stringify(assets));
-            if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+            AssetStore.updateAsset(asset.id, { lastInspected: asset.lastInspected, status: asset.status, dueDate: asset.dueDate });
           }
         }
       });

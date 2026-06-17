@@ -5,9 +5,9 @@ This file serves as a handoff context document for the next Antigravity AI codin
 ---
 
 ## Conversation Identity & Logs
-* **Latest Conversation ID (Home PC):** `683c8ea3-7e81-48af-b646-cc11271fc721`
-* **Local Transcript Location:** `C:\Users\markj\.gemini\antigravity\brain\683c8ea3-7e81-48af-b646-cc11271fc721\.system_generated\logs\transcript.jsonl`
-* **User Project Workspace Cwd:** `C:\Users\markj\.gemini\antigravity\scratch\seibi-app`
+* **Latest Conversation ID (Office PC):** `2b463725-39fb-409e-90be-d644223a925c`
+* **Local Transcript Location (Office PC):** `C:\Users\SHOP4\.gemini\antigravity\brain\2b463725-39fb-409e-90be-d644223a925c\.system_generated\logs\transcript.jsonl`
+* **User Project Workspace Cwd (Office PC):** `C:\Users\SHOP4\.gemini\antigravity\scratch\seibi-app`
 
 ---
 
@@ -25,9 +25,15 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **Grinder & Sander Templates:** Defined checklist templates for Hand Grinder, Belt Grinder, and Mini Sander in the template registry. (Their definitions remain in the code, but they are not pre-populated as default seeded assets).
 * **Categorized Asset List:** Grouped the assets tab into distinct headers: "Active Welding Robots", "Active Gas Regulators", "Active Grinders & Sanders" (empty for now), and "Offline Equipment".
 
-### Stage 4: Wire Map Tab
+### Stage 4: Wire Map Tab & Interactive Layout Builder
 * **New Tab:** Added **"Wire Map"** tab between Assets and History in the bottom navigation bar. Has a custom monitor/map SVG icon.
-* **Floor Plan Layout (canvas: 1060 × 545 px):** Renders the SVG floor plan, injects clickable equipment elements, and manages the slide-in detail panel showing all connected wires (W-001... W-030).
+* **Expanded Canvas Floor Plan (1160 × 630 px):** Enlarged the drawing space by approximately one weld table size (+100px width, +85px height). Main room right wall moved to `x=1146` and bottom wall to `y=478`. Storage extension bottom wall moved to `y=608`.
+* **Interactive Layout Editor**:
+  * Added "Edit Layout" mode. Reposition equipment elements (circles/rectangles) with drag-and-drop. Drag bounds are locked within room boundaries.
+  * Added "Add Item" toolbar option with custom English/Japanese labels.
+  * Added "Delete" (trash icon) to remove items from the draft layout.
+  * Click events are captured (propagation stopped) on equipment in Edit Mode to prevent deselection on drag release.
+  * Integrates with Firebase Realtime Database: "Save" locks the layout and syncs new positions/additions/deletions; "Cancel" reverts changes.
 
 ### Stage 5: Sudden Incident Reporting & Auto-Generation of Repair Tasks
 * **Dedicated Logging Flow:** Added a prominent "Report Incident" modal button in the Notice Board toolbar and directly on each asset card in the Assets tab. Supports custom machine input.
@@ -69,10 +75,9 @@ This file serves as a handoff context document for the next Antigravity AI codin
 
 ## 🔮 Next Steps
 
-1. **Wire Map Refinements**:
-   * Add interactive wire editing or rename wire labels (e.g. W-001 -> A1/B1) if required by the user.
-
----
+1. **Wire Map Line Editing**:
+   * Add interactive wire/connection editing or line drawing between items on the map after locking the positions.
+   * Customize wire naming or routing on the layout.
 
 ### Stage 7: PWA, Manual View, & Push Notifications
 * **Manual View:** Added a dedicated PDF manual viewer tab in the main navigation.

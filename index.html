@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="css/history.css" />
   <link rel="stylesheet" href="css/assets.css" />
   <link rel="stylesheet" href="css/wiremap.css" />
+  <link rel="stylesheet" href="css/manual.css" />
 </head>
 <body>
 
@@ -148,6 +149,17 @@
         <!-- Rendered by NoticeView.init() -->
       </section>
 
+      <!-- VIEW: Manual -->
+      <section
+        id="view-manual"
+        class="view"
+        role="tabpanel"
+        aria-labelledby="tab-manual"
+        tabindex="0"
+      >
+        <!-- Rendered dynamically by ManualView.init() -->
+      </section>
+
     </main>
 
     <!-- -------- BOTTOM NAVIGATION BAR -------- -->
@@ -253,6 +265,25 @@
           </svg>
         </span>
         <span class="nav-label">Notice</span>
+      </button>
+
+      <button
+        id="tab-manual"
+        class="nav-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="view-manual"
+        data-view="manual"
+        onclick="App.Nav.switchTo('manual')"
+      >
+        <span class="nav-icon" aria-hidden="true">
+          <!-- Book icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span class="nav-label">Manual</span>
       </button>
 
     </nav>

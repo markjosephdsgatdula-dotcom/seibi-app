@@ -46,10 +46,10 @@ const NotificationService = (() => {
     
     banner.innerHTML = `
       <span style="display:flex; align-items:center; gap:var(--space-2); font-weight:var(--font-weight-medium); color:#ffffff;">
-        <span style="font-size:16px;">🔔</span> \${I18n.t('notif_prompt_text')}
+        <span style="font-size:16px;">🔔</span> 点検アラートのプッシュ通知を有効にしますか？
       </span>
       <div style="display:flex; align-items:center; gap:var(--space-3);">
-        <button id="btn-notif-allow" style="background:#4f7cff; color:#ffffff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:var(--font-weight-bold); font-size:var(--font-size-xs); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">\${I18n.t('notif_prompt_allow')}</button>
+        <button id="btn-notif-allow" style="background:#4f7cff; color:#ffffff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:var(--font-weight-bold); font-size:var(--font-size-xs); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">許可する</button>
         <button id="btn-notif-dismiss" style="background:none; border:none; color:#a1a8c9; cursor:pointer; padding:4px; font-size:16px; font-weight:bold;">✕</button>
       </div>
     `;
@@ -155,10 +155,10 @@ const NotificationService = (() => {
         const dueTasks = tasks.filter(t => t.status === 'pending' || t.status === 'overdue');
         if (dueTasks.length > 0) {
           const overdueCount = dueTasks.filter(t => t.status === 'overdue').length;
-          let title = I18n.t('notif_title');
-          let body = I18n.t('notif_body_tasks').replace('{count}', dueTasks.length);
+          let title = '整備点検リマインダー';
+          let body = `本日の点検タスクが ${dueTasks.length} 件あります。`;
           if (overdueCount > 0) {
-            body += I18n.t('notif_body_overdue').replace('{count}', overdueCount);
+            body += `（期限超過 ${overdueCount} 件！）`;
           }
 
           if (navigator.serviceWorker.controller) {

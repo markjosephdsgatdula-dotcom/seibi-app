@@ -9,7 +9,7 @@ let isStaging = false;
 
 if (typeof window !== 'undefined') {
   const searchParams = new URLSearchParams(window.location.search);
-  if (searchParams.get('env') === 'staging') {
+  if (searchParams.get('env') === 'staging' || window.location.hostname.includes('staging')) {
     isStaging = true;
   } else if (window.location.hash.includes('env=staging')) {
     isStaging = true;

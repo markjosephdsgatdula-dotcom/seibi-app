@@ -11,12 +11,6 @@ const I18n = (() => {
 
   const DICTIONARY = {
     en: {
-      // Frequencies
-      'freq_monthly': 'MONTHLY',
-      'freq_semi_annual': 'SEMI-ANNUAL',
-      'freq_annual': 'ANNUAL',
-      'freq_every_3_years': 'EVERY 3 YEARS',
-
       // Bottom Nav
       'nav_home': 'Home',
       'nav_assets': 'Assets',
@@ -133,12 +127,6 @@ const I18n = (() => {
       'manual_safety': 'Safety Note',
     },
     jp: {
-      // Frequencies
-      'freq_monthly': '毎月',
-      'freq_semi_annual': '半年ごと',
-      'freq_annual': '毎年',
-      'freq_every_3_years': '3年ごと',
-
       // Bottom Nav
       'nav_home': 'ホーム',
       'nav_assets': '設備管理',

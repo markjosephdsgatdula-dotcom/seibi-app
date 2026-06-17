@@ -28,28 +28,103 @@ const AssetStore = (() => {
 
   // Seed default checklist template items (Decoupled Regulator check #8, re-numbered to 11 items)
   const _defaultChecklistItems = [
-    { id: 1, title: 'Clean welder rear filter', title_en: 'Clean Welder Rear Filter', title_jp: '溶接機裏側のフィルター清掃', desc: 'Remove rear filter and blow out dust with compressed air or replace with new one.', desc_en: 'Remove rear filter and blow out dust with compressed air or replace with new one.', desc_jp: 'パワーソース（溶接電源）裏側のフィルターを取り外し、粉塵をエアーブローするか、新しいものに交換する。', freq: 'monthly', image: 'image1.jpeg', category: 'A' },
-    { id: 2, title: 'Verify robot & joint alignment', title_en: 'Verify Robot & Joint Alignment', title_jp: '定盤位置出し・各軸合わせマークの確認', desc: 'Run calibration program (A, B, C) and verify J1-J6 alignment marks visually.', desc_en: 'Run calibration program (A, B, C) and verify J1-J6 alignment marks visually.', desc_jp: '基準校正プログラムを実行し、定盤A、B、Cでの位置確認と同時に、J1〜J6各軸の合わせマーク（矢印・ケガキ線）が一致しているか目視確認する。', freq: 'monthly', image: 'image10.jpeg', category: 'A' },
-    { id: 3, title: 'Test emergency stop button', title_en: 'Test Emergency Stop Button', title_jp: '非常停止ボタンの作動確認', desc: 'Ensure all Emergency buttons halt the robot immediately.', desc_en: 'Ensure all Emergency buttons halt the robot immediately.', desc_jp: 'すべての非常停止ボタンがロボットを即座に停止させるか確認する。', freq: 'monthly', image: 'image4.jpeg', category: 'A' },
-    { id: 4, title: 'Check welding ground cable', title_en: 'Check Welding Ground Cable', title_jp: '溶接アース接続部の緩み点検', desc: 'Inspect grounding clamps and table connections for looseness.', desc_en: 'Inspect grounding clamps and table connections for looseness.', desc_jp: 'アースクランプおよび定盤の接続部に緩みがないか点検する。', freq: 'monthly', image: 'generic-check.png', category: 'A' },
-    { id: 5, title: 'Test torch shock sensor', title_en: 'Test Torch Shock Sensor', title_jp: 'トーチ衝突検知センサー動作テスト', desc: 'Manually deflect the torch to ensure the collision safety circuit halts the robot.', desc_en: 'Manually deflect the torch to ensure the collision safety circuit halts the robot.', desc_jp: 'トーチの衝突検知センサーを手動で軽くたわませ、安全回路が作動してロボットが即座に一時停止することを確認する。', freq: 'monthly', image: 'generic-check.png', category: 'A' },
-    { id: 6, title: 'Verify wire feed pressure (3.5)', title_en: 'Verify Wire Feed Pressure (3.5)', title_jp: '送給装置の送給圧調整（3.5に調整）', desc: 'Check and adjust wire feed roller pressure to exactly 3.5 to prevent slipping.', desc_en: 'Check and adjust wire feed roller pressure to exactly 3.5 to prevent slipping.', desc_jp: '送給装置の加圧ローラーの圧力設定を確認し、ワイヤーの滑りや潰れを防止するために「3.5」に調整・維持する。', freq: 'monthly', image: 'generic-check.png', category: 'A' },
-    { id: 7, title: 'Sand & oil welding table', title_en: 'Sand & Oil Welding Table', title_jp: '定盤・溶接台の清掃（研磨・防錆油塗布）', desc: 'Remove spatter with a buffer and apply anti-rust oil to the welding table.', desc_en: 'Remove spatter with a buffer and apply anti-rust oil to the welding table.', desc_jp: 'バフ研磨機でスパッタを除去し、溶接定盤に防錆油を塗布する。', freq: 'monthly', image: 'generic-check.png', category: 'A' },
-    { id: 8, title: 'Clean conduit hose inner liner', title_en: 'Clean Conduit Hose Inner Liner', title_jp: 'コンジットホース内のアルコール清掃', desc: 'Clean the conduit hose with alcohol.', desc_en: 'Clean the conduit hose with alcohol.', desc_jp: 'コンジットホースをアルコールで清掃する。', freq: 'semi-annual', image: 'image11.jpeg', category: 'A' },
-    { id: 9, title: 'Blow air inside welder & boards', title_en: 'Blow Air Inside Welder & Boards', title_jp: '溶接機・基板内部のエアブロー清掃', desc: 'Remove the cover and blow dry air to remove conductive dust from PCBs and power modules.', desc_en: 'Remove the cover and blow dry air to remove conductive dust from PCBs and power modules.', desc_jp: 'カバーを取り外し、内部基板やパワー半導体に付着した導電性粉塵を乾燥したエアーで吹き飛ばす。', freq: 'annual', image: 'image12.jpeg', category: 'A' },
-    { id: 10, title: 'Visual check of mounting bolts', title_en: 'Visual Check of Mounting Bolts', title_jp: 'ロボット台座・取付ボルト緩みの目視点検', desc: 'Visually check base anchor bolts and alignment marks, or perform tap testing.', desc_en: 'Visually check base anchor bolts and alignment marks, or perform tap testing.', desc_jp: 'ロボットベース固定用アンカーボルトが緩んでいないか、合いマークのズレや目視確認、または打音テストによって確認する。', freq: 'annual', image: 'generic-check.png', category: 'A' },
+    // Monthly (7 Items)
+    { 
+      id: 1, 
+      title: 'Clean welder rear filter', title_en: 'Clean Welder Rear Filter', title_jp: '溶接機裏側のフィルター清掃',
+      desc: 'Clean or replace controller cabinet door air filters.', desc_en: 'Clean or replace controller cabinet door air filters.', desc_jp: 'コントローラー冷却ファン・ドアフィルターの清掃・交換',
+      freq: 'monthly', image: 'image1.jpeg' 
+    },
+    { 
+      id: 2, 
+      title: 'Check startup noise & fans', title_en: 'Check Startup Noise & Fans', title_jp: '電源ON時の異音確認',
+      desc: 'Verify that internal exhaust and intake fans run smoothly.', desc_en: 'Verify that internal exhaust and intake fans run smoothly.', desc_jp: 'ファンモーターの回転異音、風量、目視確認',
+      freq: 'monthly', image: 'image3.jpeg' 
+    },
+    { 
+      id: 3, 
+      title: 'Verify robot alignment', title_en: 'Verify Robot Alignment', title_jp: 'ロボットと定盤の位置出し確認',
+      desc: 'Load alignment program and check TCP to fixture alignment.', desc_en: 'Load alignment program and check TCP to fixture alignment.', desc_jp: 'ロボットと定盤の位置出し確認（定盤A、B、C）',
+      freq: 'monthly', image: 'image10.jpeg' 
+    },
+    { 
+      id: 4, 
+      title: 'Test emergency stop button', title_en: 'Test Emergency Stop Button', title_jp: '非常停止ボタンの作動確認',
+      desc: 'Test all emergency stop buttons and gate interlocks.', desc_en: 'Test all emergency stop buttons and gate interlocks.', desc_jp: '非常停止ボタン、安全柵インターロックの遮断作動テスト',
+      freq: 'monthly', image: 'image4.jpeg' 
+    },
+    { 
+      id: 5, 
+      title: 'Check welding ground cable', title_en: 'Check Welding Ground Cable', title_jp: 'アースケーブルの点検',
+      desc: 'Inspect grounding clamp and table connections.', desc_en: 'Inspect grounding clamp and table connections.', desc_jp: 'アースケーブル接続部、溶接テーブル接続ボルトの緩み点検',
+      freq: 'monthly', image: 'generic-check.png' 
+    },
+    { 
+      id: 6, 
+      title: 'Test torch shock sensor', title_en: 'Test Torch Shock Sensor', title_jp: 'トーチ衝突検知センサー動作テスト',
+      desc: 'Test the torch collision safety guard switch.', desc_en: 'Test the torch collision safety guard switch.', desc_jp: 'トーチ衝突検知センサーの作動・断線チェック',
+      freq: 'monthly', image: 'generic-check.png' 
+    },
+    { 
+      id: 7, 
+      title: 'Inspect gearbox grease leaks', title_en: 'Inspect Gearbox Grease Leaks', title_jp: '各軸減速機のグリス漏れ点検',
+      desc: 'Inspect axis joints (Axis 1–6) for grease leaks.', desc_en: 'Inspect axis joints (Axis 1–6) for grease leaks.', desc_jp: '各軸減速機のグリス漏れ点検（1〜6軸）',
+      freq: 'monthly', image: 'generic-check.png' 
+    },
 
-    // Gas Regulator
-    { id: 1, title: 'Check gas leak', title_en: 'Check Gas Leak', title_jp: 'ガス漏れ確認', desc: 'Check for gas leaks (apply leak detector spray to the regulator, coupler, and pipe connections).', desc_en: 'Check for gas leaks (apply leak detector spray to the regulator, coupler, and pipe connections).', desc_jp: 'ガス漏れ確認（レギュレーター、カプラ、配管接続部に探知スプレー）', freq: 'monthly', image: 'image8.jpeg' },
-    { id: 2, title: 'Adjust and verify flow rate', title_en: 'Adjust & Verify Flow Rate', title_jp: '流量12L/min調整', desc: 'Adjust the flow rate to 12L/min and verify proper operation.', desc_en: 'Adjust the flow rate to 12L/min and verify proper operation.', desc_jp: '流量12L/min調整・動作確認', freq: 'monthly', image: 'image8.jpeg' },
+    // Semi-Annual (3 Items)
+    { 
+      id: 8, 
+      title: 'Clean conduit hose', title_en: 'Clean Conduit Hose', title_jp: 'コンジットホース内のアルコール清掃',
+      desc: 'Clean conduit hose internally with alcohol.', desc_en: 'Clean conduit hose internally with alcohol.', desc_jp: 'コンジットホース内のアルコール清掃',
+      freq: 'semi-annual', image: 'image11.jpeg' 
+    },
+    { 
+      id: 9, 
+      title: 'Verify wire feed pressure (3.5)', title_en: 'Verify Wire Feed Pressure (3.5)', title_jp: '送給装置の送給圧調整（3.5に調整）',
+      desc: 'Inspect roll groove wear and gear backlash. Adjust pressure to 3.5.', desc_en: 'Inspect roll groove wear and gear backlash. Adjust pressure to 3.5.', desc_jp: '送給ローラーの摩耗、溝サイズ、ギア部の清掃と加圧チェック（3.5に調整）',
+      freq: 'semi-annual', image: 'generic-check.png' 
+    },
+    { 
+      id: 10, 
+      title: 'Verify joint alignment marks', title_en: 'Verify Joint Alignment Marks', title_jp: '各軸の合わせマーク（原点矢印）の一致確認',
+      desc: 'Verify the zero-position alignment marks on all joints.', desc_en: 'Verify the zero-position alignment marks on all joints.', desc_jp: '各軸の合わせマーク（原点矢印）の一致確認',
+      freq: 'semi-annual', image: 'generic-check.png' 
+    },
 
-    // Main Gas Utility
-    { id: 1, title: 'Check gas pressure needle', title_en: 'Check Gas Pressure Needle', title_jp: 'ガス圧計ゲージの針確認', desc: 'Check the gas pressure gauge needle in the 1F Courtyard (contact Daimaru Enawin if abnormal).', desc_en: 'Check the gas pressure gauge needle in the 1F Courtyard (contact Daimaru Enawin if abnormal).', desc_jp: '1F中庭 ガス圧計ゲージの針確認（異常時は大丸エナウィンに連絡）', freq: 'monthly', image: 'image2.jpeg' },
+    // Annual (3 Items)
+    { 
+      id: 11, 
+      title: 'Blow air inside machine', title_en: 'Blow Air Inside Machine', title_jp: '溶接機内のエアブロー清掃',
+      desc: 'Blow dust out of the welding power source interior.', desc_en: 'Blow dust out of the welding power source interior.', desc_jp: '溶接機内のエアブロー清掃',
+      freq: 'annual', image: 'image12.jpeg' 
+    },
+    { 
+      id: 12, 
+      title: 'Visual check of mounting bolts', title_en: 'Visual Check of Mounting Bolts', title_jp: 'ロボット台座・取付ボルト緩みの目視点検',
+      desc: 'Visual check of base mounting bolts (no torque wrench).', desc_en: 'Visual check of base mounting bolts (no torque wrench).', desc_jp: 'ロボット台座・取付ボルト緩みの目視点検',
+      freq: 'annual', image: 'generic-check.png' 
+    },
+    { 
+      id: 13, 
+      title: 'Sand & oil welding table', title_en: 'Sand & Oil Welding Table', title_jp: '定盤・溶接台の清掃（研磨・防錆油塗布）',
+      desc: 'Sand and oil the welding table.', desc_en: 'Sand and oil the welding table.', desc_jp: '定盤・溶接台の清掃（研磨・防錆油塗布）',
+      freq: 'annual', image: 'generic-check.png' 
+    },
 
-    // Grinder & Sander
-    { id: 1, title: 'Inspect power cable', title_en: 'Inspect Power Cable', title_jp: '電気配線の破損確認', desc: 'Visually inspect the power cable for any damage (look for cracks in the insulation or broken wires).', desc_en: 'Visually inspect the power cable for any damage (look for cracks in the insulation or broken wires).', desc_jp: '電気配線の破損確認（目視による被覆の亀裂や断線の有無）', freq: 'monthly', image: 'generic-check.png' },
-    { id: 2, title: 'Check grinding belt wear', title_en: 'Check Grinding Belt Wear', title_jp: '研磨ベルトの摩耗確認', desc: 'Check the grinding belt for wear, cracks, or clogging.', desc_en: 'Check the grinding belt for wear, cracks, or clogging.', desc_jp: '研磨ベルトの摩耗、ひび割れ、目詰まりの確認', freq: 'monthly', image: 'generic-check.png' },
-    { id: 3, title: 'Test abnormal vibration / sound', title_en: 'Test Abnormal Vibration / Sound', title_jp: '異音・異常振動確認', desc: 'Run the tool without load to verify switch operation, and check for abnormal noises or vibrations.', desc_en: 'Run the tool without load to verify switch operation, and check for abnormal noises or vibrations.', desc_jp: '無負荷状態で運転させ、スイッチの作動、異音・異常振動が無いか確認', freq: 'monthly', image: 'generic-check.png' }
+    // Long-Term (2 Items)
+    { 
+      id: 14, 
+      title: 'Replace encoder batteries (Power ON)', title_en: 'Replace Encoder Batteries (Power ON)', title_jp: '本体エンコーダ用バッテリー交換（通電中）',
+      desc: 'Replace manipulator internal encoder backup batteries. Power must be ON.', desc_en: 'Replace manipulator internal encoder backup batteries. Power must be ON.', desc_jp: 'ロボット本体エンコーダ用バックアップバッテリーの交換（通電中）',
+      freq: 'every-3-years', image: 'generic-check.png' 
+    },
+    { 
+      id: 15, 
+      title: 'Replace CPU batteries (Power ON)', title_en: 'Replace CPU Batteries (Power ON)', title_jp: 'コントローラーCPU用バッテリー交換（通電中）',
+      desc: 'Replace controller CPU board memory backup batteries. Power must be ON.', desc_en: 'Replace controller CPU board memory backup batteries. Power must be ON.', desc_jp: 'コントローラーCPUボード用バックアップバッテリーの交換（通電中）',
+      freq: 'every-3-years', image: 'generic-check.png' 
+    }
   ];
 
   // Seed templates

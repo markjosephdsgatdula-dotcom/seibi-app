@@ -588,7 +588,10 @@ const AssetsView = (() => {
         type: asset.type,
         templateId: asset.templateId,
         items: template.map(item => ({
-          ...item
+          title: item.title,
+          desc: item.desc,
+          freq: item.freq,
+          image: item.image
         }))
       };
       _renderEditModal();
@@ -881,20 +884,6 @@ const AssetsView = (() => {
     const resolvedPath = _resolveImagePath(item.image);
     const isJp = I18n.getLang() === 'jp';
 
-    // Fallback translation lookup in case the DB template lost its JP strings
-    let defaultItem = _defaultChecklistItems.find(d => d.id === item.id) || {};
-    if (defaultItem.title !== item.title && defaultItem.title_en !== item.title) {
-      defaultItem = {}; // Prevent cross-template fallback (e.g. regulator ID 1 pulling robot ID 1)
-    }
-    const titleJp = item.title_jp || defaultItem.title_jp || item.title;
-    const titleEn = item.title_en || defaultItem.title_en || item.title;
-    const descJp = item.desc_jp || defaultItem.desc_jp || item.desc;
-    const descEn = item.desc_en || defaultItem.desc_en || item.desc;
-
-    // Translate frequency tag
-    const freqKey = `freq_${(item.freq || '').replace('-', '_')}`;
-    const freqDisplay = (typeof I18n !== 'undefined' && I18n.t(freqKey)) ? I18n.t(freqKey) : (item.freq || '').toUpperCase();
-
     return `
       <div class="checklist-item-card" id="item-card-${item.id}">
         
@@ -902,9 +891,9 @@ const AssetsView = (() => {
         <div class="checklist-item-header">
           <div class="checklist-item-title-row" style="flex-wrap: wrap; gap: var(--space-2); align-items: center;">
             <span class="checklist-item-num-title">
-              ${_circleNumber(item.id)} ${isJp ? titleJp : titleEn}
+              ${_circleNumber(item.id)} ${isJp ? (item.title_jp || item.title) : (item.title_en || item.title)}
             </span>
-            <span class="checklist-item-freq">${freqDisplay}</span>
+            <span class="checklist-item-freq">${item.freq}</span>
             <button class="btn-howto-link" onclick="AssetsView.openManualGuide('${_escapeQuote(item.title)}')" style="background: none; border: none; padding: 0; color: var(--clr-accent); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline;">
               📖 ${I18n.t('manual_howto')}
             </button>
@@ -932,7 +921,7 @@ const AssetsView = (() => {
 
         <!-- Details Row -->
         <div class="checklist-item-details">
-          <p class="checklist-item-desc">${isJp ? descJp : descEn || (isJp ? '詳細な指示はありません。' : 'No detailed instructions.')}</p>
+          <p class="checklist-item-desc">${isJp ? (item.desc_jp || item.desc) : (item.desc_en || item.desc || item.desc_jp) || (isJp ? '詳細な指示はありません。' : 'No detailed instructions.')}</p>
           ${resolvedPath ? `
             <div 
               class="ref-photo-wrapper" 

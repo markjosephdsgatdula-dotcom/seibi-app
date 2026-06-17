@@ -1129,6 +1129,7 @@ const AssetsView = (() => {
     const historyRecord = {
       title: isJp ? `${assetName} — 月次点検` : `${_activeAsset.name} — Monthly Inspection`,
       title_jp: `${assetName} — 月次点検`,
+      assetId: _activeAsset.id,
       assetName: _activeAsset.name,
       assetName_jp: _activeAsset.name_jp || _activeAsset.name,
       location: _activeAsset.location,
@@ -1139,7 +1140,8 @@ const AssetsView = (() => {
       notes: totalDefects === 0 
         ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
         : (isJp ? `${totalDefects}件の不具合が報告されました` : `${totalDefects} issue(s) reported`),
-      checklist: _checklistState
+      checklist: _checklistState,
+      type: 'inspection'
     };
 
     HistoryStore.addRecord(historyRecord).then(() => {

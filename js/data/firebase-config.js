@@ -141,7 +141,7 @@ const FirebaseSync = (() => {
     if (dot && txt) {
       dot.className = `status-dot status-dot--${status}`;
       const envText = SEIBI_ENV === 'staging' ? ' · STAGING' : '';
-      txt.textContent = `${text} (v25${envText})`;
+      txt.textContent = `${text} (v26${envText})`;
     }
   }
 

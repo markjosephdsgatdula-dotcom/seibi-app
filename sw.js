@@ -24,7 +24,7 @@ try {
   console.warn('[sw.js] Firebase Messaging initialization failed:', e);
 }
 
-const CACHE_NAME = 'seibi-app-v2';
+const CACHE_NAME = 'seibi-app-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

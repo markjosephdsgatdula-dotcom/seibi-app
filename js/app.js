@@ -71,7 +71,7 @@ const App = (() => {
       _translateStaticShell();
     }
 
-    const APP_VERSION = 'v25_firebase_only';
+    const APP_VERSION = 'v26_checklist_and_i18n';
 
     function proceedBoot() {
       // Initialize PWA Reminders

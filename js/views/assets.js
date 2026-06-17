@@ -77,11 +77,8 @@ const AssetsView = (() => {
       <article class="asset-card status-${asset.status === 'inspection_due' ? 'due' : asset.status}" id="asset-card-${asset.id}">
         <div class="asset-card-content">
           <div class="asset-card-header">
-            <div>
-              <h3 class="asset-name">${asset.name}</h3>
-              <span class="asset-model">${asset.model}</span>
-            </div>
-            ${_statusBadge(asset.status)}
+            <h3 class="asset-name">${(I18n.getLang() === 'jp' && asset.name_jp) ? asset.name_jp : asset.name}</h3>
+            <div class="asset-badges">${asset.model}</span>
           </div>
           
           <div class="asset-meta-rows" style="margin-top: 12px;">
@@ -445,8 +442,9 @@ const AssetsView = (() => {
       if (typeof HomeView !== 'undefined') HomeView.refresh();
       if (typeof CalendarView !== 'undefined') CalendarView.init();
 
-      const msg = I18n.getLang() === 'jp'
-        ? `${newAsset.name} を登録しました`
+      const isJp = I18n.getLang() === 'jp';
+      const msg = isJp
+        ? `${(newAsset.name_jp || newAsset.name)} を登録しました`
         : `Registered ${newAsset.name}`;
       _showSuccessBanner(msg);
     });
@@ -584,6 +582,7 @@ const AssetsView = (() => {
       _editForm = {
         id: asset.id,
         name: asset.name,
+        name_jp: asset.name_jp || asset.name,
         model: asset.model,
         location: asset.location,
         type: asset.type,
@@ -813,14 +812,15 @@ const AssetsView = (() => {
     modal.className = 'inspection-modal-backdrop';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', isJp ? `点検フォーム: ${_activeAsset.name}` : `Inspection form for ${_activeAsset.name}`);
+    const assetName = (isJp && _activeAsset.name_jp) ? _activeAsset.name_jp : _activeAsset.name;
+    modal.setAttribute('aria-label', isJp ? `点検フォーム: ${assetName}` : `Inspection form for ${assetName}`);
 
     modal.innerHTML = `
       <div class="inspection-modal-panel">
         
         <!-- Header -->
         <header class="inspection-modal-header">
-          <h2 class="inspection-modal-title">${isJp ? '点検' : 'Inspection'}: ${_activeAsset.name}</h2>
+          <h2 class="inspection-modal-title">${isJp ? '点検' : 'Inspection'}: ${assetName}</h2>
           <button class="inspection-modal-close" onclick="AssetsView.closeInspection()" aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -1081,27 +1081,28 @@ const AssetsView = (() => {
 
     const failedItems = _checklistState.filter(item => item.status === 'fail');
     const totalDefects = failedItems.length;
-    
-    let reportNotes = totalDefects === 0 
-      ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
-      : (isJp ? `${totalDefects}件の不具合が報告されました: ` : `${totalDefects} issue(s) reported: `);
-    
-    if (totalDefects > 0) {
-      reportNotes += failedItems.map(item => `[${item.title}: ${item.notes}]`).join(', ');
-    }
+    const assetName = (isJp && _activeAsset.name_jp) ? _activeAsset.name_jp : _activeAsset.name;
+
+    const failedReport = failedItems.map(item => {
+      const itemTitle = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
+      return { itemTitle, notes: item.notes };
+    });
 
     const priority = totalDefects > 0 ? 'high' : 'low';
 
     const historyRecord = {
-      title: `${_activeAsset.name} — Monthly Inspection`,
-      assetId: _activeAsset.id,
+      title: isJp ? `${assetName} — 月次点検` : `${_activeAsset.name} — Monthly Inspection`,
+      title_jp: `${assetName} — 月次点検`,
       assetName: _activeAsset.name,
+      assetName_jp: _activeAsset.name_jp || _activeAsset.name,
       location: _activeAsset.location,
       priority: priority,
       completedAt: new Date().toISOString(),
       durationMins: duration,
       completedBy: name,
-      notes: reportNotes,
+      notes: totalDefects === 0 
+        ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
+        : (isJp ? `${totalDefects}件の不具合が報告されました` : `${totalDefects} issue(s) reported`),
       checklist: _checklistState
     };
 
@@ -1111,15 +1112,12 @@ const AssetsView = (() => {
       let noticePromise = Promise.resolve();
       if (failedItems.length > 0 && typeof NoticeStore !== 'undefined') {
         const postPromises = failedItems.map(item => {
+          const itemTitle = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
           const messageText = isJp
-            ? `【異常検知】 ${_activeAsset.name} — ${_activeAsset.location}\n` +
-              `不合格項目: ${item.title}\n` +
-              `異常内容: ${item.notes}\n` +
-              `報告点検: 定期点検 (${duration}分)`
-            : `[DEFECT FOUND] ${_activeAsset.name} — ${_activeAsset.location}\n` +
-              `Failed Check: ${item.title}\n` +
-              `Issue: ${item.notes}\n` +
-              `Reported during: Monthly Inspection (${duration} mins)`;
+            ? `【異常検知】 ${assetName} — ${_activeAsset.location}\n` +
+              `点検中に「${itemTitle}」で異常が報告されました。`
+            : `[DEFECT FOUND] ${assetName} — ${_activeAsset.location}\n` +
+              `Defect reported during inspection of "${itemTitle}".`;
 
           return NoticeStore.post({
             author: name,
@@ -1174,8 +1172,16 @@ const AssetsView = (() => {
     `;
 
     toast.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      ${message}
+      <div class="toast-content">
+        <span class="toast-icon">⚠️</span>
+        <span>${isJp ? '点検が未完了です。' : 'Inspection incomplete.'}</span>
+      </div>
+      <button class="btn btn-outline btn-sm toast-action" onclick="App.AssetsView.resumeInspection()">
+        ${isJp
+      ? `↩️ ${assetName} の点検に戻る`
+      : `↩️ Return to Inspection of ${assetName}`
+    }
+      </button>
     `;
 
     document.body.appendChild(toast);
@@ -1368,9 +1374,10 @@ const AssetsView = (() => {
     banner.style.alignItems = 'center';
 
     const isJp = I18n.getLang() === 'jp';
+    const assetName = (isJp && _activeAsset.name_jp) ? _activeAsset.name_jp : _activeAsset.name;
     const btnText = isJp
-      ? `🔧 ${_activeAsset.name} の点検に戻る`
-      : `🔧 Return to Inspection of ${_activeAsset.name}`;
+      ? `🔧 ${assetName} の点検に戻る`
+      : `🔧 Return to Inspection of ${assetName}`;
 
     banner.innerHTML = `
       <button onclick="AssetsView.resumeInspection()" style="

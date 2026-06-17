@@ -158,12 +158,16 @@ const HomeView = (() => {
          </button>`
       : '';
 
+    const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+    const displayTitle = (isJp && task.title_jp) ? task.title_jp : task.title;
+    const displayAssetName = (isJp && task.assetName_jp) ? task.assetName_jp : task.assetName;
+
     return `
       <article
         class="task-card priority-${task.priority} status-${task.status}"
         id="card-${task.id}"
         data-task-id="${task.id}"
-        aria-label="${task.title}"
+        aria-label="${displayTitle}"
         ${cardClickHandler ? `onclick="${cardClickHandler}"` : ''}
         style="${isDone ? 'cursor: default;' : 'cursor: pointer;'}"
       >
@@ -173,12 +177,12 @@ const HomeView = (() => {
         <div class="task-body">
           <!-- Row 1: Title + done button -->
           <div class="task-top-row">
-            <h2 class="task-title ${isDone ? 'task-title--done' : ''}">${task.title}</h2>
+            <h2 class="task-title ${isDone ? 'task-title--done' : ''}">${displayTitle}</h2>
             <div style="display: flex; align-items: center; gap: var(--space-2);">
               ${deleteBtnHtml}
               <button
                 class="task-done-btn ${isDone ? 'task-done-btn--checked' : ''}"
-                aria-label="${isDone ? 'Mark as pending' : 'Mark as done'}: ${task.title}"
+                aria-label="${isDone ? 'Mark as pending' : 'Mark as done'}: ${displayTitle}"
                 data-task-id="${task.id}"
                 onclick="event.stopPropagation(); ${btnClickHandler}"
               >
@@ -195,7 +199,7 @@ const HomeView = (() => {
           <div class="task-meta-row">
             <span class="task-asset">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-              ${task.assetName}
+              ${displayAssetName}
             </span>
             <span class="task-location">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>

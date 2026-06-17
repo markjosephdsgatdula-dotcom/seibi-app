@@ -281,18 +281,6 @@ const FirebaseSync = (() => {
       auth.signInAnonymously()
         .then(() => {
           console.log('[Firebase] Authenticated anonymously.');
-          const seedVer = 'v26';
-          try {
-            if (localStorage.getItem('seed_version') !== seedVer) {
-              console.log('[Firebase] Force wiping database to apply v26 templates...');
-              localStorage.setItem('seed_version', seedVer);
-              return Promise.all([
-                db.ref('assets').remove(),
-                db.ref('templates').remove(),
-                db.ref('tasks').remove()
-              ]);
-            }
-          } catch(e) {}
           return Promise.resolve();
         })
         .then(() => {

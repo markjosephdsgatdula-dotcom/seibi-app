@@ -404,3 +404,148 @@
   padding: var(--space-2) var(--space-3);
   line-height: 1.4;
 }
+
+/* ─── Layout Editor Styles ─────────────────────────────────────────────────── */
+.btn-wm {
+  background: var(--clr-surface-raised);
+  color: var(--clr-text-primary);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  transition: all var(--transition-fast);
+  min-height: var(--touch-min);
+}
+.btn-wm:hover:not(:disabled) {
+  background: var(--clr-border);
+}
+.btn-wm-primary {
+  background: var(--clr-accent);
+  color: #fff;
+  border-color: var(--clr-accent);
+}
+.btn-wm-primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.btn-wm-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.btn-wm-danger:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+.btn-wm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wm-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Draggable state */
+.wm-equipment.dragging {
+  opacity: 0.75;
+  transform: scale(1.05);
+  cursor: grabbing !important;
+  z-index: 100 !important;
+  filter: brightness(1.5) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.wm-equipment.edit-selected {
+  outline: 2px dashed var(--clr-accent) !important;
+  outline-offset: 3px;
+}
+
+/* Modal Overlay */
+.wm-modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 17, 23, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.wm-modal.open {
+  display: flex;
+}
+.wm-modal-content {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  width: 340px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.wm-modal-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--clr-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.wm-modal-header h3 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-text-primary);
+}
+.wm-modal-close {
+  background: none;
+  border: none;
+  color: var(--clr-text-secondary);
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.wm-modal-body {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.wm-modal-body .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.wm-modal-body label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-secondary);
+}
+.wm-modal-body input, .wm-modal-body select {
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  color: var(--clr-text-primary);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+}
+.wm-modal-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--clr-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

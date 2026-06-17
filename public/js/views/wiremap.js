@@ -5,6 +5,9 @@
  * workshop sketch. Equipment items are clickable and open a side
  * panel showing all wires connected to that item.
  *
+ * Provides a Layout Edit mode allowing users to drag and reposition
+ * items, add new ones, and delete items.
+ *
  * Canvas: 1060 × 545 px
  *  Main room  : x=14, y=22 → w=1032, h=374  (bottom wall at y=396)
  *  Extension  : x=14, y=396 → w=155, h=130  (bottom-left storage, y=526)
@@ -19,7 +22,16 @@ const WireMapView = (() => {
   const R = { x1:14, y1:22, x2:1046, y2:396 };   // main room
   const E = { x1:14, y1:396, x2:169, y2:526 };   // extension
 
-  let _sel = null; // currently selected equipment id
+  let _sel = null; // currently selected equipment id in view mode
+  let _editMode = false;
+  let _draftEquipment = [];
+  let _selectedEditId = null; // selected equipment id in edit mode
+  
+  // Dragging state
+  let _draggedId = null;
+  let _dragStartX = 0;
+  let _dragStartY = 0;
+  let _dragStartPos = {}; // starting coordinates
 
   // ─── Type visual config ────────────────────────────────────────────────────
   const CFG = {
@@ -34,6 +46,33 @@ const WireMapView = (() => {
   };
 
   const COND = { Good:'#52c41a', Fair:'#faad14', Poor:'#ff4d4f' };
+
+  // Bounding check helper to keep dragged elements inside workshop bounds
+  function _boundPosition(cx, cy, radius, shape, rectW, rectH) {
+    const halfW = shape === 'circle' ? radius : rectW / 2;
+    const halfH = shape === 'circle' ? radius : rectH / 2;
+    
+    let x = cx;
+    let y = cy;
+
+    // Check if within extension zone (left area below main floor)
+    const isLeft = x <= (169 + 50); // allow slightly wider transition margin
+    
+    if (isLeft) {
+      x = Math.max(14 + halfW, Math.min(1046 - halfW, x));
+      // If x is positioned within extension bounds, let y go down to 526
+      if (x <= 169 - halfW) {
+        y = Math.max(22 + halfH, Math.min(526 - halfH, y));
+      } else {
+        y = Math.max(22 + halfH, Math.min(396 - halfH, y));
+      }
+    } else {
+      x = Math.max(14 + halfW, Math.min(1046 - halfW, x));
+      y = Math.max(22 + halfH, Math.min(396 - halfH, y));
+    }
+    
+    return { x, y };
+  }
 
   // ─── Floor plan SVG ────────────────────────────────────────────────────────
   function _svgFloor() {
@@ -52,15 +91,13 @@ const WireMapView = (() => {
     for (let x = E.x1; x <= E.x2; x += 50)
       g += `<line x1="${x}" y1="${E.y1}" x2="${x}" y2="${E.y2}" stroke="${grid}" stroke-width="1"/>`;
     for (let y = E.y1; y <= E.y2; y += 50)
-      g += `<line x1="${E.x1}" y1="${y}" x2="${E.x2}" y2="${y}" stroke="${grid}" stroke-width="1"/>`;
+      g += `<line x1="${E.x1}" y1="${y}" x2="${E.x2}" y2="${E.y2}" stroke="${grid}" stroke-width="1"/>`;
 
     // Main room rectangle
     const mainRoom = `<rect x="${R.x1}" y="${R.y1}" width="${R.x2-R.x1}" height="${R.y2-R.y1}"
       fill="${fill}" stroke="${wall}" stroke-width="${wallW}" rx="2"/>`;
 
-    // Extension — draw left/bottom/right walls only (top is the main room floor)
-    // Opening in the main room bottom wall between x1 and x2 of extension is handled
-    // by drawing the extension walls OVER the bottom wall of the main room
+    // Extension — draw left/bottom/right walls only
     const ext = `
       <rect x="${E.x1}" y="${E.y1}" width="${E.x2-E.x1}" height="${E.y2-E.y1}" fill="${fill}"/>
       <line x1="${E.x1}" y1="${E.y1}" x2="${E.x1}" y2="${E.y2}" stroke="${wall}" stroke-width="${wallW}"/>
@@ -68,7 +105,7 @@ const WireMapView = (() => {
       <line x1="${E.x2}" y1="${E.y2}" x2="${E.x2}" y2="${E.y1}" stroke="${wall}" stroke-width="${wallW}"/>
     `;
 
-    // Erase the bottom-wall segment over the opening (cover it with bg colour)
+    // Erase the bottom-wall segment over the opening
     const opening = `<line x1="${E.x1+wallW/2}" y1="${R.y2}" x2="${E.x2-wallW/2}" y2="${R.y2}"
       stroke="#0f1117" stroke-width="${wallW+2}"/>`;
 
@@ -95,49 +132,114 @@ const WireMapView = (() => {
     const wireCount = WireMapStore.getWiresFor(eq.id).length;
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const lbl = (lang === 'jp' && eq.labelJP) ? eq.labelJP : eq.label;
-    const badge = wireCount > 0
+    const badge = (wireCount > 0 && !_editMode)
       ? `<span class="wm-wire-badge">${wireCount}</span>` : '';
+
+    const el = document.createElement('div');
+    el.id = `wm-eq-${eq.id}`;
+    el.dataset.eqId = eq.id;
+    el.title = lbl;
 
     if (eq.shape === 'circle') {
       const d = eq.r * 2;
-      const el = document.createElement('div');
       el.className = 'wm-equipment wm-circle';
-      el.id = `wm-eq-${eq.id}`;
-      el.dataset.eqId = eq.id;
-      el.title = lbl;
+      if (_editMode && _selectedEditId === eq.id) el.classList.add('edit-selected');
       el.style.cssText = `left:${eq.cx-eq.r}px;top:${eq.cy-eq.r}px;width:${d}px;height:${d}px;--eq-color:${cfg.color};`;
       el.innerHTML = `
         <div style="width:${d}px;height:${d}px;border-radius:50%;
           background:${cfg.color}20;border:2px solid ${cfg.color};
-          display:flex;align-items:center;justify-content:center;">
+          display:flex;align-items:center;justify-content:center;pointer-events:none;">
           <span style="font-size:${Math.max(7,eq.r-5)}px;font-weight:700;color:${cfg.color};font-family:Inter,sans-serif;">
             ${eq.type==='tank'?'T':eq.type==='torch'?'🔥':'R'}
           </span>
         </div>
         ${badge}`;
-      return el;
+    } else {
+      // Rectangle
+      el.className = 'wm-equipment wm-rect';
+      if (_editMode && _selectedEditId === eq.id) el.classList.add('edit-selected');
+      el.style.cssText = `left:${eq.x}px;top:${eq.y}px;width:${eq.w}px;height:${eq.h}px;
+        --eq-color:${cfg.color};border-color:${cfg.color}80;`;
+
+      const inner = _innerLabel(eq, cfg);
+      const noteEl = eq.note
+        ? `<span class="wm-pillar-note">${eq.note}</span>` : '';
+
+      el.innerHTML = `
+        ${noteEl}
+        <div class="wm-eq-inner" style="color:${cfg.color};pointer-events:none;">
+          <span class="wm-eq-text" style="font-size:${_fontSize(eq)}px;">${inner}</span>
+        </div>
+        ${badge}`;
     }
 
-    // Rectangle
-    const el = document.createElement('div');
-    el.className = 'wm-equipment wm-rect';
-    el.id = `wm-eq-${eq.id}`;
-    el.dataset.eqId = eq.id;
-    el.title = lbl;
-    el.style.cssText = `left:${eq.x}px;top:${eq.y}px;width:${eq.w}px;height:${eq.h}px;
-      --eq-color:${cfg.color};border-color:${cfg.color}80;`;
+    // Attach Pointer Drag listeners in edit mode
+    if (_editMode) {
+      el.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        _selectEdit(eq.id);
+        
+        _draggedId = eq.id;
+        _dragStartX = e.clientX;
+        _dragStartY = e.clientY;
+        
+        if (eq.shape === 'circle') {
+          _dragStartPos = { cx: eq.cx, cy: eq.cy };
+        } else {
+          _dragStartPos = { x: eq.x, y: eq.y };
+        }
+        
+        el.classList.add('dragging');
+        el.setPointerCapture(e.pointerId);
+      });
 
-    // Short labels that fit inside each box
-    const inner = _innerLabel(eq, cfg);
-    const noteEl = eq.note
-      ? `<span class="wm-pillar-note">${eq.note}</span>` : '';
+      el.addEventListener('pointermove', e => {
+        if (_draggedId !== eq.id) return;
+        e.stopPropagation();
+        
+        const dx = e.clientX - _dragStartX;
+        const dy = e.clientY - _dragStartY;
+        const draft = _draftEquipment.find(item => item.id === eq.id);
+        
+        if (draft) {
+          if (draft.shape === 'circle') {
+            const newCx = _dragStartPos.cx + dx;
+            const newCy = _dragStartPos.cy + dy;
+            const bounded = _boundPosition(newCx, newCy, draft.r, 'circle');
+            
+            draft.cx = bounded.x;
+            draft.cy = bounded.y;
+            
+            el.style.left = `${bounded.x - draft.r}px`;
+            el.style.top = `${bounded.y - draft.r}px`;
+          } else {
+            const newX = _dragStartPos.x + dx;
+            const newY = _dragStartPos.y + dy;
+            
+            // Bounding needs center coordinates
+            const cx = newX + draft.w / 2;
+            const cy = newY + draft.h / 2;
+            const bounded = _boundPosition(cx, cy, 0, 'rect', draft.w, draft.h);
+            
+            draft.x = bounded.x - draft.w / 2;
+            draft.y = bounded.y - draft.h / 2;
+            
+            el.style.left = `${draft.x}px`;
+            el.style.top = `${draft.y}px`;
+          }
+        }
+      });
 
-    el.innerHTML = `
-      ${noteEl}
-      <div class="wm-eq-inner" style="color:${cfg.color};">
-        <span class="wm-eq-text" style="font-size:${_fontSize(eq)}px;">${inner}</span>
-      </div>
-      ${badge}`;
+      el.addEventListener('pointerup', e => {
+        if (_draggedId !== eq.id) return;
+        e.stopPropagation();
+        
+        el.classList.remove('dragging');
+        el.releasePointerCapture(e.pointerId);
+        _draggedId = null;
+      });
+    }
+
     return el;
   }
 
@@ -148,13 +250,15 @@ const WireMapView = (() => {
   }
 
   function _innerLabel(eq, cfg) {
-    if (eq.type === 'pillar')     return eq.label.replace('Pillar ', 'PILLAR<br>');
-    if (eq.type === 'robot')      return eq.label.replace('Robot ', 'ROBOT ');
-    if (eq.type === 'weld-table') return 'WELD<br>TABLE';
-    if (eq.type === 'welder-tig') return 'TIG<br>Weld Mach';
-    if (eq.type === 'welder-co2') return 'CO2<br>Weld Mach';
-    if (eq.type === 'controller') return 'Controller<br>+ Weld Mach';
-    return eq.label;
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    const labelText = (lang === 'jp' && eq.labelJP) ? eq.labelJP : eq.label;
+    if (eq.type === 'pillar')     return labelText.replace('Pillar ', 'PILLAR<br>').replace('柱', '柱 ');
+    if (eq.type === 'robot')      return labelText.replace('Robot ', 'ROBOT ').replace('ロボット', 'ロボット ');
+    if (eq.type === 'weld-table') return lang === 'jp' ? '溶接台' : 'WELD<br>TABLE';
+    if (eq.type === 'welder-tig') return lang === 'jp' ? 'TIG溶接機' : 'TIG<br>Weld Mach';
+    if (eq.type === 'welder-co2') return lang === 'jp' ? 'CO2溶接機' : 'CO2<br>Weld Mach';
+    if (eq.type === 'controller') return lang === 'jp' ? '制御盤' : 'Controller';
+    return labelText;
   }
 
   // ─── Detail panel ─────────────────────────────────────────────────────────
@@ -180,7 +284,7 @@ const WireMapView = (() => {
             <polyline points="9 11 12 14 22 4"/>
             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
           </svg>
-          <p>Click any item on the map<br>to see its wires</p>
+          <p>${(typeof I18n !== 'undefined' && I18n.getLang() === 'jp') ? '設備を選択すると<br>配線一覧が表示されます' : 'Click any item on the map<br>to see its wires'}</p>
         </div>
       </div>`;
     return d;
@@ -206,7 +310,7 @@ const WireMapView = (() => {
     if (!body) return;
 
     if (!wires.length) {
-      body.innerHTML = `<div class="wm-panel-empty"><p>No wires registered for this item.</p></div>`;
+      body.innerHTML = `<div class="wm-panel-empty"><p>${lang === 'jp' ? 'この設備に登録されている配線はありません。' : 'No wires registered for this item.'}</p></div>`;
       return;
     }
 
@@ -242,15 +346,16 @@ const WireMapView = (() => {
       <div class="wm-wire-list">${rows}</div>`;
   }
 
-  // ─── Select / deselect ────────────────────────────────────────────────────
+  // ─── Select / deselect in View Mode ─────────────────────────────────────────
   function _select(id) {
+    if (_editMode) return;
     if (_sel) {
       const prev = document.getElementById(`wm-eq-${_sel}`);
       if (prev) prev.classList.remove('selected');
     }
     const panel = document.getElementById('wm-detail-panel');
 
-    if (_sel === id) { // toggle off
+    if (_sel === id) {
       _sel = null;
       if (panel) panel.classList.remove('open');
       return;
@@ -261,6 +366,125 @@ const WireMapView = (() => {
     if (el) el.classList.add('selected');
     _fillPanel(id);
     if (panel) panel.classList.add('open');
+  }
+
+  // ─── Select in Edit Mode ───────────────────────────────────────────────────
+  function _selectEdit(id) {
+    if (!_editMode) return;
+    if (_selectedEditId) {
+      const prev = document.getElementById(`wm-eq-${_selectedEditId}`);
+      if (prev) prev.classList.remove('edit-selected');
+    }
+    
+    _selectedEditId = id;
+    const el = document.getElementById(`wm-eq-${id}`);
+    if (el) el.classList.add('edit-selected');
+
+    // Enable delete button
+    const deleteBtn = document.getElementById('btn-wm-delete');
+    if (deleteBtn) deleteBtn.disabled = false;
+  }
+
+  function _deselectEdit() {
+    if (_selectedEditId) {
+      const prev = document.getElementById(`wm-eq-${_selectedEditId}`);
+      if (prev) prev.classList.remove('edit-selected');
+      _selectedEditId = null;
+    }
+    const deleteBtn = document.getElementById('btn-wm-delete');
+    if (deleteBtn) deleteBtn.disabled = true;
+  }
+
+  // ─── Edit Mode Toggles ─────────────────────────────────────────────────────
+  function startEdit() {
+    _editMode = true;
+    _draftEquipment = JSON.parse(JSON.stringify(WireMapStore.EQUIPMENT)); // clone
+    _selectedEditId = null;
+    
+    // Close detail panel
+    const panel = document.getElementById('wm-detail-panel');
+    if (panel) panel.classList.remove('open');
+    _sel = null;
+    
+    render();
+  }
+
+  function cancelEdit() {
+    _editMode = false;
+    _draftEquipment = [];
+    _selectedEditId = null;
+    render();
+  }
+
+  function saveEdit() {
+    if (!_editMode) return;
+    
+    WireMapStore.saveEquipment(_draftEquipment).then(() => {
+      _editMode = false;
+      _draftEquipment = [];
+      _selectedEditId = null;
+      render();
+    });
+  }
+
+  // ─── Add Item Logic ────────────────────────────────────────────────────────
+  function openAddModal() {
+    const modal = document.getElementById('wm-add-modal');
+    if (modal) modal.classList.add('open');
+  }
+
+  function closeAddModal() {
+    const modal = document.getElementById('wm-add-modal');
+    if (modal) modal.classList.remove('open');
+  }
+
+  function submitAddItem() {
+    const type = document.getElementById('wm-add-type').value;
+    const label = document.getElementById('wm-add-label').value.trim() || 'New Item';
+    const labelJP = document.getElementById('wm-add-label-jp').value.trim() || label;
+    
+    // Set sensible dimensions based on shape & type
+    const shape = (type === 'tank' || type === 'torch') ? 'circle' : 'rect';
+    const newItem = {
+      id: `custom-eq-${Date.now()}`,
+      label,
+      labelJP,
+      type,
+      shape
+    };
+
+    if (shape === 'circle') {
+      newItem.cx = 500;
+      newItem.cy = 200;
+      newItem.r = 15;
+    } else {
+      newItem.x = 450;
+      newItem.y = 170;
+      // Dimensions
+      if (type === 'pillar') { newItem.w = 45; newItem.h = 70; newItem.note = 'regulators'; }
+      else if (type === 'controller') { newItem.w = 70; newItem.h = 42; }
+      else if (type === 'welder-tig' || type === 'welder-co2') { newItem.w = 62; newItem.h = 68; }
+      else if (type === 'robot') { newItem.w = 66; newItem.h = 48; }
+      else if (type === 'weld-table') { newItem.w = 92; newItem.h = 82; }
+      else { newItem.w = 60; newItem.h = 40; }
+    }
+
+    _draftEquipment.push(newItem);
+    closeAddModal();
+    render();
+    
+    // Select the newly added item
+    _selectEdit(newItem.id);
+  }
+
+  // ─── Delete Item Logic ─────────────────────────────────────────────────────
+  function deleteSelected() {
+    if (!_selectedEditId) return;
+    if (!confirm('Are you sure you want to delete the selected equipment? All wire links for this equipment will become inactive.')) return;
+    
+    _draftEquipment = _draftEquipment.filter(eq => eq.id !== _selectedEditId);
+    _selectedEditId = null;
+    render();
   }
 
   // ─── Legend ───────────────────────────────────────────────────────────────
@@ -277,69 +501,183 @@ const WireMapView = (() => {
     </div>`;
   }
 
-  // ─── Init ─────────────────────────────────────────────────────────────────
-  function init() {
+  // ─── Add Item Modal HTML ───────────────────────────────────────────────────
+  function _modalHtml() {
+    return `
+      <div class="wm-modal" id="wm-add-modal">
+        <div class="wm-modal-content">
+          <div class="wm-modal-header">
+            <h3>Add Equipment</h3>
+            <button class="wm-modal-close" id="btn-modal-close">×</button>
+          </div>
+          <div class="wm-modal-body">
+            <div class="form-group">
+              <label>Type / タイプ</label>
+              <select id="wm-add-type">
+                <option value="robot">Robot / ロボット</option>
+                <option value="weld-table">Weld Table / 溶接台</option>
+                <option value="controller">Controller / コントローラー</option>
+                <option value="welder-tig">TIG Welder / TIG溶接機</option>
+                <option value="welder-co2">CO2 Welder / CO2溶接機</option>
+                <option value="tank">Gas Tank / ガスタンク</option>
+                <option value="pillar">Pillar / 柱</option>
+                <option value="torch">Torch / トーチ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Label (EN) / 英語名称</label>
+              <input type="text" id="wm-add-label" placeholder="e.g. Robot 7">
+            </div>
+            <div class="form-group">
+              <label>Label (JP) / 日本語名称</label>
+              <input type="text" id="wm-add-label-jp" placeholder="e.g. ロボット 7">
+            </div>
+          </div>
+          <div class="wm-modal-footer">
+            <button class="btn-wm" id="btn-modal-cancel">Cancel</button>
+            <button class="btn-wm btn-wm-primary" id="btn-modal-submit">Add to Map</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ─── Main Render ──────────────────────────────────────────────────────────
+  function render() {
     const view = document.getElementById('view-wiremap');
     if (!view) return;
 
-    _sel = null;
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
 
-    view.innerHTML = `
-      <div class="wm-toolbar">
+    // 1. Render toolbar header
+    let toolbarHtml = '';
+    if (!_editMode) {
+      toolbarHtml = `
         <div class="wm-toolbar-left">
           <h1 class="view-title">Wire Map</h1>
-          <span class="wm-hint">Tap any item to view its wires</span>
+          <span class="wm-hint">${lang === 'jp' ? '設備をタップして配線を確認' : 'Tap any item to view its wires'}</span>
         </div>
-        ${_legend()}
-      </div>
+        <div class="wm-toolbar-right">
+          ${_legend()}
+          <button class="btn-wm btn-wm-primary" id="btn-wm-edit-mode">
+            🔧 ${lang === 'jp' ? 'レイアウト編集' : 'Edit Layout'}
+          </button>
+        </div>`;
+    } else {
+      toolbarHtml = `
+        <div class="wm-toolbar-left">
+          <h1 class="view-title" style="color:var(--clr-accent)">🔧 Layout Editor</h1>
+          <span class="wm-hint" style="color:var(--clr-accent)">Drag elements to position them</span>
+        </div>
+        <div class="wm-toolbar-right">
+          <button class="btn-wm btn-wm-primary" id="btn-wm-add">＋ Add Item</button>
+          <button class="btn-wm btn-wm-danger" id="btn-wm-delete" disabled>🗑️ Delete</button>
+          <div style="width:1px;height:24px;background:var(--clr-border);margin:0 var(--space-2);"></div>
+          <button class="btn-wm" id="btn-wm-cancel">Cancel</button>
+          <button class="btn-wm btn-wm-primary" id="btn-wm-save" style="background:#10b981;border-color:#10b981">💾 Save</button>
+        </div>`;
+    }
+
+    view.innerHTML = `
+      <div class="wm-toolbar">${toolbarHtml}</div>
       <div class="wm-layout">
         <div class="wm-scroll-wrapper">
           <div class="wm-map-container" id="wm-map" style="width:${W}px;height:${H}px;position:relative;">
             ${_svgFloor()}
           </div>
         </div>
-      </div>`;
+      </div>
+      ${_modalHtml()}`;
 
-    const layout = view.querySelector('.wm-layout');
-    layout.appendChild(_makePanel());
+    // Add Side Detail Panel in view mode
+    if (!_editMode) {
+      const layout = view.querySelector('.wm-layout');
+      layout.appendChild(_makePanel());
+      
+      const closeBtn = document.getElementById('wm-panel-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          if (_sel) {
+            const prev = document.getElementById(`wm-eq-${_sel}`);
+            if (prev) prev.classList.remove('selected');
+            _sel = null;
+          }
+          const panel = document.getElementById('wm-detail-panel');
+          if (panel) panel.classList.remove('open');
+        });
+      }
+    }
 
     const mapEl = document.getElementById('wm-map');
+    const items = _editMode ? _draftEquipment : WireMapStore.EQUIPMENT;
 
-    // Render equipment
-    WireMapStore.EQUIPMENT.forEach(eq => {
+    // Render equipment items
+    items.forEach(eq => {
       const el = _buildEl(eq);
-      el.addEventListener('click', e => { e.stopPropagation(); _select(eq.id); });
+      if (!_editMode) {
+        el.addEventListener('click', e => { e.stopPropagation(); _select(eq.id); });
+      }
       mapEl.appendChild(el);
     });
 
-    // Click blank map → deselect
+    // Tap canvas backdrop → deselect
     mapEl.addEventListener('click', () => {
-      if (_sel) {
-        const prev = document.getElementById(`wm-eq-${_sel}`);
-        if (prev) prev.classList.remove('selected');
-        _sel = null;
-        const panel = document.getElementById('wm-detail-panel');
-        if (panel) panel.classList.remove('open');
-      }
-    });
-
-    // Close button
-    const closeBtn = document.getElementById('wm-panel-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
+      if (!_editMode) {
         if (_sel) {
           const prev = document.getElementById(`wm-eq-${_sel}`);
           if (prev) prev.classList.remove('selected');
           _sel = null;
+          const panel = document.getElementById('wm-detail-panel');
+          if (panel) panel.classList.remove('open');
         }
-        const panel = document.getElementById('wm-detail-panel');
-        if (panel) panel.classList.remove('open');
-      });
+      } else {
+        _deselectEdit();
+      }
+    });
+
+    // Attach button event listeners
+    if (!_editMode) {
+      const editBtn = document.getElementById('btn-wm-edit-mode');
+      if (editBtn) editBtn.addEventListener('click', startEdit);
+    } else {
+      const addBtn = document.getElementById('btn-wm-add');
+      if (addBtn) addBtn.addEventListener('click', openAddModal);
+
+      const deleteBtn = document.getElementById('btn-wm-delete');
+      if (deleteBtn) deleteBtn.addEventListener('click', deleteSelected);
+
+      const cancelBtn = document.getElementById('btn-wm-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', cancelEdit);
+
+      const saveBtn = document.getElementById('btn-wm-save');
+      if (saveBtn) saveBtn.addEventListener('click', saveEdit);
+
+      // Modal buttons
+      const modalClose = document.getElementById('btn-modal-close');
+      if (modalClose) modalClose.addEventListener('click', closeAddModal);
+
+      const modalCancel = document.getElementById('btn-modal-cancel');
+      if (modalCancel) modalCancel.addEventListener('click', closeAddModal);
+
+      const modalSubmit = document.getElementById('btn-modal-submit');
+      if (modalSubmit) modalSubmit.addEventListener('click', submitAddItem);
     }
   }
 
-  function refresh() { init(); }
+  function init() {
+    _sel = null;
+    _editMode = false;
+    _draftEquipment = [];
+    _selectedEditId = null;
+    render();
+  }
 
-  return { init, refresh };
+  function refresh() {
+    // Only re-render if not in edit mode (so we don't discard unsaved drag drafts)
+    if (!_editMode) {
+      render();
+    }
+  }
+
+  return { init, refresh, closeAddModal, submitAddItem };
 
 })();

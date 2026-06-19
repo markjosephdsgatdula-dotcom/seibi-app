@@ -353,6 +353,10 @@ const AssetStore = (() => {
     const template = templates.find(t => t.id === templateId) || templates[0];
     const items = template ? template.items : _defaultChecklistItems;
 
+    if (monthIndex === null || monthIndex === -1) {
+      return Promise.resolve(items);
+    }
+
     const filtered = items.filter(item => {
       if (item.freq === 'annual') {
         return monthIndex === 11; // December
@@ -395,8 +399,25 @@ const AssetStore = (() => {
 
   function updateTemplate(templateId, items) {
     const templates = _loadTemplates();
-    const tpl = templates.find(t => t.id === templateId);
-    if (!tpl) return Promise.reject(new Error('Template not found'));
+    let tpl = templates.find(t => t.id === templateId);
+    if (!tpl) {
+      if (templateId && templateId.startsWith('template-custom-')) {
+        tpl = {
+          id: templateId,
+          name: 'Custom Checklist',
+          items: []
+        };
+        templates.push(tpl);
+      } else {
+        const seedTpl = _templatesSeed.find(t => t.id === templateId);
+        if (seedTpl) {
+          tpl = { ...seedTpl, items: [] };
+          templates.push(tpl);
+        } else {
+          return Promise.reject(new Error('Template not found'));
+        }
+      }
+    }
 
     tpl.items = items.map((item, idx) => ({
       ...item,

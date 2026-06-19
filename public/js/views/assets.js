@@ -617,7 +617,7 @@ const AssetsView = (() => {
   function openEditModal(assetId) {
     Promise.all([
       AssetStore.getById(assetId),
-      AssetStore.getChecklistTemplate(11, assetId) // Load all checklist items for editing
+      AssetStore.getChecklistTemplate(null, assetId) // Load all checklist items for editing
     ]).then(([asset, template]) => {
       if (!asset) return;
       _editForm = {

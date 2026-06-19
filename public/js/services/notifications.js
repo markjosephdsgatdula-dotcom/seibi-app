@@ -152,9 +152,16 @@ const NotificationService = (() => {
 
     setTimeout(() => {
       MockDB.getAllTasks().then(tasks => {
-        const dueTasks = tasks.filter(t => t.status === 'pending' || t.status === 'overdue');
+        const offset = new Date().getTimezoneOffset() * 60000;
+        const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
+
+        const dueTasks = tasks.filter(t => {
+          if (t.status === 'done') return false;
+          return t.dueDate <= todayStr;
+        });
+
         if (dueTasks.length > 0) {
-          const overdueCount = dueTasks.filter(t => t.status === 'overdue').length;
+          const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
           let title = '整備点検リマインダー';
           let body = `本日の点検タスクが ${dueTasks.length} 件あります。`;
           if (overdueCount > 0) {

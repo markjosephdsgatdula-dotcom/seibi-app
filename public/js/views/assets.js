@@ -1213,16 +1213,10 @@ const AssetsView = (() => {
     `;
 
     toast.innerHTML = `
-      <div class="toast-content">
-        <span class="toast-icon">⚠️</span>
-        <span>${isJp ? '点検が未完了です。' : 'Inspection incomplete.'}</span>
+      <div class="toast-content" style="display: flex; align-items: center; gap: 8px;">
+        <span class="toast-icon">✅</span>
+        <span>${message}</span>
       </div>
-      <button class="btn btn-outline btn-sm toast-action" onclick="App.AssetsView.resumeInspection()">
-        ${isJp
-      ? `↩️ ${assetName} の点検に戻る`
-      : `↩️ Return to Inspection of ${assetName}`
-    }
-      </button>
     `;
 
     document.body.appendChild(toast);

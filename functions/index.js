@@ -144,7 +144,7 @@ exports.weeklyMaintenanceReminder = onSchedule({
 /**
  * Test endpoint
  */
-exports.testNotification = onRequest({ cors: true }, async (req, res) => {
+exports.testNotification = onRequest({ cors: true, invoker: 'public' }, async (req, res) => {
   try {
     const todayStr = getTokyoDateString(0);
 
@@ -199,3 +199,5 @@ exports.testNotification = onRequest({ cors: true }, async (req, res) => {
     res.status(500).send('Internal Server Error: ' + error.message);
   }
 });
+// Trigger redeployment
+

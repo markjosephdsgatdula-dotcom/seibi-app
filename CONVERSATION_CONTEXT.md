@@ -84,13 +84,30 @@ This file serves as a handoff context document for the next Antigravity AI codin
    * Customize wire naming or routing on the layout.
 
 ### Stage 7: PWA, Manual View, & Push Notifications
-* **Manual View:** Added a dedicated PDF manual viewer tab in the main navigation.
-* **Progressive Web App (PWA):** Created `manifest.json` and `sw.js` to enable "Add to Home Screen" installation and offline asset caching (stale-while-revalidate strategy).
-* **Push Notifications (FCM):**
+* **Manual View**: Added a dedicated PDF manual viewer tab in the main navigation.
+* **Progressive Web App (PWA)**: Created `manifest.json` and `sw.js` to enable "Add to Home Screen" installation.
+* **Push Notifications (FCM)**:
   * Created `firebase-messaging-sw.js` and `js/services/notifications.js`.
-  * Set up `vapidKey` for both production and staging environments to uniquely identify Chrome pushes.
-  * Added UI banner to politely request notification permissions on login.
-* **Cloud Functions & Staging Environment:**
-  * Created a Firebase Cloud Function `dailyMaintenanceReminder` scheduled for 8:30 AM JST.
-  * Created a test HTTP endpoint `testNotification` to manually trigger the reminder broadcast for testing.
-  * Deployed a separate `seibi-app-staging` project for development and isolated testing of FCM endpoints.
+  * Set up VAPID keys for both production and staging environments to uniquely identify Chrome pushes.
+  * Added a banner to politely request notification permissions on page load.
+* **Cloud Functions**:
+  * Created scheduled functions `dailyMaintenanceReminder` (06:00 AM JST) and `weeklyMaintenanceReminder` (Monday 06:00 AM JST).
+  * Created a test HTTP endpoint `testNotification` to manually trigger reminders.
+  * Added `invoker: 'public'` to `testNotification` to allow unauthenticated public testing.
+* **Notification Count Bug Fixes**:
+  * Fixed both the frontend (`notifications.js`) and the backend Cloud Function (`functions/index.js`) to query tasks and filter using `t.dueDate <= todayStr` (instead of counting all pending tasks regardless of their due date).
+  * Deployed updated functions to production (`seibi-app`).
+  * Bumped all script reference query parameters and Service Worker registrations to `v=31` to completely bypass aggressive browser caches.
+
+### Stage 8: Asset Editing & Template Integrity
+* **Cloned Template Decoupling**: Fixed a bug where editing asset properties and custom templates could revert to default seed states. Custom templates are now cleanly cloned when edited.
+* **Master Template Custom Image Seeding**: Synchronized custom pictures uploaded to Robot 3 and Main Gas Utility as base64 strings directly in the codebase seed arrays and production database, propagating them automatically to all other active robots.
+
+---
+
+## 🔮 Next Steps
+
+1. **Wire Map Line Editing**:
+   * Add interactive wire/connection editing or line drawing between items on the map after locking the positions.
+   * Customize wire naming or routing on the layout.
+

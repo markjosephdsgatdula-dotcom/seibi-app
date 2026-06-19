@@ -131,12 +131,6 @@ const App = (() => {
           }
         }
         localStorage.setItem('seibi_app_version', APP_VERSION);
-
-        // One-time templates re-seed in Firebase
-        if (typeof firebaseDb !== 'undefined') {
-          console.log('[Seibi] Version update: Wiping Firebase templates to force re-seed...');
-          firebaseDb.ref('templates').remove();
-        }
       }
     } catch (_) {}
 

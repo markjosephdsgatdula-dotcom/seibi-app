@@ -811,6 +811,9 @@ const AssetsView = (() => {
         ? `${_editForm.name} を更新しました`
         : `Updated ${_editForm.name}`;
       _showSuccessBanner(msg);
+    }).catch(err => {
+      console.error('[submitEdits] Error saving edits:', err);
+      alert('Error saving changes: ' + err.message);
     });
   }
 

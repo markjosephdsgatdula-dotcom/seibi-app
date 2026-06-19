@@ -55,6 +55,9 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **Set Aside Checklist Items 6 & 8 (v22)**:
   * Commented out items 6 (`Check torch nozzle & tip`) and 8 (`Clean feeding rollers`) in the seed checklist for CO2/MAG robots.
   * Configured a one-time Firebase templates wipe check on `v22` upgrade to re-seed the templates list dynamically across all devices.
+* **Asset Save & Template Recovery Fix (v23)**:
+  * Solved a bug where editing assets with deleted custom templates caused silent failures on save. Added auto-recreation of custom templates on template updates.
+  * Bypassed checklist filtering (using `null` month) in the edit modal to prevent deleting un-scheduled checklist items (semi-annual/annual checks) when saving edits.
 * **Firebase Hosting**:
   * Deployed the site live at `https://seibi-app.web.app`.
 

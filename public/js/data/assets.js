@@ -190,7 +190,8 @@ const AssetStore = (() => {
   // ─── Templates database operations ──────────────────────────────────────────
 
   function _loadTemplates() {
-    return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.templates) || [];
+    const raw = (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.templates) || [];
+    return raw.filter(t => t && typeof t === 'object' && t.id);
   }
 
   function _saveTemplates(templates) {
@@ -211,7 +212,7 @@ const AssetStore = (() => {
 
   function getTemplateById(id) {
     const templates = _loadTemplates();
-    return Promise.resolve(templates.find(t => t.id === id) || null);
+    return Promise.resolve(templates.find(t => t && t.id === id) || null);
   }
 
   function createTemplate(name, items) {
@@ -350,7 +351,7 @@ const AssetStore = (() => {
     }
 
     const templates = _loadTemplates();
-    const template = templates.find(t => t.id === templateId) || templates[0];
+    const template = templates.find(t => t && t.id === templateId) || templates[0];
     const items = template ? template.items : _defaultChecklistItems;
 
     if (monthIndex === null || monthIndex === -1) {
@@ -399,7 +400,7 @@ const AssetStore = (() => {
 
   function updateTemplate(templateId, items) {
     const templates = _loadTemplates();
-    let tpl = templates.find(t => t.id === templateId);
+    let tpl = templates.find(t => t && t.id === templateId);
     if (!tpl) {
       if (templateId && templateId.startsWith('template-custom-')) {
         tpl = {
@@ -409,7 +410,7 @@ const AssetStore = (() => {
         };
         templates.push(tpl);
       } else {
-        const seedTpl = _templatesSeed.find(t => t.id === templateId);
+        const seedTpl = _templatesSeed.find(t => t && t.id === templateId);
         if (seedTpl) {
           tpl = { ...seedTpl, items: [] };
           templates.push(tpl);
@@ -419,14 +420,19 @@ const AssetStore = (() => {
       }
     }
 
-    tpl.items = items.map((item, idx) => ({
-      ...item,
-      id: idx + 1,
-      title: (item.title || '').trim() || `Check #${idx + 1}`,
-      desc: (item.desc || '').trim() || '',
-      freq: item.freq || 'monthly',
-      image: item.image || 'generic-check.png'
-    }));
+    tpl.items = items.map((item, idx) => {
+      const newItem = {
+        id: idx + 1,
+        title: (item.title || '').trim() || `Check #${idx + 1}`,
+        desc: (item.desc || '').trim() || '',
+        freq: item.freq || 'monthly',
+        image: item.image || 'generic-check.png'
+      };
+      if (item.category) {
+        newItem.category = item.category;
+      }
+      return newItem;
+    });
 
     _saveTemplates(templates);
     return Promise.resolve(tpl);
@@ -434,14 +440,29 @@ const AssetStore = (() => {
 
   function cloneTemplate(templateId) {
     const templates = _loadTemplates();
-    const tpl = templates.find(t => t.id === templateId);
+    const tpl = templates.find(t => t && t.id === templateId);
     if (!tpl) return Promise.reject(new Error('Template not found'));
 
     const newId = `template-custom-${Date.now()}`;
     const newTemplate = {
       id: newId,
       name: `${tpl.name} (Clone)`,
-      items: tpl.items.map(item => ({ ...item }))
+      items: tpl.items.map(item => {
+        const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+        const title = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
+        const desc = isJp ? (item.desc_jp || item.desc) : (item.desc_en || item.desc || item.desc_jp);
+        const newItem = {
+          id: item.id,
+          title: (title || '').trim(),
+          desc: (desc || '').trim(),
+          freq: item.freq || 'monthly',
+          image: item.image || 'generic-check.png'
+        };
+        if (item.category) {
+          newItem.category = item.category;
+        }
+        return newItem;
+      })
     };
 
     templates.push(newTemplate);

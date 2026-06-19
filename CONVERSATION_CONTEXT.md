@@ -58,6 +58,7 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **Asset Save & Template Recovery Fix (v23)**:
   * Solved a bug where editing assets with deleted custom templates caused silent failures on save. Added auto-recreation of custom templates on template updates.
   * Bypassed checklist filtering (using `null` month) in the edit modal to prevent deleting un-scheduled checklist items (semi-annual/annual checks) when saving edits.
+  * Fixed a ReferenceError (`isJp is not defined`) in `_showSuccessBanner` that threw when attempting to render the success toast after saving.
 * **Firebase Hosting**:
   * Deployed the site live at `https://seibi-app.web.app`.
 

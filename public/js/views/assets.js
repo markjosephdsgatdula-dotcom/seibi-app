@@ -620,6 +620,7 @@ const AssetsView = (() => {
       AssetStore.getChecklistTemplate(null, assetId) // Load all checklist items for editing
     ]).then(([asset, template]) => {
       if (!asset) return;
+      const isJp = I18n.getLang() === 'jp';
       _editForm = {
         id: asset.id,
         name: asset.name,
@@ -628,7 +629,20 @@ const AssetsView = (() => {
         location: asset.location,
         type: asset.type,
         templateId: asset.templateId,
-        items: template.map(item => ({ ...item }))
+        items: template.map(item => {
+          const titleVal = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
+          const descVal = isJp ? (item.desc_jp || item.desc) : (item.desc_en || item.desc || item.desc_jp);
+          const newItem = {
+            ...item,
+            title: (titleVal || '').trim(),
+            desc: (descVal || '').trim()
+          };
+          delete newItem.title_jp;
+          delete newItem.title_en;
+          delete newItem.desc_jp;
+          delete newItem.desc_en;
+          return newItem;
+        })
       };
       _renderEditModal();
     });
@@ -783,7 +797,7 @@ const AssetsView = (() => {
 
   function submitEdits() {
     let templateIdPromise;
-    if (_editForm.templateId === 'template-co2-mag') {
+    if (_editForm.templateId && !_editForm.templateId.startsWith('template-custom-')) {
       templateIdPromise = AssetStore.cloneTemplate(_editForm.templateId);
     } else {
       templateIdPromise = Promise.resolve(_editForm.templateId);

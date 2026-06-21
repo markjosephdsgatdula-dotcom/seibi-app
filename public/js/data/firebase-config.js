@@ -303,9 +303,6 @@ const FirebaseSync = (() => {
             { id: 3, title: 'Test abnormal vibration / sound', title_en: 'Test Abnormal Vibration / Sound', title_jp: '異音・異常振動確認', desc: 'Run the tool without load to verify switch operation, and check for abnormal noises or vibrations.', desc_en: 'Run the tool without load to verify switch operation, and check for abnormal noises or vibrations.', desc_jp: '無負荷状態で運転させ、スイッチの作動、異音・異常振動が無いか確認', freq: 'monthly', image: 'generic-check.png' }
           ]}
         ];
-        db.ref('templates').set(templatesSeed);
-        cache.templates = [...templatesSeed];
-      }
 
       if (data) {
         let list = Array.isArray(data) ? data : Object.values(data);

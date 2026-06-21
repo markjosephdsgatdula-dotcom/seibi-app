@@ -275,11 +275,8 @@ const FirebaseSync = (() => {
     // 2. Templates sync — seed data is in AssetStore._templatesSeed
     db.ref('templates').on('value', snapshot => {
       const data = snapshot.val();
-      if (data) {
-        cache.templates = Array.isArray(data) ? data : Object.values(data);
-      } else {
-        // Seed templates
-        const templatesSeed = [
+      // Seed templates
+      const templatesSeed = [
           { id: 'template-co2-mag', name: 'CO2/MAG Robot Template', items: [
             { id: 1, title: 'Clean welder rear filter', title_en: 'Clean Welder Rear Filter', title_jp: '溶接機裏側のフィルター清掃', desc: 'Remove rear filter and blow out dust with compressed air or replace with new one.', desc_en: 'Remove rear filter and blow out dust with compressed air or replace with new one.', desc_jp: 'パワーソース（溶接電源）裏側のフィルターを取り外し、粉塵をエアーブローするか、新しいものに交換する。', freq: 'monthly', image: 'image1.jpeg', category: 'A' },
             { id: 2, title: 'Verify robot & joint alignment', title_en: 'Verify Robot & Joint Alignment', title_jp: '定盤位置出し・各軸合わせマークの確認', desc: 'Run calibration program (A, B, C) and verify J1-J6 alignment marks visually.', desc_en: 'Run calibration program (A, B, C) and verify J1-J6 alignment marks visually.', desc_jp: '基準校正プログラムを実行し、定盤A、B、Cでの位置確認と同時に、J1〜J6各軸の合わせマーク（矢印・ケガキ線）が一致しているか目視確認する。', freq: 'monthly', image: 'image10.jpeg', category: 'A' },
@@ -309,6 +306,51 @@ const FirebaseSync = (() => {
         db.ref('templates').set(templatesSeed);
         cache.templates = [...templatesSeed];
       }
+
+      if (data) {
+        let list = Array.isArray(data) ? data : Object.values(data);
+        let needsMigration = false;
+        
+        const migratedList = list.map(tpl => {
+          const seedTpl = templatesSeed.find(s => s.id === tpl.id);
+          if (seedTpl) {
+            const isMissingJp = tpl.items && tpl.items.some(item => !item.title_jp);
+            if (isMissingJp) {
+              needsMigration = true;
+              console.log(`[FirebaseSync] Migrating template ${tpl.id} to include translations.`);
+              const mergedItems = tpl.items.map(item => {
+                const seedItem = seedTpl.items.find(si => si.id === item.id);
+                if (seedItem) {
+                  return {
+                    ...item,
+                    title_jp: item.title_jp || seedItem.title_jp,
+                    desc_jp: item.desc_jp || seedItem.desc_jp,
+                    title_en: item.title_en || seedItem.title_en,
+                    desc_en: item.desc_en || seedItem.desc_en
+                  };
+                }
+                return item;
+              });
+              return {
+                ...tpl,
+                items: mergedItems
+              };
+            }
+          }
+          return tpl;
+        });
+
+        if (needsMigration) {
+          db.ref('templates').set(migratedList);
+          cache.templates = migratedList;
+        } else {
+          cache.templates = list;
+        }
+      } else {
+        db.ref('templates').set(templatesSeed);
+        cache.templates = [...templatesSeed];
+      }
+
       _markReady('templates');
     }, handleErr('templates'));
 

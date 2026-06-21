@@ -311,17 +311,25 @@ const FirebaseSync = (() => {
         const migratedList = list.map(tpl => {
           const seedTpl = templatesSeed.find(s => s.id === tpl.id);
           if (seedTpl) {
-            const isMissingJp = tpl.items && tpl.items.some(item => !item.title_jp);
+            const isMissingJp = tpl.items && tpl.items.some(item => {
+              const seedItem = seedTpl.items.find(si => si.id === item.id);
+              const seedHasJp = seedItem && /[\u3040-\u30ff\u4e00-\u9fff]/.test(seedItem.title_jp);
+              const itemHasJp = item.title_jp && /[\u3040-\u30ff\u4e00-\u9fff]/.test(item.title_jp);
+              return !item.title_jp || (seedHasJp && !itemHasJp);
+            });
             if (isMissingJp) {
               needsMigration = true;
               console.log(`[FirebaseSync] Migrating template ${tpl.id} to include translations.`);
               const mergedItems = tpl.items.map(item => {
                 const seedItem = seedTpl.items.find(si => si.id === item.id);
                 if (seedItem) {
+                  const seedHasJp = /[\u3040-\u30ff\u4e00-\u9fff]/.test(seedItem.title_jp);
+                  const itemHasJp = item.title_jp && /[\u3040-\u30ff\u4e00-\u9fff]/.test(item.title_jp);
+                  const shouldOverwriteJp = !item.title_jp || (seedHasJp && !itemHasJp);
                   return {
                     ...item,
-                    title_jp: item.title_jp || seedItem.title_jp,
-                    desc_jp: item.desc_jp || seedItem.desc_jp,
+                    title_jp: shouldOverwriteJp ? seedItem.title_jp : item.title_jp,
+                    desc_jp: shouldOverwriteJp ? seedItem.desc_jp : item.desc_jp,
                     title_en: item.title_en || seedItem.title_en,
                     desc_en: item.desc_en || seedItem.desc_en
                   };

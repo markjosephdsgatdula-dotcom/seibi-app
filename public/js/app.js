@@ -71,7 +71,7 @@ const App = (() => {
       _translateStaticShell();
     }
 
-    const APP_VERSION = 'v26_checklist_and_i18n';
+    const APP_VERSION = 'v34_templates_translation_fix';
 
     function proceedBoot() {
       // Initialize PWA Reminders (using Service Worker for background push notifications)

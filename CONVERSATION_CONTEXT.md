@@ -105,9 +105,39 @@ This file serves as a handoff context document for the next Antigravity AI codin
 
 ---
 
+## 🚀 Accomplished Roadmap Stages (Continued)
+
+### Stage 9: Base64 Image Extraction & Code Cleanup
+* **Base64 Extraction:** Extracted large embedded Base64 image strings from `public/js/data/assets.js` and `public/js/data/firebase-config.js` into distinct binary image files under `public/images/` (e.g., `gas-utility.jpg`, `ground-cable.jpg`, etc.).
+* **Size Reduction:** Reduced combined file size of `assets.js` and `firebase-config.js` from ~2.3 MB to under 60 KB, making the app much lighter, faster to load, and reducing token usage by 98%.
+
+### Stage 10: Modular Refactoring of Assets View
+* **Modularization:** Separated the monolithic `public/js/views/assets.js` (66 KB, 1,519 lines) into a modular, clean structure.
+* **AssetCard Component:** Extracted UI rendering code to `public/js/components/asset-card.js`.
+* **AssetService Service:** Extracted business calculations, date helpers, and form validations to `public/js/services/asset-service.js`.
+* **Controller Cleanup:** Left the controller `assets.js` solely responsible for event bindings and view state management.
+* **Scripts Order:** Registered new component and service files in `index.html` in the correct load order.
+
+---
+
+## 🚨 Cross-Machine AI Sync Instruction (Home PC / Work Laptop)
+
+The workspace rules and token-saving guidelines are saved in `.agents/AGENTS.md`.
+**Instruction for the AI session starting on a new machine:** 
+1. Read the rules in `.agents/AGENTS.md`.
+2. Compare them to the local global `GEMINI.md` file (located at `C:\Users\SHOP4\.gemini\GEMINI.md` or equivalent global config path).
+3. If they differ, update the global `GEMINI.md` to match `.agents/AGENTS.md` exactly to ensure matching token-saving constraints and behaviors across all machines.
+
+---
+
 ## 🔮 Next Steps
 
-1. **Wire Map Line Editing**:
+1. **LINE WORKS Incident Notifications**:
+   * Integrate LINE WORKS webhooks with the Seibi application.
+   * Follow the blueprint in `lineworks_plan.md` (which we placed in the project root).
+   * Set up a Firebase Database trigger on `notices/{noticeId}` write inside `functions/index.js` to securely send incident notifications, including `@All` or specific member mentions.
+2. **Wire Map Line Editing**:
    * Add interactive wire/connection editing or line drawing between items on the map after locking the positions.
    * Customize wire naming or routing on the layout.
+
 

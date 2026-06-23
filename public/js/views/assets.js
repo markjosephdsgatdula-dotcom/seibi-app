@@ -42,90 +42,11 @@ const AssetsView = (() => {
 
   // ─── Render Asset List ───────────────────────────────────────────────────
 
-  function _statusBadge(status) {
-    if (status === 'healthy') {
-      return `<span class="status-badge status-badge--healthy">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        ${I18n.t('badge_healthy')}
-      </span>`;
-    }
-    if (status === 'inspection_due') {
-      return `<span class="status-badge status-badge--due">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/></svg>
-        ${I18n.t('badge_due')}
-      </span>`;
-    }
-    if (status === 'needs_repair') {
-      return `<span class="status-badge status-badge--repair">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        ${I18n.t('badge_repair')}
-      </span>`;
-    }
-    return `<span class="status-badge status-badge--decommissioned">${I18n.t('badge_offline')}</span>`;
-  }
-
-  function _renderCard(asset) {
-    const isDecom = asset.status === 'decommissioned';
-    const lastInspectedLabel = asset.lastInspected 
-      ? new Date(asset.lastInspected).toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : I18n.t('never');
-    const dueLabel = asset.dueDate
-      ? new Date(asset.dueDate).toLocaleDateString(I18n.getLang() === 'jp' ? 'ja-JP' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : I18n.t('na');
-
-    return `
-      <article class="asset-card status-${asset.status === 'inspection_due' ? 'due' : asset.status}" id="asset-card-${asset.id}">
-        <div class="asset-card-content">
-          <div class="asset-card-header">
-            <h3 class="asset-name">${(I18n.getLang() === 'jp' && asset.name_jp) ? asset.name_jp : asset.name}</h3>
-            <div class="asset-badges">${asset.model}</span>
-          </div>
-          
-          <div class="asset-meta-rows" style="margin-top: 12px;">
-            <div class="asset-meta-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              ${I18n.t('meta_location')}: ${asset.location}
-            </div>
-            <div class="asset-meta-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              ${I18n.t('meta_last_checked')}: ${lastInspectedLabel}
-            </div>
-            ${!isDecom ? `
-              <div class="asset-meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                ${I18n.t('meta_next_due')}: <strong>${dueLabel}</strong>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-
-        <div class="asset-card-buttons" style="display: flex; gap: var(--space-2); margin-top: 12px;">
-          <button class="asset-btn-secondary" onclick="AssetsView.openEditModal('${asset.id}')" style="flex: 1; margin: 0;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/></svg>
-            ${I18n.t('btn_edit_asset')}
-          </button>
-          ${!isDecom ? `
-            <button class="asset-btn-secondary btn-report-incident-action" onclick="AssetsView.reportIncidentTrigger('${asset.id}')" style="flex: 1; margin: 0; color: #f87171; border-color: rgba(248, 113, 113, 0.3);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-              ${I18n.t('btn_report_incident')}
-            </button>
-          ` : ''}
-        </div>
-      </article>
-    `;
-  }
-
   function _renderList(assets) {
     const container = document.getElementById('assets-container');
     if (!container) return;
 
-    const active = assets.filter(a => a.status !== 'decommissioned');
-    const offline = assets.filter(a => a.status === 'decommissioned');
-
-    const robots = active.filter(a => a.type === 'CO2_MAG' || a.type === 'TIG');
-    const regulators = active.filter(a => a.type === 'REGULATOR');
-    const utilities = active.filter(a => a.type === 'UTILITY');
-    const tools = active.filter(a => a.type === 'GRINDER' || a.type === 'BELT_GRINDER' || a.type === 'SANDER');
+    const categories = AssetService.groupAssetsByCategory(assets);
 
     container.innerHTML = `
       <!-- Top Action Bar -->
@@ -137,53 +58,53 @@ const AssetsView = (() => {
       </div>
 
       <!-- Welding Robots Section -->
-      ${robots.length > 0 ? `
+      ${categories.robots.length > 0 ? `
         <div class="assets-section">
           <h2 class="assets-section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-            ${I18n.t('section_active_robots')} (${robots.length})
+            ${I18n.t('section_active_robots')} (${categories.robots.length})
           </h2>
           <div class="asset-grid">
-            ${robots.map(_renderCard).join('')}
+            ${categories.robots.map(AssetCard.renderCard).join('')}
           </div>
         </div>
       ` : ''}
 
       <!-- Gas Regulators Section -->
-      ${regulators.length > 0 ? `
+      ${categories.regulators.length > 0 ? `
         <div class="assets-section" style="margin-top: 32px;">
           <h2 class="assets-section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 12L16 8M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
-            ${I18n.t('section_active_regulators')} (${regulators.length})
+            ${I18n.t('section_active_regulators')} (${categories.regulators.length})
           </h2>
           <div class="asset-grid">
-            ${regulators.map(_renderCard).join('')}
+            ${categories.regulators.map(AssetCard.renderCard).join('')}
           </div>
         </div>
       ` : ''}
 
       <!-- Facility Utilities Section -->
-      ${utilities.length > 0 ? `
+      ${categories.utilities.length > 0 ? `
         <div class="assets-section" style="margin-top: 32px;">
           <h2 class="assets-section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/><line x1="9" y1="16" x2="15" y2="16"/><path d="M8 6h2v2H8V6zm0 4h2v2H8v-2zm0 4h2v2H8v-2zm8-8h2v2h-2V6zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/></svg>
-            ${I18n.t('section_active_utilities')} (${utilities.length})
+            ${I18n.t('section_active_utilities')} (${categories.utilities.length})
           </h2>
           <div class="asset-grid">
-            ${utilities.map(_renderCard).join('')}
+            ${categories.utilities.map(AssetCard.renderCard).join('')}
           </div>
         </div>
       ` : ''}
 
       <!-- Grinders & Sanders Section -->
-      ${tools.length > 0 ? `
+      ${categories.tools.length > 0 ? `
         <div class="assets-section" style="margin-top: 32px;">
           <h2 class="assets-section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            ${I18n.t('section_active_tools')} (${tools.length})
+            ${I18n.t('section_active_tools')} (${categories.tools.length})
           </h2>
           <div class="asset-grid">
-            ${tools.map(_renderCard).join('')}
+            ${categories.tools.map(AssetCard.renderCard).join('')}
           </div>
         </div>
       ` : ''}
@@ -192,10 +113,10 @@ const AssetsView = (() => {
       <div class="assets-section" style="margin-top: 32px;">
         <h2 class="assets-section-title" style="color: var(--clr-text-disabled);">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><rect x="2" y="7" width="20" height="14" rx="2" stroke="var(--clr-text-disabled)"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="var(--clr-text-disabled)"/></svg>
-          ${I18n.t('section_inactive_robots')} (${offline.length})
+          ${I18n.t('section_inactive_robots')} (${categories.offline.length})
         </h2>
         <div class="asset-grid">
-          ${offline.map(_renderCard).join('')}
+          ${categories.offline.map(AssetCard.renderCard).join('')}
         </div>
       </div>
     `;
@@ -413,18 +334,7 @@ const AssetsView = (() => {
   }
 
   function _validateRegForm() {
-    let isValid = _newAssetForm.name.trim().length > 0 &&
-                  _newAssetForm.model.trim().length > 0 &&
-                  _newAssetForm.location.trim().length > 0 &&
-                  _newAssetForm.dueDate.length > 0;
-
-    if (_newAssetForm.templateId === 'custom') {
-      const nameValid = _newAssetForm.customTemplateName.trim().length > 0;
-      const itemsValid = _newAssetForm.customTemplateItems.length > 0 &&
-                          _newAssetForm.customTemplateItems.every(item => item.title.trim().length > 0);
-      isValid = isValid && nameValid && itemsValid;
-    }
-
+    const isValid = AssetService.validateRegistrationForm(_newAssetForm);
     const submitBtn = document.getElementById('btn-submit-registration');
     if (submitBtn) {
       submitBtn.disabled = !isValid;
@@ -775,15 +685,7 @@ const AssetsView = (() => {
   }
 
   function _validateEditForm() {
-    let isValid = _editForm.name.trim().length > 0 &&
-                  _editForm.model.trim().length > 0 &&
-                  _editForm.location.trim().length > 0;
-
-    const itemsValid = _editForm.items.length > 0 &&
-                       _editForm.items.every(item => item.title.trim().length > 0);
-    
-    isValid = isValid && itemsValid;
-
+    const isValid = AssetService.validateEditForm(_editForm);
     const saveBtn = document.getElementById('btn-save-edits');
     if (saveBtn) {
       saveBtn.disabled = !isValid;
@@ -1188,7 +1090,7 @@ const AssetsView = (() => {
       }
 
       return noticePromise.then(() => {
-        const todayStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        const todayStr = AssetService.getTodayString();
         return AssetStore.completeInspection(_activeAsset.id, todayStr, failedItems.length > 0);
       });
     }).then(() => {

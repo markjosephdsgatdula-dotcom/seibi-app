@@ -201,12 +201,16 @@ exports.testNotification = onRequest({ cors: true, invoker: 'public' }, async (r
   }
 });
 
+const projectId = process.env.GCLOUD_PROJECT || 'seibi-app';
+const instanceName = `${projectId}-default-rtdb`;
+
 /**
  * Realtime Database trigger on notice creation/write.
  * Sends a secure notification payload to the LINE WORKS talksroom webhook
  * whenever a sudden incident or checklist defect is reported.
  */
 exports.onNoticeWritten = onValueWritten({
+  instance: instanceName,
   ref: '/notices/{noticeId}'
 }, async (event) => {
   // 1. Skip if notice was deleted

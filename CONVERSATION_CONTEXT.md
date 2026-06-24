@@ -118,6 +118,20 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **Controller Cleanup:** Left the controller `assets.js` solely responsible for event bindings and view state management.
 * **Scripts Order:** Registered new component and service files in `index.html` in the correct load order.
 
+### Stage 11: Staging Environment Decommissioning
+* **Staging Removal:** Removed all staging project configurations from `.firebaserc` and simplified `firebase-config.js` to only initialize the production database (`seibi-app`).
+* **Clean SW Registration:** Removed unused environment configuration checks from the Service Worker registration script in `index.html`.
+
+### Stage 12: LINE WORKS Incident Notifications
+* **Cloud Database Trigger:** Implemented a secure Gen 2 Database Trigger Cloud Function (`sendLineWorksNotice`) in `functions/index.js` set to monitor database writes in `/notices`.
+* **Configured Params:** Integrated `defineString('LINE_WORKS_WEBHOOK_URL')` for parameter configuration during deployment, preventing secrets from leaking into Git.
+* **Targeted Region:** Targeted the correct database region `region: 'asia-southeast1'` to align with the Singapore RTDB instance.
+
+### Stage 13: Modular Refactoring of Notice Board View
+* **View Separation:** Refactored `public/js/views/notice.js` using the new component and service directory structure.
+* **NoticeCard Component:** Extracted UI card generation and resolution banners to `public/js/components/notice-card.js`.
+* **NoticeService Service:** Extracted time delta calculations, avatar color selectors, and search/filter logic to `public/js/services/notice-service.js`.
+
 ---
 
 ## 🚨 Cross-Machine AI Sync Instruction (Home PC / Work Laptop)
@@ -132,12 +146,11 @@ The workspace rules and token-saving guidelines are saved in `.agents/AGENTS.md`
 
 ## 🔮 Next Steps
 
-1. **LINE WORKS Incident Notifications**:
-   * Integrate LINE WORKS webhooks with the Seibi application.
-   * Follow the blueprint in `lineworks_plan.md` (which we placed in the project root).
-   * Set up a Firebase Database trigger on `notices/{noticeId}` write inside `functions/index.js` to securely send incident notifications, including `@All` or specific member mentions.
-2. **Wire Map Line Editing**:
+1. **Wire Map Line Editing**:
    * Add interactive wire/connection editing or line drawing between items on the map after locking the positions.
    * Customize wire naming or routing on the layout.
+2. **Refactor Remaining View Monoliths**:
+   * Consider modularizing `views/calendar.js` (26 KB) or `views/wiremap.js` (27 KB) next using the newly established components/services pattern.
+
 
 

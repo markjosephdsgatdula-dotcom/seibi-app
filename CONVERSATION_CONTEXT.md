@@ -132,6 +132,11 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **NoticeCard Component:** Extracted UI card generation and resolution banners to `public/js/components/notice-card.js`.
 * **NoticeService Service:** Extracted time delta calculations, avatar color selectors, and search/filter logic to `public/js/services/notice-service.js`.
 
+### Stage 14: Admin/Operator Role Authorization & Login Modal
+* **Auth Service:** Implemented role-based login logic in `public/js/services/auth-service.js`.
+* **Login Modal:** Created a login modal UI in `public/js/components/login-modal.js` and layout styles in `public/css/login.css`.
+* **Access Control:** Interfaced view controllers to query the current active user role (Admin vs. Operator) before allowing destructive actions (such as editing floor layouts, submitting inspection records, or clearing reports).
+
 ---
 
 ## 🚨 Cross-Machine AI Sync Instruction (Home PC / Work Laptop)
@@ -149,8 +154,7 @@ The workspace rules and token-saving guidelines are saved in `.agents/AGENTS.md`
 1. **Wire Map Line Editing**:
    * Add interactive wire/connection editing or line drawing between items on the map after locking the positions.
    * Customize wire naming or routing on the layout.
-2. **Refactor Remaining View Monoliths**:
-   * Consider modularizing `views/calendar.js` (26 KB) or `views/wiremap.js` (27 KB) next using the newly established components/services pattern.
+
 
 
 

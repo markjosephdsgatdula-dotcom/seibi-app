@@ -419,9 +419,16 @@ const FirebaseSync = (() => {
     console.log('[Firebase] Real-time synchronization listeners attached.');
     }; // end setupDatabaseListeners
 
-    // Auth is now handled by AuthService before FirebaseSync.start() is called.
-    // By this point the user is already signed in via email/password.
-    setupDatabaseListeners();
+    // Force auth token propagation to the RTDB connection before attaching
+    // listeners. Without this, the first read fires before the token is ready
+    // and gets a Permission Denied on first login (works fine on refresh).
+    const tokenReady = (firebaseAuth && firebaseAuth.currentUser)
+      ? firebaseAuth.currentUser.getIdToken()
+      : Promise.resolve();
+
+    tokenReady.then(() => {
+      setupDatabaseListeners();
+    });
 
     return _readyPromise;
   }

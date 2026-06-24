@@ -139,7 +139,7 @@ const HomeView = (() => {
         ? `AssetsView.openInspection('${task.assetId}')`
         : `HomeView.toggleDone('${task.id}')`);
 
-    const deleteBtnHtml = isCustom
+    const deleteBtnHtml = (isCustom && AuthService.isAdmin())
       ? `<button
            class="task-delete-btn"
            onclick="event.stopPropagation(); HomeView.deleteCustomTask('${task.id}')"

@@ -473,9 +473,11 @@ const WireMapView = (() => {
         </div>
         <div class="wm-toolbar-right">
           ${_legend()}
-          <button class="btn-wm btn-wm-primary" id="btn-wm-edit-mode">
-            🔧 ${lang === 'jp' ? 'レイアウト編集' : 'Edit Layout'}
-          </button>
+          ${AuthService.isAdmin() ? `
+            <button class="btn-wm btn-wm-primary" id="btn-wm-edit-mode">
+              🔧 ${lang === 'jp' ? 'レイアウト編集' : 'Edit Layout'}
+            </button>
+          ` : ''}
         </div>`;
     } else {
       toolbarHtml = `

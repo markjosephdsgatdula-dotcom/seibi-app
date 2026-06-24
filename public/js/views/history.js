@@ -64,6 +64,7 @@ const HistoryView = (() => {
             <h3 class="hist-card-title">${rec.title}</h3>
             <div class="hist-card-top-right">
               <span class="hist-card-duration">⏱ ${rec.durationMins}${I18n.t('min')}</span>
+              ${AuthService.isAdmin() ? `
               <button
                 class="hist-delete-btn"
                 onclick="HistoryView.deleteRecord('${rec.id}')"
@@ -77,6 +78,7 @@ const HistoryView = (() => {
                   <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                 </svg>
               </button>
+              ` : ''}
             </div>
           </div>
           <div class="hist-card-meta">

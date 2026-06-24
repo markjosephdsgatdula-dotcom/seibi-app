@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="css/assets.css" />
   <link rel="stylesheet" href="css/wiremap.css" />
   <link rel="stylesheet" href="css/manual.css" />
+  <link rel="stylesheet" href="css/login.css" />
 </head>
 <body>
 
@@ -39,6 +40,9 @@
       <span class="lang-divider">|</span>
       <button class="lang-btn" id="lang-btn-jp" onclick="I18n.setLang('jp')">🇯🇵 JP</button>
     </div>
+
+    <!-- User badge + logout button (populated by app.js after login) -->
+    <div id="user-badge-slot" style="position:fixed;top:12px;right:12px;z-index:900;"></div>
 
     <!-- Firebase Connection Indicator -->
     <div id="firebase-status-indicator" class="db-status-indicator" title="Firebase Status">
@@ -295,34 +299,36 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
-  <script src="js/utils.js?v=34"></script>
-  <script src="js/data/firebase-config.js?v=34"></script>
-  <script src="js/data/i18n.js?v=34"></script>
-  <script src="js/router.js?v=34"></script>
-  <script src="js/data/mock.js?v=34"></script>
-  <script src="js/data/notices.js?v=34"></script>
-  <script src="js/data/history.js?v=34"></script>
-  <script src="js/data/assets.js?v=34"></script>
-  <script src="js/views/home.js?v=34"></script>
-  <script src="js/components/calendar-grid.js?v=34"></script>
-  <script src="js/services/calendar-service.js?v=34"></script>
-  <script src="js/views/calendar.js?v=34"></script>
-  <script src="js/views/history.js?v=34"></script>
-  <script src="js/components/notice-card.js?v=34"></script>
-  <script src="js/services/notice-service.js?v=34"></script>
-  <script src="js/views/notice.js?v=34"></script>
-  <script src="js/components/asset-modal.js?v=34"></script>
-  <script src="js/components/asset-card.js?v=34"></script>
-  <script src="js/services/asset-service.js?v=34"></script>
-  <script src="js/views/assets.js?v=34"></script>
-  <script src="js/data/wiremap.js?v=34"></script>
-  <script src="js/components/wiremap-svg.js?v=34"></script>
-  <script src="js/services/wiremap-service.js?v=34"></script>
-  <script src="js/views/wiremap.js?v=34"></script>
-  <script src="js/data/manuals.js?v=34"></script>
-  <script src="js/views/manual.js?v=34"></script>
-  <script src="js/services/notifications.js?v=34"></script>
-  <script src="js/app.js?v=34"></script>
+  <script src="js/utils.js?v=35"></script>
+  <script src="js/data/firebase-config.js?v=35"></script>
+  <script src="js/data/i18n.js?v=35"></script>
+  <script src="js/services/auth-service.js?v=35"></script>
+  <script src="js/components/login-modal.js?v=35"></script>
+  <script src="js/router.js?v=35"></script>
+  <script src="js/data/mock.js?v=35"></script>
+  <script src="js/data/notices.js?v=35"></script>
+  <script src="js/data/history.js?v=35"></script>
+  <script src="js/data/assets.js?v=35"></script>
+  <script src="js/views/home.js?v=35"></script>
+  <script src="js/components/calendar-grid.js?v=35"></script>
+  <script src="js/services/calendar-service.js?v=35"></script>
+  <script src="js/views/calendar.js?v=35"></script>
+  <script src="js/views/history.js?v=35"></script>
+  <script src="js/components/notice-card.js?v=35"></script>
+  <script src="js/services/notice-service.js?v=35"></script>
+  <script src="js/views/notice.js?v=35"></script>
+  <script src="js/components/asset-modal.js?v=35"></script>
+  <script src="js/components/asset-card.js?v=35"></script>
+  <script src="js/services/asset-service.js?v=35"></script>
+  <script src="js/views/assets.js?v=35"></script>
+  <script src="js/data/wiremap.js?v=35"></script>
+  <script src="js/components/wiremap-svg.js?v=35"></script>
+  <script src="js/services/wiremap-service.js?v=35"></script>
+  <script src="js/views/wiremap.js?v=35"></script>
+  <script src="js/data/manuals.js?v=35"></script>
+  <script src="js/views/manual.js?v=35"></script>
+  <script src="js/services/notifications.js?v=35"></script>
+  <script src="js/app.js?v=35"></script>
 
   <!-- Service Worker Registration -->
   <script>

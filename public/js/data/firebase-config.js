@@ -419,22 +419,9 @@ const FirebaseSync = (() => {
     console.log('[Firebase] Real-time synchronization listeners attached.');
     }; // end setupDatabaseListeners
 
-    if (auth) {
-      auth.signInAnonymously()
-        .then(() => {
-          console.log('[Firebase] Authenticated anonymously.');
-          return Promise.resolve();
-        })
-        .then(() => {
-          setupDatabaseListeners();
-        })
-        .catch(err => {
-          console.warn('[Firebase] Anonymous Auth failed. Attempting to proceed without auth.', err);
-          setupDatabaseListeners();
-        });
-    } else {
-      setupDatabaseListeners();
-    }
+    // Auth is now handled by AuthService before FirebaseSync.start() is called.
+    // By this point the user is already signed in via email/password.
+    setupDatabaseListeners();
 
     return _readyPromise;
   }

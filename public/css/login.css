@@ -1,0 +1,181 @@
+/* ─── Login Modal ─────────────────────────────────────────────────────────── */
+
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--clr-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: var(--space-4);
+}
+
+.login-modal-panel {
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--clr-accent), #6366f1);
+  border-radius: var(--radius-lg);
+  color: #fff;
+  margin-bottom: var(--space-3);
+  box-shadow: 0 8px 24px rgba(79, 124, 255, 0.35);
+}
+
+.login-app-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-text-primary);
+  margin: 0 0 var(--space-1);
+  letter-spacing: 0.04em;
+}
+
+.login-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--clr-text-secondary);
+  margin: 0;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.login-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--clr-text-secondary);
+}
+
+.login-input {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  color: var(--clr-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  padding: var(--space-3) var(--space-3);
+  transition: border-color var(--transition-fast);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  border-color: var(--clr-accent);
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.15);
+}
+
+.login-input--error {
+  border-color: var(--clr-priority-high);
+}
+
+/* Error message */
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  color: #f87171;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Submit button */
+.login-submit-btn {
+  background: linear-gradient(135deg, var(--clr-accent), #6366f1);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(79, 124, 255, 0.3);
+}
+
+.login-submit-btn:hover  { opacity: 0.9; transform: translateY(-1px); }
+.login-submit-btn:active { opacity: 1;   transform: translateY(0); }
+.login-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Logout button in nav header ────────────────────────────────────────── */
+
+.logout-btn {
+  background: none;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.logout-btn:hover {
+  color: var(--clr-text-primary);
+  border-color: var(--clr-text-secondary);
+}
+
+/* ─── User badge in header ───────────────────────────────────────────────── */
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+}
+
+.user-badge-role {
+  background: rgba(79, 124, 255, 0.15);
+  color: var(--clr-accent);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  font-weight: var(--font-weight-medium);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-badge-role--admin {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}

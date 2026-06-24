@@ -115,7 +115,7 @@ body {
 .global-lang-selector {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 16px;
   background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -157,8 +157,8 @@ body {
 
 /* ------- Firebase Status Indicator ------- */
 .db-status-indicator {
-  position: absolute;
-  top: 16px;
+  position: fixed;
+  bottom: 72px;
   left: 16px;
   background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(8px);

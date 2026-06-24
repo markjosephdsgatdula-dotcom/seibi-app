@@ -1,4 +1,4 @@
-# Implementation Plan: LINE WORKS Incident Notifications (With Mentions)
+# Implementation Plan: LINE WORKS Incident Notifications (Secure & Configurable)
 
 This plan describes how to integrate LINE WORKS with the Seibi application. When a technician logs a sudden incident or defect in the app, the system will instantly send a formatted notification to the team's LINE WORKS talkroom, with support for target mentions (like @All or specific users).
 
@@ -25,57 +25,101 @@ graph LR
 ## Step-by-Step Integration Guide
 
 ### Step 1: Set up the LINE WORKS Webhook (Manual Setup)
-Before executing the code changes, you or your Senpai must generate the Webhook URL:
 1. Go to your **LINE WORKS Developer Console** or **App Directory** and search for the **Incoming Webhook** app.
 2. Add the app, choose a title (e.g., `Seibi Notice Bot`), and invite it to the target talkroom where notifications should go.
-3. Under the Webhook settings, copy the generated **Webhook URL** (it looks like `https://webhook.worksmobile.com/r/xxxxxx/xxxxxx`).
+3. Under the Webhook settings, copy the generated **Webhook URL** (e.g., `https://webhook.worksmobile.com/r/xxxxxx/xxxxxx`). Keep this URL ready.
 
 ---
 
-### Step 2: Implement the Cloud Function with Mentions
-We will add a new trigger function to [functions/index.js](file:///C:/Users/SHOP4/.gemini/antigravity/scratch/seibi-app/seibi-app-main/functions/index.js).
+### Step 2: Implement the Cloud Function in functions/index.js
+We will write the Gen 2 Database Trigger in [functions/index.js](file:///C:/Users/SHOP4/.gemini/antigravity/scratch/seibi-app/seibi-app-main/functions/index.js).
 
 * **Target File:** [functions/index.js](file:///C:/Users/SHOP4/.gemini/antigravity/scratch/seibi-app/seibi-app-main/functions/index.js)
-* **Trigger Event:** `onValueCreated` (or `ref('notices/{noticeId}').onCreate`) in Firebase Realtime Database.
-* **Logic:**
-  1. Retrieve the new notice payload (incident title, asset name, severity/priority, author, and description).
-  2. Format the message content in both Japanese and English.
-  3. Send an HTTP POST request to the LINE WORKS Webhook URL.
+* **Trigger Event:** `onValueCreated` on database reference `notices/{noticeId}`.
+* **Database Region:** `asia-southeast1` (Singapore) to match your database location.
+* **Secrets Configuration:** We will use `defineString` from `firebase-functions/params` to define `LINE_WORKS_WEBHOOK_URL`. During deployment, the Firebase CLI will ask you to enter the Webhook URL, securing it.
 
-#### How Mentions Work in LINE WORKS Webhooks:
-To tag a user or notify everyone, you place a special tag inside the `text` field:
-* **To Mention Everyone:** Use `<m userId="all">` (renders as `@All` and triggers notifications for everyone).
-* **To Mention a Specific User:** Use `<m userId="senpai@company.com">` (replaces `{email}` with their registered corporate email, rendering as `@Senpai` and triggering a direct notification).
+#### Code Draft for `functions/index.js`:
+Add this block at the end of the file:
+```javascript
+const { onValueCreated } = require('firebase-functions/v2/database');
+const { defineString } = require('firebase-functions/params');
 
-#### Example Notification Format (JSON Payload):
-```json
-{
-  "title": "🚨 異常発生通知 (Incident Alert)",
-  "body": {
-    "text": "<m userId=\"all\">\n新しい異常報告が届きました。\n\n■ 設備名 (Equipment): Robot #3\n■ 内容 (Details): 溶接ノズルにスパッタ付着、動作一時停止。\n■ 報告者 (Reporter): John Doe\n■ 日時 (Time): 2026-06-23 17:15"
-  },
-  "button": {
-    "label": "アプリを開く (Open Seibi)",
-    "url": "https://seibi-app.firebaseapp.com"
+// Define Webhook parameter (Firebase CLI will ask for this during deploy)
+const lineWorksWebhookUrl = defineString('LINE_WORKS_WEBHOOK_URL');
+
+exports.sendLineWorksNotice = onValueCreated({
+  ref: '/notices/{noticeId}',
+  region: 'asia-southeast1' // Matches Singapore database location
+}, async (event) => {
+  try {
+    const notice = event.data.val();
+    if (!notice) return;
+
+    // Only notify for incidents or defects
+    if (notice.category !== 'incident' && notice.category !== 'defect') {
+      console.log('Notice is not an incident/defect. Skipping LINE WORKS notification.');
+      return;
+    }
+
+    const isIncident = notice.category === 'incident';
+    const alertEmoji = isIncident ? '🚨' : '🔧';
+    const alertTitle = isIncident ? '異常発生通知 (Incident Alert)' : '不具合報告 (Defect Report)';
+    
+    // Format message text with @All mention tag
+    const messageText = `<m userId="all">\n${alertEmoji} ${alertTitle}\n\n■ 設備名 (Equipment): ${notice.assetName || 'Unassigned'}\n■ 内容 (Details): ${notice.text || 'No description provided'}\n■ 報告者 (Reporter): ${notice.author || 'Anonymous'}\n■ 日時 (Time): ${new Date(notice.createdAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+
+    const payload = {
+      title: `${alertEmoji} Seibi Alert`,
+      body: {
+        text: messageText
+      },
+      button: {
+        label: 'アプリを開く (Open Seibi)',
+        url: 'https://seibi-app.web.app'
+      }
+    };
+
+    const webhookUrl = lineWorksWebhookUrl.value();
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      console.log('Successfully sent notice to LINE WORKS.');
+    } else {
+      const errText = await response.text();
+      console.error(`Failed to send notice to LINE WORKS. Status: ${response.status}, Error: ${errText}`);
+    }
+
+  } catch (error) {
+    console.error('Error in sendLineWorksNotice trigger:', error);
   }
-}
+});
 ```
 
 ---
 
-### Step 3: Deployment
-To deploy the new function to Firebase:
-1. Open the terminal.
-2. Run the command:
-   ```bash
-   firebase deploy --only functions
-   ```
+### Step 3: Deploy and Configure Webhook URL
+Run this command in the project root:
+```bash
+firebase deploy --only functions
+```
+**During deployment:**
+The Firebase CLI will detect the new parameter and output a prompt:
+> `? Enter a value for LINE_WORKS_WEBHOOK_URL:`
+
+Paste your Webhook URL there and press Enter. Firebase will automatically save it.
 
 ---
 
 ## Verification Plan
 
-### Automated Tests
+### Automated Verification
 * Once deployed, write a mock notice object directly to `/notices` inside your Firebase Database Console.
 * Verify the Cloud Function logs show `Status 200` from the worksmobile server.
 

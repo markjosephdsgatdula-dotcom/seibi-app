@@ -9,30 +9,9 @@
 
 'use strict';
 
-// Detect environment
-let isStaging = false;
+const SEIBI_ENV = 'production';
 
-if (typeof window !== 'undefined') {
-  const searchParams = new URLSearchParams(window.location.search);
-  if (searchParams.get('env') === 'staging' || window.location.hostname.includes('staging')) {
-    isStaging = true;
-  } else if (window.location.hash.includes('env=staging')) {
-    isStaging = true;
-    const cleanHash = window.location.hash.replace(/\?env=staging/i, '').replace(/&env=staging/i, '');
-    const searchPart = window.location.search ? `${window.location.search}&env=staging` : '?env=staging';
-    window.history.replaceState(null, '', `${searchPart}${cleanHash}`);
-  }
-} else if (typeof self !== 'undefined' && self.location) {
-  // Service Worker context
-  const searchParams = new URLSearchParams(self.location.search);
-  if (searchParams.get('env') === 'staging' || self.location.hostname.includes('staging')) {
-    isStaging = true;
-  }
-}
-
-const SEIBI_ENV = isStaging ? 'staging' : 'production';
-
-const prodConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyA8Of3keXXlECF3ADaNQe6EOOvAIifYJ5Q",
   authDomain: "seibi-app.firebaseapp.com",
   projectId: "seibi-app",
@@ -43,24 +22,12 @@ const prodConfig = {
   databaseURL: "https://seibi-app-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
-const stagingConfig = {
-  apiKey: "AIzaSyByW32vjzjWFbrsnghcOan2DNAkcI6vYdM",
-  authDomain: "seibi-app-staging.firebaseapp.com",
-  databaseURL: "https://seibi-app-staging-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "seibi-app-staging",
-  storageBucket: "seibi-app-staging.firebasestorage.app",
-  messagingSenderId: "1071070088047",
-  appId: "1:1071070088047:web:699fa3afd7c7ba4a4b769a",
-  measurementId: "G-SQ94K29CZX"
-};
-
 let firebaseApp;
 let firebaseAuth;
 let firebaseDb;
 let firebaseMessaging;
 if (typeof firebase !== 'undefined') {
-  const config = SEIBI_ENV === 'staging' ? stagingConfig : prodConfig;
-  firebaseApp = firebase.initializeApp(config);
+  firebaseApp = firebase.initializeApp(firebaseConfig);
   if (typeof firebaseApp.auth === 'function') {
     firebaseAuth = firebaseApp.auth();
   }
@@ -217,8 +184,7 @@ const FirebaseSync = (() => {
     const txt = document.getElementById('firebase-status-text');
     if (dot && txt) {
       dot.className = `status-dot status-dot--${status}`;
-      const envText = SEIBI_ENV === 'staging' ? ' · STAGING' : '';
-      txt.textContent = `${text} (v26${envText})`;
+      txt.textContent = `${text} (v26)`;
     }
   }
 

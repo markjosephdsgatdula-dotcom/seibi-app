@@ -305,6 +305,8 @@
   <script src="js/views/home.js?v=34"></script>
   <script src="js/views/calendar.js?v=34"></script>
   <script src="js/views/history.js?v=34"></script>
+  <script src="js/components/notice-card.js?v=34"></script>
+  <script src="js/services/notice-service.js?v=34"></script>
   <script src="js/views/notice.js?v=34"></script>
   <script src="js/components/asset-card.js?v=34"></script>
   <script src="js/services/asset-service.js?v=34"></script>
@@ -320,8 +322,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        const env = typeof SEIBI_ENV !== 'undefined' ? SEIBI_ENV : 'production';
-        navigator.serviceWorker.register(`./sw.js?env=${env}&v=31`)
+        navigator.serviceWorker.register('./sw.js?v=31')
           .then(registration => {
             console.log('[Service Worker] Registered successfully with scope:', registration.scope);
           })

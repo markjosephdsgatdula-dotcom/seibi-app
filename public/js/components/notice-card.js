@@ -6,16 +6,6 @@
 
 const NoticeCard = (() => {
 
-  function _escapeHtml(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/\n/g, '<br>');
-  }
-
   function renderRepairBanner(notice) {
     if (!notice.repaired) return '';
     const isJp = I18n.getLang() === 'jp';
@@ -34,14 +24,14 @@ const NoticeCard = (() => {
       
     const byTxt = isJp ? '担当' : 'by';
     
-    const label = `${resolvedTxt} · ${time} · ${byTxt} ${_escapeHtml(notice.repairedBy)}`;
+    const label = `${resolvedTxt} · ${time} · ${byTxt} ${Utils.escapeHtml(notice.repairedBy)}`;
 
     return `
       <div class="notice-repaired-banner" style="${isIncident ? 'border-color: var(--clr-success); background: rgba(16, 185, 129, 0.1);' : ''}">
         <span class="notice-repaired-icon">${isIncident ? '✅' : '🔧'}</span>
         <div class="notice-repaired-info">
           <span class="notice-repaired-label" style="${isIncident ? 'color: var(--clr-success);' : ''}">${label}</span>
-          ${notice.repairNote ? `<span class="notice-repaired-note">${_escapeHtml(notice.repairNote)}</span>` : ''}
+          ${notice.repairNote ? `<span class="notice-repaired-note">${Utils.escapeHtml(notice.repairNote)}</span>` : ''}
           ${notice.repairPhoto ? `
             <div class="repair-photo-display" onclick="AssetsView.openLightbox('${notice.repairPhoto}', '${isJp ? '解決写真' : 'Resolution Photo'}')">
               <img class="repair-photo-thumb" src="${notice.repairPhoto}" alt="Resolution photo" />
@@ -125,7 +115,7 @@ const NoticeCard = (() => {
             </button>
           </div>
           ${incidentDetailsHtml}
-          <p class="notice-message">${_escapeHtml(notice.message)}</p>
+          <p class="notice-message">${Utils.escapeHtml(notice.message)}</p>
           ${notice.photo ? `
             <div class="notice-photo-wrapper" onclick="AssetsView.openLightbox('${notice.photo}', 'Defect Photo')">
               <img class="notice-photo-img" src="${notice.photo}" alt="Attached defect photo" />

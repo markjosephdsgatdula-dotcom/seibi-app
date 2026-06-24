@@ -59,7 +59,7 @@ const ManualView = (() => {
             type="text" 
             class="manual-search-input" 
             placeholder="${I18n.t('manual_search')}" 
-            value="${_escapeHtml(_searchQuery)}"
+            value="${Utils.escapeAttr(_searchQuery)}"
             oninput="ManualView.onSearchInput(this.value)"
           />
           ${_searchQuery ? `
@@ -243,15 +243,7 @@ const ManualView = (() => {
     return str.replace(/[^a-z0-9]/gi, '-').toLowerCase();
   }
 
-  function _escapeHtml(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
+
 
   function _escapeQuote(str) {
     if (!str) return '';

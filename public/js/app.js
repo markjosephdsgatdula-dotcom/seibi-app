@@ -61,6 +61,50 @@ const App = (() => {
     }
   }
 
+  // ─── Notification permission prompt banner ───────────────────────────────────
+  // Rendered here (in the boot orchestrator) because it is a one-off UI concern
+  // that does not belong in any single view. The service itself stays DOM-free.
+
+  function _showNotifPromptBanner() {
+    const header = document.querySelector('.view-header');
+    if (!header || document.getElementById('notif-prompt-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'notif-prompt-banner';
+    banner.style.cssText = [
+      'background:#252a3e',
+      'border-left:4px solid #4f7cff',
+      'color:#ffffff',
+      'padding:var(--space-3) var(--space-4)',
+      'border-radius:var(--radius-sm)',
+      'margin-bottom:var(--space-4)',
+      'display:flex',
+      'justify-content:space-between',
+      'align-items:center',
+      'font-size:var(--font-size-sm)',
+      'box-shadow:0 4px 12px rgba(0,0,0,0.4)',
+    ].join(';');
+
+    banner.innerHTML = `
+      <span style="display:flex;align-items:center;gap:var(--space-2);font-weight:var(--font-weight-medium);color:#ffffff;">
+        <span style="font-size:16px;">🔔</span> 点検アラートのプッシュ通知を有効にしますか？
+      </span>
+      <div style="display:flex;align-items:center;gap:var(--space-3);">
+        <button id="btn-notif-allow"   style="background:#4f7cff;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:var(--font-weight-bold);font-size:var(--font-size-xs);box-shadow:0 2px 4px rgba(0,0,0,0.2);">許可する</button>
+        <button id="btn-notif-dismiss" style="background:none;border:none;color:#a1a8c9;cursor:pointer;padding:4px;font-size:16px;font-weight:bold;">✕</button>
+      </div>
+    `;
+
+    header.parentNode.insertBefore(banner, header.nextSibling);
+
+    document.getElementById('btn-notif-allow').addEventListener('click', () => {
+      NotificationService.requestPermission().then(granted => { banner.remove(); });
+    });
+    document.getElementById('btn-notif-dismiss').addEventListener('click', () => {
+      banner.remove();
+    });
+  }
+
   // ─── Initialisation ───────────────────────────────────────────────────────
 
   function _boot() {
@@ -88,9 +132,13 @@ const App = (() => {
           });
       }
 
-      // Initialize PWA Reminders (using Notification API directly without SW)
+      // Initialize notification service.
+      // If the browser hasn't been asked for permission yet, show the prompt banner.
       if (typeof NotificationService !== 'undefined') {
-        NotificationService.init();
+        const { needsPrompt } = NotificationService.init();
+        if (needsPrompt) {
+          _showNotifPromptBanner();
+        }
       }
 
       if (typeof FirebaseSync !== 'undefined') {

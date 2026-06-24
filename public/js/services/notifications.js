@@ -1,10 +1,31 @@
+/**
+ * services/notifications.js — Pure notification & FCM service
+ *
+ * Responsibilities:
+ *   - Check notification permission state
+ *   - Set up Firebase Cloud Messaging (FCM) token
+ *   - Save/update device token in Firebase
+ *   - Fire local SW notifications for due tasks
+ *
+ * NO DOM access here. The permission prompt banner is rendered
+ * by app.js (the boot orchestrator) after calling init().
+ */
+
 'use strict';
 
 const NotificationService = (() => {
   let isSupported = 'Notification' in window && 'serviceWorker' in navigator;
-  let hasGranted = isSupported && Notification.permission === 'granted';
+  let hasGranted  = isSupported && Notification.permission === 'granted';
   let _currentToken = null;
 
+  // ─── Public: initialise ────────────────────────────────────────────────
+
+  /**
+   * Initialise the notification service.
+   * @returns {{ needsPrompt: boolean }}
+   *   needsPrompt — true when the browser has not yet been asked for permission.
+   *   The caller (app.js) is responsible for showing the UI prompt if needed.
+   */
   function init() {
     try {
       _currentToken = localStorage.getItem('seibi_fcm_token');
@@ -12,67 +33,56 @@ const NotificationService = (() => {
 
     if (!isSupported) {
       console.warn('[Notifications] Not supported in this browser.');
-      return;
+      return { needsPrompt: false };
     }
 
     if (Notification.permission === 'granted') {
       hasGranted = true;
       _setupFCM();
-      _checkAndNotifyDueTasks(); // Fallback local check
-    } else if (Notification.permission !== 'denied') {
-      _showPermissionPrompt();
+      _checkAndNotifyDueTasks();
+      return { needsPrompt: false };
+    }
+
+    if (Notification.permission === 'denied') {
+      return { needsPrompt: false };
+    }
+
+    // Permission is 'default' — caller should show a prompt
+    return { needsPrompt: true };
+  }
+
+  // ─── Public: request permission (called when user taps Allow) ─────────
+
+  /**
+   * Trigger the browser permission dialog.
+   * Resolves to true if granted, false otherwise.
+   * @returns {Promise<boolean>}
+   */
+  function requestPermission() {
+    return Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        hasGranted = true;
+        _setupFCM();
+        _checkAndNotifyDueTasks();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // ─── Public: update token language after lang switch ──────────────────
+
+  function updateTokenLang(lang) {
+    if (!_currentToken) {
+      try { _currentToken = localStorage.getItem('seibi_fcm_token'); } catch (_) {}
+    }
+    if (_currentToken && typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref(`fcmTokens/${_currentToken}/lang`).set(lang)
+        .catch(e => console.error('[FCM] Error updating token lang:', e));
     }
   }
 
-  function _showPermissionPrompt() {
-    const header = document.querySelector('.view-header');
-    if (!header || document.getElementById('notif-prompt-banner')) return;
-
-    const banner = document.createElement('div');
-    banner.id = 'notif-prompt-banner';
-    banner.style.cssText = `
-      background: #252a3e; /* Solid elevated dark blue-gray */
-      border-left: 4px solid #4f7cff; /* Solid brand blue accent border */
-      color: #ffffff; /* Explicit pure white for text */
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-sm);
-      margin-bottom: var(--space-4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: var(--font-size-sm);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    `;
-    
-    banner.innerHTML = `
-      <span style="display:flex; align-items:center; gap:var(--space-2); font-weight:var(--font-weight-medium); color:#ffffff;">
-        <span style="font-size:16px;">🔔</span> 点検アラートのプッシュ通知を有効にしますか？
-      </span>
-      <div style="display:flex; align-items:center; gap:var(--space-3);">
-        <button id="btn-notif-allow" style="background:#4f7cff; color:#ffffff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:var(--font-weight-bold); font-size:var(--font-size-xs); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">許可する</button>
-        <button id="btn-notif-dismiss" style="background:none; border:none; color:#a1a8c9; cursor:pointer; padding:4px; font-size:16px; font-weight:bold;">✕</button>
-      </div>
-    `;
-
-    header.parentNode.insertBefore(banner, header.nextSibling);
-
-    document.getElementById('btn-notif-allow').addEventListener('click', () => {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          hasGranted = true;
-          banner.remove();
-          _setupFCM();
-          _checkAndNotifyDueTasks();
-        } else {
-          banner.remove();
-        }
-      });
-    });
-
-    document.getElementById('btn-notif-dismiss').addEventListener('click', () => {
-      banner.remove();
-    });
-  }
+  // ─── Private: FCM setup ───────────────────────────────────────────────
 
   function _setupFCM() {
     if (typeof firebaseMessaging === 'undefined' || !firebaseMessaging) {
@@ -81,34 +91,27 @@ const NotificationService = (() => {
     }
 
     const VAPID_KEYS = {
-      staging: 'BB5uw1Q-xcfAOEtRc5518F8Tv3CrfLYvx0JoMDxvXPRKGqtfavoBDgaNWCq8Bdp7D16VtIrKU1LqfLOela94Jeo',
+      staging:    'BB5uw1Q-xcfAOEtRc5518F8Tv3CrfLYvx0JoMDxvXPRKGqtfavoBDgaNWCq8Bdp7D16VtIrKU1LqfLOela94Jeo',
       production: 'BCKRHaLHf6L4CZJx9HEF4vgSllQE9FWupTGOXnJwFfIJYvyuy2YP5UH4wT0cVM6wfh5sy1TJiPI6HxIeriGYh8o'
     };
 
-    const env = typeof SEIBI_ENV !== 'undefined' ? SEIBI_ENV : 'production';
+    const env      = typeof SEIBI_ENV !== 'undefined' ? SEIBI_ENV : 'production';
     const vapidKey = VAPID_KEYS[env];
 
-    // Use the main Service Worker registration for FCM
     navigator.serviceWorker.ready
-      .then((registration) => {
-        return firebaseMessaging.getToken({
-          vapidKey: vapidKey,
-          serviceWorkerRegistration: registration
-        });
-      })
-      .then((currentToken) => {
+      .then(registration => firebaseMessaging.getToken({ vapidKey, serviceWorkerRegistration: registration }))
+      .then(currentToken => {
         if (currentToken) {
           console.log(`[FCM] Got device token (${env}):`, currentToken);
           _saveTokenToDb(currentToken);
         } else {
-          console.warn('[FCM] No registration token available. Request permission to generate one.');
+          console.warn('[FCM] No registration token. Request permission first.');
         }
-      }).catch((err) => {
-        console.error('[FCM] An error occurred while retrieving token. ', err);
-      });
+      })
+      .catch(err => console.error('[FCM] Error retrieving token:', err));
 
-    firebaseMessaging.onMessage((payload) => {
-      console.log('[FCM] Message received. ', payload);
+    firebaseMessaging.onMessage(payload => {
+      console.log('[FCM] Message received:', payload);
       const { title, body } = payload.notification || {};
       if (title && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -121,12 +124,9 @@ const NotificationService = (() => {
 
   function _saveTokenToDb(token) {
     _currentToken = token;
-    try {
-      localStorage.setItem('seibi_fcm_token', token);
-    } catch (_) {}
+    try { localStorage.setItem('seibi_fcm_token', token); } catch (_) {}
 
     if (typeof firebaseDb !== 'undefined') {
-      // Store token with device info/timestamp and current language preference
       firebaseDb.ref('fcmTokens/' + token).set({
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
@@ -135,38 +135,23 @@ const NotificationService = (() => {
     }
   }
 
-  function updateTokenLang(lang) {
-    if (!_currentToken) {
-      try {
-        _currentToken = localStorage.getItem('seibi_fcm_token');
-      } catch (_) {}
-    }
-    if (_currentToken && typeof firebaseDb !== 'undefined') {
-      firebaseDb.ref(`fcmTokens/${_currentToken}/lang`).set(lang)
-        .catch(e => console.error('[FCM] Error updating token lang:', e));
-    }
-  }
+  // ─── Private: local due-task check ────────────────────────────────────
 
   function _checkAndNotifyDueTasks() {
     if (!hasGranted || typeof MockDB === 'undefined') return;
 
     setTimeout(() => {
       MockDB.getAllTasks().then(tasks => {
-        const offset = new Date().getTimezoneOffset() * 60000;
+        const offset   = new Date().getTimezoneOffset() * 60000;
         const todayStr = new Date(Date.now() - offset).toISOString().slice(0, 10);
 
-        const dueTasks = tasks.filter(t => {
-          if (t.status === 'done') return false;
-          return t.dueDate <= todayStr;
-        });
+        const dueTasks     = tasks.filter(t => t.status !== 'done' && t.dueDate <= todayStr);
+        const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
 
         if (dueTasks.length > 0) {
-          const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
-          let title = '整備点検リマインダー';
-          let body = `本日の点検タスクが ${dueTasks.length} 件あります。`;
-          if (overdueCount > 0) {
-            body += `（期限超過 ${overdueCount} 件！）`;
-          }
+          const title = '整備点検リマインダー';
+          let body    = `本日の点検タスクが ${dueTasks.length} 件あります。`;
+          if (overdueCount > 0) body += `（期限超過 ${overdueCount} 件！）`;
 
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({
@@ -181,5 +166,6 @@ const NotificationService = (() => {
     }, 2000);
   }
 
-  return { init, checkDueTasks: _checkAndNotifyDueTasks, updateTokenLang };
+  return { init, requestPermission, updateTokenLang, checkDueTasks: _checkAndNotifyDueTasks };
+
 })();

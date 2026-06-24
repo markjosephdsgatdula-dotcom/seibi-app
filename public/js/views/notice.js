@@ -33,14 +33,6 @@ const NoticeView = (() => {
 
 
 
-  function _escapeHtml(str) {
-    return str
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/\n/g,'<br>');
-  }
 
   function _renderFeed(notices) {
     const feed = document.getElementById('notice-feed');
@@ -128,7 +120,7 @@ const NoticeView = (() => {
               class="compose-input compose-author"
               type="text"
               placeholder="${I18n.t('placeholder_name')}"
-              value="${_escapeHtml(savedAuthor)}"
+              value="${Utils.escapeAttr(savedAuthor)}"
               maxlength="40"
               aria-label="Your name"
             />
@@ -354,7 +346,7 @@ const NoticeView = (() => {
             <div class="inspection-modal-body" style="display: flex; flex-direction: column; gap: var(--space-4);">
               <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
                 <label class="inspector-input-label" for="inc-reporter">${I18n.t('placeholder_name')} *</label>
-                <input type="text" id="inc-reporter" required class="inspector-input" value="${_escapeHtml(_savedAuthor())}" placeholder="${I18n.t('placeholder_name')}" maxlength="40">
+                <input type="text" id="inc-reporter" required class="inspector-input" value="${Utils.escapeAttr(_savedAuthor())}" placeholder="${I18n.t('placeholder_name')}" maxlength="40">
               </div>
               <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-1);">
                 <label class="inspector-input-label" for="inc-machine">${I18n.t('label_machine')}</label>
@@ -599,7 +591,7 @@ const NoticeView = (() => {
                   <span style="font-size: 11px; color: var(--clr-text-secondary);">${new Date(notice.timestamp).toLocaleString(isJp ? 'ja-JP' : 'en-US')}</span>
                 </div>
                 <div style="font-size: 13px; line-height: 1.5; color: var(--clr-text-secondary); word-break: break-word;">
-                  ${_escapeHtml(notice.message)}
+                  ${Utils.escapeHtml(notice.message)}
                 </div>
                 ${notice.photo ? `
                   <div class="notice-photo-wrapper" style="margin-top: 5px; max-width: 150px; max-height: 112px;" onclick="AssetsView.openLightbox('${notice.photo}', 'Report Photo')">

@@ -76,8 +76,9 @@ const AuthService = (() => {
   function restoreSession() {
     return new Promise(resolve => {
       firebaseAuth.onAuthStateChanged(user => {
-        if (!user) {
-          resolve(null);
+        // No session, or a leftover anonymous session — sign out and show login
+        if (!user || user.isAnonymous || !user.email) {
+          firebaseAuth.signOut().then(() => resolve(null));
           return;
         }
         _uid      = user.uid;

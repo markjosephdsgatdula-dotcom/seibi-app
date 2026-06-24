@@ -137,6 +137,11 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **Login Modal:** Created a login modal UI in `public/js/components/login-modal.js` and layout styles in `public/css/login.css`.
 * **Access Control:** Interfaced view controllers to query the current active user role (Admin vs. Operator) before allowing destructive actions (such as editing floor layouts, submitting inspection records, or clearing reports).
 
+### Stage 15: Firebase Auth Token Sync Fix
+* **Token Propagation:** Modified `firebase-config.js` to wait for the current user's ID token resolution (`getIdToken()`) before attaching database listeners.
+* **First-Login Resolution:** Prevents intermittent "Permission Denied" database errors on first login before the session token has propagated.
+* **Cache Busting:** Bumped the cache parameter to `v=35b` for `firebase-config.js` in `index.html`.
+
 ---
 
 ## 🚨 Cross-Machine AI Sync Instruction (Home PC / Work Laptop)

@@ -24,97 +24,21 @@ const CalendarView = (() => {
   let _draggingTaskId = null;
   let _touchDragEl    = null;   // cloned ghost element for touch drag
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  function _getDayNames() {
-    return I18n.getLang() === 'jp'
-      ? ['日', '月', '火', '水', '木', '金', '土']
-      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  }
-
-  function _getMonthNames() {
-    return I18n.getLang() === 'jp'
-      ? ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-      : [
-          'January','February','March','April','May','June',
-          'July','August','September','October','November','December',
-        ];
-  }
-
-  function _toDateStr(year, month, day) {
-    return `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  }
-
-  function _todayStr() {
-    const now = new Date();
-    const offset = now.getTimezoneOffset() * 60000;
-    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-  }
-
-  function _tasksForDate(dateStr) {
-    return _tasks.filter(t => t.dueDate === dateStr);
-  }
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  function _renderHeader() {
-    const isJp = I18n.getLang() === 'jp';
-    const monthName = _getMonthNames()[_month];
-    const monthYearHtml = isJp
-      ? `<span class="cal-year">${_year}年</span><span class="cal-month-name">${monthName}</span>`
-      : `<span class="cal-month-name">${monthName}</span><span class="cal-year">${_year}</span>`;
 
-    return `
-      <div class="cal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3);">
-        <div style="display: flex; align-items: center; gap: var(--space-2);">
-          <button class="cal-nav-btn" id="cal-prev" onclick="CalendarView.prevMonth()" aria-label="Previous month">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="cal-month-title" style="flex: none; display: flex; align-items: baseline; gap: var(--space-2);">
-            ${monthYearHtml}
-          </div>
-          <button class="cal-nav-btn" id="cal-next" onclick="CalendarView.nextMonth()" aria-label="Next month">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-        <div style="display: flex; align-items: center; gap: var(--space-2);">
-          <button class="cal-today-btn" onclick="CalendarView.goToToday()">${I18n.t('btn_today')}</button>
-          <button class="cal-today-btn" style="background: linear-gradient(135deg, #4f7cff, #3054c4); color: #fff; border: none; box-shadow: 0 4px 10px rgba(79, 124, 255, 0.25); display: flex; align-items: center; gap: var(--space-1);" onclick="CalendarView.openCreateOrderModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            ${I18n.t('btn_new_work_order')}
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  function _renderDayHeaders() {
-    return `<div class="cal-day-headers">${_getDayNames().map(d => `<div class="cal-day-name">${d}</div>`).join('')}</div>`;
-  }
-
-  function _renderPill(task) {
-    const short = task.title.length > 18 ? task.title.slice(0, 17) + '…' : task.title;
-    const isDone = task.status === 'done';
-    return `
-      <div
-        class="cal-pill priority-pill--${task.priority} status-pill--${task.status}"
-        data-task-id="${task.id}"
-        draggable="${isDone ? 'false' : 'true'}"
-        style="${isDone ? 'cursor:default;' : ''}"
-        title="${task.title} — ${task.dueTime}"
-      >${short}</div>
-    `;
-  }
 
   function _renderCell(year, month, day) {
-    const dateStr   = _toDateStr(year, month, day);
-    const todayStr  = _todayStr();
+    const dateStr   = CalendarService.toDateStr(year, month, day);
+    const todayStr  = CalendarService.todayStr();
     const isToday   = dateStr === todayStr;
-    const dayTasks  = _tasksForDate(dateStr);
+    const dayTasks  = CalendarService.tasksForDate(_tasks, dateStr);
     const MAX_PILLS = 3;
     const extra     = dayTasks.length - MAX_PILLS;
 
-    const pillsHtml = dayTasks.slice(0, MAX_PILLS).map(_renderPill).join('');
+    const pillsHtml = dayTasks.slice(0, MAX_PILLS).map(CalendarGrid.renderPill).join('');
     const moreHtml  = extra > 0
       ? `<div class="cal-more">+${extra} ${I18n.getLang() === 'jp' ? '件以上' : 'more'}</div>`
       : '';
@@ -157,7 +81,7 @@ const CalendarView = (() => {
     const panel = document.getElementById('home-calendar');
     if (!panel) return;
 
-    panel.innerHTML = _renderHeader() + _renderDayHeaders() + _renderGrid();
+    panel.innerHTML = CalendarGrid.renderHeader(_year, _month) + CalendarGrid.renderDayHeaders() + _renderGrid();
     _bindDragEvents();
   }
 
@@ -171,7 +95,7 @@ const CalendarView = (() => {
     if (existing) existing.remove();
 
     const isJp = I18n.getLang() === 'jp';
-    const dayTasks = _tasksForDate(dateStr);
+    const dayTasks = CalendarService.tasksForDate(_tasks, dateStr);
     const label    = new Date(dateStr + 'T00:00:00').toLocaleDateString(isJp ? 'ja-JP' : 'en-US', {
       weekday: 'long', month: 'long', day: 'numeric',
     });
@@ -264,7 +188,7 @@ const CalendarView = (() => {
     const existing = document.getElementById('create-order-modal');
     if (existing) existing.remove();
 
-    const todayStr = _todayStr();
+    const todayStr = CalendarService.todayStr();
 
     const modal = document.createElement('div');
     modal.id = 'create-order-modal';

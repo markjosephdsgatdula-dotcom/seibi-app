@@ -1,0 +1,365 @@
+[
+  {
+    "assetId": "",
+    "assetName": "中のTIG溶接機",
+    "completedAt": "2026-06-22T00:58:50.617Z",
+    "completedBy": "山口",
+    "durationMins": 30,
+    "id": "hist-repair-notice-1782089804544",
+    "location": "Workshop",
+    "notes": "再はんだ付け",
+    "priority": "high",
+    "repairPhoto": null,
+    "reportNotes": "ボタンのワヤーがきえてしまいました。",
+    "reportPhoto": null,
+    "title": "Incident Resolution: 中のTIG溶接機",
+    "type": "repair"
+  },
+  {
+    "assetId": "asset-utility-gas-01",
+    "assetName": "Main Gas Utility",
+    "assetName_jp": "メインガス供給設備",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Gas Pressure Needle"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Gas Leak"
+      }
+    ],
+    "completedAt": "2026-06-21T22:00:07.888Z",
+    "completedBy": "マーク",
+    "durationMins": 5,
+    "id": "hist-1782079207888",
+    "location": "1F Courtyard",
+    "notes": "すべての項目に合格しました。",
+    "priority": "low",
+    "title": "メインガス供給設備 — 月次点検",
+    "title_jp": "メインガス供給設備 — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-regulator-02",
+    "assetName": "Regulator Pillar Right",
+    "assetName_jp": "ガス調整器 (右柱)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "一番したのれグレーが漏れています。",
+        "status": "fail",
+        "title": "Check gas leak"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Adjust and verify flow rate"
+      }
+    ],
+    "completedAt": "2026-06-21T21:59:43.056Z",
+    "completedBy": "マーク",
+    "durationMins": 25,
+    "id": "hist-1782079183056",
+    "location": "Pillar Right",
+    "notes": "1件の不具合が報告されました",
+    "priority": "high",
+    "title": "ガス調整器 (右柱) — 月次点検",
+    "title_jp": "ガス調整器 (右柱) — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-robot-06",
+    "assetName": "Welding Robot #6 (CO2/MAG)",
+    "assetName_jp": "溶接ロボット 6号機 (CO2/MAG)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Clean Welder Rear Filter"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Robot & Joint Alignment"
+      },
+      {
+        "itemId": 3,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Emergency Stop Button"
+      },
+      {
+        "itemId": 4,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Welding Ground Cable"
+      },
+      {
+        "itemId": 5,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Torch Shock Sensor"
+      },
+      {
+        "itemId": 6,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Wire Feed Pressure (3.5)"
+      },
+      {
+        "itemId": 7,
+        "notes": "",
+        "status": "pass",
+        "title": "Sand & Oil Welding Table"
+      },
+      {
+        "itemId": 8,
+        "notes": "なし",
+        "status": "fail",
+        "title": "Clean Conduit Hose Inner Liner"
+      }
+    ],
+    "completedAt": "2026-06-21T21:58:50.084Z",
+    "completedBy": "マーク",
+    "durationMins": 25,
+    "id": "hist-1782079130084",
+    "location": "right",
+    "notes": "1件の不具合が報告されました",
+    "priority": "high",
+    "title": "溶接ロボット 6号機 (CO2/MAG) — 月次点検",
+    "title_jp": "溶接ロボット 6号機 (CO2/MAG) — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-robot-05",
+    "assetName": "Welding Robot #5 (CO2/MAG)",
+    "assetName_jp": "溶接ロボット 5号機 (CO2/MAG)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Clean Welder Rear Filter"
+      },
+      {
+        "itemId": 2,
+        "notes": "左定盤手前に2mm 中定盤左に2mm",
+        "status": "fail",
+        "title": "Verify Robot & Joint Alignment"
+      },
+      {
+        "itemId": 3,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Emergency Stop Button"
+      },
+      {
+        "itemId": 4,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Welding Ground Cable"
+      },
+      {
+        "itemId": 5,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Torch Shock Sensor"
+      },
+      {
+        "itemId": 6,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Wire Feed Pressure (3.5)"
+      },
+      {
+        "itemId": 7,
+        "notes": "",
+        "status": "pass",
+        "title": "Sand & Oil Welding Table"
+      },
+      {
+        "itemId": 8,
+        "notes": "なし",
+        "status": "fail",
+        "title": "Clean Conduit Hose Inner Liner"
+      }
+    ],
+    "completedAt": "2026-06-21T21:58:20.607Z",
+    "completedBy": "貫名",
+    "durationMins": 15,
+    "id": "hist-1782079100607",
+    "location": "right",
+    "notes": "2件の不具合が報告されました",
+    "priority": "high",
+    "title": "溶接ロボット 5号機 (CO2/MAG) — 月次点検",
+    "title_jp": "溶接ロボット 5号機 (CO2/MAG) — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-robot-04",
+    "assetName": "Welding Robot #4 (CO2/MAG)",
+    "assetName_jp": "溶接ロボット 4号機 (CO2/MAG)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Clean Welder Rear Filter"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Robot & Joint Alignment"
+      },
+      {
+        "itemId": 3,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Emergency Stop Button"
+      },
+      {
+        "itemId": 4,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Welding Ground Cable"
+      },
+      {
+        "itemId": 5,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Torch Shock Sensor"
+      },
+      {
+        "itemId": 6,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Wire Feed Pressure (3.5)"
+      },
+      {
+        "itemId": 7,
+        "notes": "",
+        "status": "pass",
+        "title": "Sand & Oil Welding Table"
+      },
+      {
+        "itemId": 8,
+        "notes": "",
+        "status": "pass",
+        "title": "Clean Conduit Hose Inner Liner"
+      }
+    ],
+    "completedAt": "2026-06-21T21:53:05.185Z",
+    "completedBy": "外山",
+    "durationMins": 25,
+    "id": "hist-1782078785185",
+    "location": "middle",
+    "notes": "すべての項目に合格しました。",
+    "priority": "low",
+    "title": "溶接ロボット 4号機 (CO2/MAG) — 月次点検",
+    "title_jp": "溶接ロボット 4号機 (CO2/MAG) — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-robot-03",
+    "assetName": "Welding Robot #3 (CO2/MAG)",
+    "assetName_jp": "溶接ロボット 3号機 (CO2/MAG)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Clean Welder Rear Filter"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Robot & Joint Alignment"
+      },
+      {
+        "itemId": 3,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Emergency Stop Button"
+      },
+      {
+        "itemId": 4,
+        "notes": "",
+        "status": "pass",
+        "title": "Check Welding Ground Cable"
+      },
+      {
+        "itemId": 5,
+        "notes": "",
+        "status": "pass",
+        "title": "Test Torch Shock Sensor"
+      },
+      {
+        "itemId": 6,
+        "notes": "",
+        "status": "pass",
+        "title": "Verify Wire Feed Pressure (3.5)"
+      },
+      {
+        "itemId": 7,
+        "notes": "",
+        "status": "pass",
+        "title": "Sand & Oil Welding Table"
+      },
+      {
+        "itemId": 8,
+        "notes": "なし",
+        "status": "pass",
+        "title": "Clean Conduit Hose Inner Liner"
+      }
+    ],
+    "completedAt": "2026-06-21T21:52:47.507Z",
+    "completedBy": "坂本",
+    "durationMins": 25,
+    "id": "hist-1782078767507",
+    "location": "middle",
+    "notes": "すべての項目に合格しました。",
+    "priority": "low",
+    "title": "溶接ロボット 3号機 (CO2/MAG) — 月次点検",
+    "title_jp": "溶接ロボット 3号機 (CO2/MAG) — 月次点検",
+    "type": "inspection"
+  },
+  {
+    "assetId": "asset-regulator-01",
+    "assetName": "Regulator Pillar Left",
+    "assetName_jp": "ガス調整器 (左柱)",
+    "checklist": [
+      {
+        "itemId": 1,
+        "notes": "",
+        "status": "pass",
+        "title": "Check gas leak"
+      },
+      {
+        "itemId": 2,
+        "notes": "",
+        "status": "pass",
+        "title": "Adjust and verify flow rate"
+      }
+    ],
+    "completedAt": "2026-06-21T21:03:30.178Z",
+    "completedBy": "マーク",
+    "durationMins": 5,
+    "id": "hist-1782075810178",
+    "location": "Pillar Left",
+    "notes": "すべての項目に合格しました。",
+    "priority": "low",
+    "title": "ガス調整器 (左柱) — 月次点検",
+    "title_jp": "ガス調整器 (左柱) — 月次点検",
+    "type": "inspection"
+  }
+]

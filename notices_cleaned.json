@@ -1,0 +1,54 @@
+[
+  {
+    "assetId": "asset-robot-05",
+    "author": "貫名",
+    "category": "defect",
+    "id": "notice-1782079100615",
+    "initials": "貫",
+    "message": "【異常検知】 溶接ロボット 5号機 (CO2/MAG) — right\n点検中に「Verify Robot & Joint Alignment」で異常が報告されました。",
+    "timestamp": "2026-06-21T21:58:20.615Z"
+  },
+  {
+    "assetId": "asset-robot-05",
+    "author": "貫名",
+    "category": "defect",
+    "id": "notice-1782079100617",
+    "initials": "貫",
+    "message": "【異常検知】 溶接ロボット 5号機 (CO2/MAG) — right\n点検中に「Clean Conduit Hose Inner Liner」で異常が報告されました。",
+    "timestamp": "2026-06-21T21:58:20.617Z"
+  },
+  {
+    "assetId": "asset-robot-06",
+    "author": "マーク",
+    "category": "defect",
+    "id": "notice-1782079130087",
+    "initials": "マ",
+    "message": "【異常検知】 溶接ロボット 6号機 (CO2/MAG) — right\n点検中に「Clean Conduit Hose Inner Liner」で異常が報告されました。",
+    "timestamp": "2026-06-21T21:58:50.087Z"
+  },
+  {
+    "assetId": "asset-regulator-02",
+    "author": "マーク",
+    "category": "defect",
+    "id": "notice-1782079183059",
+    "initials": "マ",
+    "message": "【異常検知】 ガス調整器 (右柱) — Pillar Right\n点検中に「Check gas leak」で異常が報告されました。",
+    "timestamp": "2026-06-21T21:59:43.059Z"
+  },
+  {
+    "assetName": "中のTIG溶接機",
+    "author": "山口",
+    "category": "incident",
+    "id": "notice-1782089804544",
+    "incidentType": "stoppage",
+    "initials": "山",
+    "message": "ボタンのワヤーがきえてしまいました。",
+    "photo": null,
+    "repairNote": "再はんだ付け",
+    "repairPhoto": null,
+    "repaired": true,
+    "repairedAt": "2026-06-22T00:58:50.539Z",
+    "repairedBy": "山口",
+    "timestamp": "2026-06-22T00:54:00.000Z"
+  }
+]

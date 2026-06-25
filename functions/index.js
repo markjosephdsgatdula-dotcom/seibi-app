@@ -1,5 +1,5 @@
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { onRequest } = require('firebase-functions/v2/https');
+
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { defineString } = require('firebase-functions/params');
 const admin = require('firebase-admin');
@@ -146,64 +146,6 @@ exports.weeklyMaintenanceReminder = onSchedule({
   }
 });
 
-/**
- * Test endpoint
- */
-exports.testNotification = onRequest({ cors: true, invoker: 'public' }, async (req, res) => {
-  try {
-    const todayStr = getTokyoDateString(0);
-
-    const tasksSnap = await admin.database().ref('tasks').once('value');
-    const tasks = tasksSnap.val() || {};
-    
-    const dueTasks = Object.values(tasks).filter(t => {
-      if (t.status === 'done') return false;
-      return t.dueDate <= todayStr;
-    });
-
-    if (dueTasks.length === 0) {
-      res.status(200).send('No pending or overdue tasks for today. Skipping notification.');
-      return;
-    }
-
-    const overdueCount = dueTasks.filter(t => t.dueDate < todayStr).length;
-
-    const tokensSnap = await admin.database().ref('fcmTokens').once('value');
-    const tokensData = tokensSnap.val() || {};
-    const tokens = Object.keys(tokensData);
-
-    if (tokens.length === 0) {
-      res.status(200).send('No registered FCM tokens found. Skipping notification.');
-      return;
-    }
-
-    const title = '本日の整備点検スケジュール (テスト)';
-    let body = `本日実施予定の点検が ${dueTasks.length} 件あります。`;
-    if (overdueCount > 0) {
-      body += `（期限超過 ${overdueCount} 件！）`;
-    }
-
-    const message = {
-      notification: {
-        title: title,
-        body: body
-      },
-      tokens: tokens,
-      webpush: {
-        notification: {
-          icon: '/images/icon.svg',
-          vibrate: [200, 100, 200]
-        }
-      }
-    };
-
-    const response = await admin.messaging().sendEachForMulticast(message);
-    res.status(200).send(`Successfully sent message. Success count: ${response.successCount}, Failure count: ${response.failureCount}`);
-  } catch (error) {
-    console.error('Error in testNotification:', error);
-    res.status(500).send('Internal Server Error: ' + error.message);
-  }
-});
 
 /**
  * Realtime Database trigger on notice creation.

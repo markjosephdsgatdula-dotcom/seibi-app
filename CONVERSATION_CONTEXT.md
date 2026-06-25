@@ -63,6 +63,7 @@ Firebase RTDB ──► FirebaseSync (firebase-config.js)
 - ✅ Firebase Storage migration: no Base64 images in RTDB (99.9% bandwidth reduction)
 - ✅ Live database sanitized: all test/mock entries purged from `/notices`, `/history`, `/tasks`, `/assets`
 - ✅ Custom robot checklist reference photos restored to Cloud Storage with token URLs
+- ✅ P0 Security Fixes: Stored XSS protection (HTML escaping for author/initials in notices), role-based delete action guards (delete button restricted to Admin, deleteNotice function-level guard), and removal of unauthenticated test Cloud Function.
 
 ---
 

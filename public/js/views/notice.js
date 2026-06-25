@@ -213,6 +213,7 @@ const NoticeView = (() => {
   // ─── Delete notice ────────────────────────────────────────────────────────
 
   function deleteNotice(id) {
+    if (!AuthService.isAdmin()) return;
     if (!confirm(I18n.t('confirm_delete_notice'))) return;
     NoticeStore.deleteNotice(id).then(() => {
       const card = document.getElementById(`notice-${id}`);

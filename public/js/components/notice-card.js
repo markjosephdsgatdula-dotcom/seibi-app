@@ -89,17 +89,18 @@ const NoticeCard = (() => {
     return `
       <article class="notice-card${incidentClass}" id="notice-${notice.id}">
         <div class="notice-avatar" style="background:${colour}" aria-hidden="true">
-          ${notice.initials}
+          ${Utils.escapeHtml(notice.initials)}
         </div>
         <div class="notice-body${isRepaired ? ' notice-body--repaired' : ''}">
           <div class="notice-meta">
-            <span class="notice-author">${notice.author}</span>
+            <span class="notice-author">${Utils.escapeHtml(notice.author)}</span>
             <span class="notice-time" title="${formattedTime}">
               ${NoticeService.relativeTime(notice.timestamp)}
             </span>
             <span class="notice-cat notice-cat--${notice.category}">
               ${cat.emoji} ${catLabel}
             </span>
+            ${AuthService.isAdmin() ? `
             <button
               class="notice-delete-btn"
               onclick="NoticeView.deleteNotice('${notice.id}')"
@@ -113,6 +114,7 @@ const NoticeCard = (() => {
                 <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
             </button>
+            ` : ''}
           </div>
           ${incidentDetailsHtml}
           <p class="notice-message">${Utils.escapeHtml(notice.message)}</p>

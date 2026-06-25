@@ -66,6 +66,16 @@ const Router = (() => {
       console.warn(`[Router] Unknown view: "${viewId}"`);
       return;
     }
+
+    // Role-based access control: Admin only views
+    if (viewId === 'assets' && typeof AuthService !== 'undefined' && !AuthService.isAdmin()) {
+      console.warn(`[Router] Access denied to view: "${viewId}" for operator`);
+      if (!_currentView) {
+        navigate('home', updateHash);
+      }
+      return;
+    }
+
     if (viewId === _currentView) return;   // No-op if already there
 
     _deactivateAll();

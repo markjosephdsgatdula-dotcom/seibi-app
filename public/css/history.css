@@ -210,3 +210,348 @@
 .hist-photo-wrapper:hover {
   border-color: var(--clr-accent) !important;
 }
+
+/* =============================================
+   History Analytics Enhancements
+   ============================================= */
+
+/* ------- Stats bar ------- */
+.hist-stats-bar {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.hist-stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hist-stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-accent);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hist-stat-value--repair  { color: var(--clr-priority-high);   }
+.hist-stat-value--defect  { color: var(--clr-priority-medium); }
+.hist-stat-value--machine { color: var(--clr-priority-low); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); padding-top: 4px; }
+
+.hist-stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  text-align: center;
+}
+
+.hist-stat-range-label {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  font-size: 10px;
+  color: var(--clr-text-disabled);
+  font-style: italic;
+}
+
+/* ------- Machine Health Panel ------- */
+.hist-health-panel {
+  margin-bottom: var(--space-3);
+}
+
+.hist-health-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.hist-health-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+}
+
+.hist-health-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-disabled);
+}
+
+.hist-health-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hist-health-card {
+  flex-shrink: 0;
+  min-width: 175px;
+  max-width: 210px;
+  background: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hist-health-score--healthy { border-color: rgba(82, 196, 26, 0.5); }
+.hist-health-score--watch   { border-color: rgba(250, 173, 20, 0.5); }
+.hist-health-score--risk    {
+  border-color: rgba(255, 77, 79, 0.6);
+  animation: hist-risk-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hist-risk-pulse {
+  0%, 100% { border-color: rgba(255, 77, 79, 0.6); }
+  50%       { border-color: rgba(255, 77, 79, 1);   }
+}
+
+.hist-health-card-score {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+}
+
+.hist-health-card-name {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.hist-health-card-meta {
+  font-size: 10px;
+  color: var(--clr-text-disabled);
+}
+
+.hist-health-card-repairs {
+  font-size: 10px;
+  color: var(--clr-priority-medium);
+  margin-top: 2px;
+}
+
+/* ------- Recurring Failure Alerts ------- */
+.hist-alerts-panel {
+  background: rgba(250, 173, 20, 0.07);
+  border: 1px solid rgba(250, 173, 20, 0.3);
+  border-left: 3px solid var(--clr-priority-medium);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.hist-alerts-panel--urgent {
+  background: rgba(255, 77, 79, 0.07);
+  border-color: rgba(255, 77, 79, 0.3);
+  border-left-color: var(--clr-priority-high);
+}
+
+.hist-alerts-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.hist-alerts-icon { font-size: var(--font-size-sm); }
+
+.hist-alerts-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-priority-medium);
+}
+
+.hist-alerts-panel--urgent .hist-alerts-title { color: var(--clr-priority-high); }
+
+.hist-alerts-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-disabled);
+}
+
+.hist-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.hist-alert-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  flex-wrap: wrap;
+}
+
+.hist-alert-machine {
+  font-weight: var(--font-weight-semibold);
+  color: var(--clr-text-primary);
+  flex-shrink: 0;
+}
+
+.hist-alert-item {
+  color: var(--clr-text-secondary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hist-alert-count {
+  font-weight: var(--font-weight-bold);
+  color: var(--clr-priority-medium);
+  flex-shrink: 0;
+}
+
+.hist-alert-row--consecutive .hist-alert-count { color: var(--clr-priority-high); }
+
+.hist-alert-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: rgba(250, 173, 20, 0.15);
+  color: var(--clr-priority-medium);
+  flex-shrink: 0;
+}
+
+.hist-alert-badge--consecutive {
+  background: rgba(255, 77, 79, 0.15);
+  color: var(--clr-priority-high);
+}
+
+/* ------- Filter Bar ------- */
+.hist-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.hist-filter-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hist-filter-group {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.hist-filter-pill {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--clr-border);
+  background: var(--clr-surface-raised);
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-instant), color var(--transition-instant), border-color var(--transition-instant);
+  white-space: nowrap;
+  min-height: 28px;
+}
+
+.hist-filter-pill:hover {
+  color: var(--clr-text-primary);
+  border-color: var(--clr-text-secondary);
+}
+
+.hist-filter-pill.active {
+  background: var(--clr-accent-dim);
+  color: var(--clr-accent);
+  border-color: var(--clr-accent);
+}
+
+.hist-filter-search-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.hist-search-input {
+  flex: 1;
+  background: var(--clr-surface-raised);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-primary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  min-height: 36px;
+  transition: border-color var(--transition-fast);
+}
+
+.hist-search-input:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+}
+
+.hist-search-input::placeholder { color: var(--clr-text-disabled); }
+
+.hist-clear-btn {
+  font-size: var(--font-size-xs);
+  color: var(--clr-text-secondary);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 36px;
+  transition: color var(--transition-instant), border-color var(--transition-instant);
+}
+
+.hist-clear-btn:hover {
+  color: var(--clr-priority-high);
+  border-color: var(--clr-priority-high);
+}
+
+/* Clear button inside empty state */
+.hist-clear-filter-btn {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--clr-accent);
+  border: 1px solid var(--clr-accent);
+  border-radius: var(--radius-sm);
+  background: var(--clr-accent-dim);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  min-height: 36px;
+}
+
+/* ------- Responsive: narrow screens ------- */
+@media (max-width: 480px) {
+  .hist-stats-bar {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .hist-stat-range-label {
+    grid-column: 1 / -1;
+    position: static;
+    text-align: right;
+    margin-top: calc(-1 * var(--space-2));
+  }
+
+  .hist-filter-row { gap: var(--space-2); }
+}

@@ -42,7 +42,9 @@ const CalendarGrid = (() => {
   }
 
   function renderPill(task) {
-    const short = task.title.length > 18 ? task.title.slice(0, 17) + '…' : task.title;
+    const isJp = I18n.getLang() === 'jp';
+    const displayTitle = (isJp && task.title_jp) ? task.title_jp : task.title;
+    const short = displayTitle.length > 18 ? displayTitle.slice(0, 17) + '…' : displayTitle;
     const isDone = task.status === 'done';
     return `
       <div
@@ -50,7 +52,7 @@ const CalendarGrid = (() => {
         data-task-id="${task.id}"
         draggable="${isDone ? 'false' : 'true'}"
         style="${isDone ? 'cursor:default;' : ''}"
-        title="${task.title} — ${task.dueTime}"
+        title="${displayTitle} — ${task.dueTime}"
       >${short}</div>
     `;
   }

@@ -468,6 +468,8 @@ const AssetsView = (() => {
       _checklistState = template.map(item => ({
         itemId: item.id,
         title: item.title,
+        title_jp: item.title_jp || null,
+        title_en: item.title_en || null,
         status: null,
         notes: ''
       }));

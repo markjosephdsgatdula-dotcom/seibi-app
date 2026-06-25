@@ -417,9 +417,9 @@ const AssetModal = (() => {
                 <div class="editor-row" id="editor-row-${idx}">
                   <span class="editor-num">${idx + 1}</span>
                   <input class="editor-input" type="text" placeholder="Title"
-                    value="${Utils.escapeAttr(item.title)}" oninput="AssetsView.onEditModalRowItem(${idx}, 'title', this.value)" />
+                    value="${Utils.escapeAttr(isJp ? (item.title_jp || item.title) : (item.title_en || item.title))}" oninput="AssetsView.onEditModalRowItem(${idx}, 'title', this.value)" />
                   <input class="editor-input" type="text" placeholder="Description"
-                    value="${Utils.escapeAttr(item.desc)}" oninput="AssetsView.onEditModalRowItem(${idx}, 'desc', this.value)" />
+                    value="${Utils.escapeAttr(isJp ? (item.desc_jp || item.desc) : (item.desc_en || item.desc))}" oninput="AssetsView.onEditModalRowItem(${idx}, 'desc', this.value)" />
                   <select class="form-select" style="min-height:30px;padding:2px;" onchange="AssetsView.onEditModalRowItem(${idx}, 'freq', this.value)">
                     <option value="monthly"     ${item.freq === 'monthly'     ? 'selected' : ''}>Monthly</option>
                     <option value="semi-annual" ${item.freq === 'semi-annual' ? 'selected' : ''}>Semi-Ann</option>

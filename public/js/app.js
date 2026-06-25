@@ -34,7 +34,9 @@ const App = (() => {
       '#tab-manual .nav-label':    'nav_manual',
       '#view-assets .view-title':  'nav_assets',
       '#view-history .view-title': 'hist_title',
-      '#view-manual .view-title':  'manual_title'
+      '#view-manual .view-title':  'manual_title',
+      '#sort-btn-date':            'sort_date',
+      '#sort-btn-machine':         'sort_machine'
     };
     for (const [selector, key] of Object.entries(mappings)) {
       const el = document.querySelector(selector);
@@ -169,6 +171,14 @@ const App = (() => {
         // Clear user badge
         const badge = document.getElementById('user-badge-slot');
         if (badge) badge.innerHTML = '';
+
+        // Hide assets tab on logout
+        const assetsTab = document.getElementById('tab-assets');
+        if (assetsTab) assetsTab.style.display = 'none';
+
+        // Reset navigation to home view
+        Router.navigate('home');
+
         // Show login modal
         _showLoginModal();
       });
@@ -179,6 +189,12 @@ const App = (() => {
 
   function _initApp(username, role) {
     _renderUserBadge(username, role);
+
+    // Hide/show asset tab based on role
+    const assetsTab = document.getElementById('tab-assets');
+    if (assetsTab) {
+      assetsTab.style.display = (role === 'admin') ? '' : 'none';
+    }
 
     // Register service worker
     if ('serviceWorker' in navigator) {

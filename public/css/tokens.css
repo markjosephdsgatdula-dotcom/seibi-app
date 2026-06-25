@@ -20,6 +20,9 @@
   --clr-priority-medium: #faad14;
   --clr-priority-low:    #52c41a;
 
+  /* Semantic status */
+  --clr-success: #10b981;
+
   /* Text */
   --clr-text-primary:    #e8eaf6;
   --clr-text-secondary:  #8890b5;

@@ -125,12 +125,14 @@
           <h1 class="view-title">History Log</h1>
           <div class="sort-toggle" role="group" aria-label="Sort history by">
             <button
+              id="sort-btn-date"
               class="sort-btn active"
               data-sort="date"
               aria-pressed="true"
               onclick="App.HistoryView.setSort('date')"
             >By Date</button>
             <button
+              id="sort-btn-machine"
               class="sort-btn"
               data-sort="machine"
               aria-pressed="false"
@@ -138,7 +140,15 @@
             >By Machine</button>
           </div>
         </div>
-        <!-- Rendered by HistoryView.init() via HistoryStore -->
+        <!-- Machine health score cards (rendered by HistoryView) -->
+        <div id="hist-health-panel"></div>
+        <!-- Recurring failure alerts (rendered by HistoryView) -->
+        <div id="hist-alerts-panel"></div>
+        <!-- Summary statistics bar (rendered by HistoryView) -->
+        <div id="hist-stats-bar"></div>
+        <!-- Filter bar: date range + type + search (rendered by HistoryView) -->
+        <div id="hist-filter-bar"></div>
+        <!-- Record list (rendered by HistoryView) -->
         <div id="history-list"></div>
       </section>
 
@@ -315,6 +325,7 @@
   <script src="js/components/calendar-grid.js?v=37"></script>
   <script src="js/services/calendar-service.js?v=37"></script>
   <script src="js/views/calendar.js?v=37"></script>
+  <script src="js/services/history-service.js?v=37"></script>
   <script src="js/views/history.js?v=37"></script>
   <script src="js/components/notice-card.js?v=37"></script>
   <script src="js/services/notice-service.js?v=37"></script>

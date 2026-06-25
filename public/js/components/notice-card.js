@@ -42,6 +42,15 @@ const NoticeCard = (() => {
     `;
   }
 
+  function _elapsedLabel(isoStr) {
+    const mins = Math.round((Date.now() - new Date(isoStr)) / 60000);
+    if (mins < 1)  return '< 1m';
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+
   function renderNotice(notice) {
     const cat    = NoticeStore.CATEGORIES[notice.category] || NoticeStore.CATEGORIES.info;
     const colour = NoticeService.avatarColour(notice.initials);
@@ -60,9 +69,33 @@ const NoticeCard = (() => {
       'incident': isJp ? '突発異常' : 'Incident'
     }[notice.category] || cat.label;
 
-    const repairBtn = isDefectOrIncident && !isRepaired
-      ? `<button class="notice-repair-btn" onclick="NoticeView.openRepairForm('${notice.id}')" title="${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}">${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}</button>`
-      : '';
+    let repairBtn = '';
+    if (isDefectOrIncident && !isRepaired) {
+      if (notice.startedRepairAt) {
+        // Repair already started — show live elapsed chip + submit button
+        repairBtn = `
+          <div class="repair-in-progress-bar">
+            <span class="repair-in-progress-chip">
+              ⏱ ${I18n.t('repair_in_progress')}
+              <span class="repair-elapsed-timer"
+                    data-started="${notice.startedRepairAt}">
+                ${_elapsedLabel(notice.startedRepairAt)}
+              </span>
+            </span>
+            <button class="notice-repair-btn"
+                    onclick="NoticeView.openRepairForm('${notice.id}')" title="${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}">
+              ${isIncident ? I18n.t('btn_resolve_incident') : I18n.t('btn_mark_repaired')}
+            </button>
+          </div>`;
+      } else {
+        // Repair not started yet — show "Start Repair" button
+        repairBtn = `
+          <button class="notice-repair-btn notice-repair-btn--start"
+                  onclick="NoticeView.startRepair('${notice.id}')">
+            ${I18n.t('btn_start_repair')}
+          </button>`;
+      }
+    }
 
     const formattedTime = new Date(notice.timestamp).toLocaleString(isJp ? 'ja-JP' : 'en-US');
 

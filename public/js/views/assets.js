@@ -13,6 +13,10 @@ const AssetsView = (() => {
   let _checklistState = []; // Array of { itemId, status: 'pass'|'fail'|null, notes: string }
   let _template = [];
 
+  // Inspection stopwatch state
+  let _inspectionStartTime     = null;   // epoch ms when modal opened
+  let _inspectionTimerInterval = null;   // setInterval handle
+
   // In-memory state for new asset registration
   let _newAssetForm = {
     name: '',
@@ -492,6 +496,18 @@ const AssetsView = (() => {
     modal.innerHTML = AssetModal.renderInspectionModal(_activeAsset, _template, _savedInspector());
     document.getElementById('app-shell').appendChild(modal);
     _validateForm();
+
+    // ── Inspection stopwatch ─────────────────────────────────────────────────
+    _inspectionStartTime = Date.now();
+    clearInterval(_inspectionTimerInterval);
+    _inspectionTimerInterval = setInterval(() => {
+      const el = document.getElementById('insp-timer');
+      if (!el) { clearInterval(_inspectionTimerInterval); return; }
+      const totalSecs = Math.floor((Date.now() - _inspectionStartTime) / 1000);
+      const mm = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+      const ss = String(totalSecs % 60).padStart(2, '0');
+      el.textContent = `${mm}:${ss}`;
+    }, 1000);
   }
 
 
@@ -561,6 +577,9 @@ const AssetsView = (() => {
   function closeInspection() {
     const modal = document.getElementById('inspection-modal');
     if (modal) modal.remove();
+    clearInterval(_inspectionTimerInterval);
+    _inspectionTimerInterval = null;
+    _inspectionStartTime = null;
     _activeAsset = null;
     _checklistState = [];
     const banner = document.getElementById('return-inspection-banner');
@@ -569,9 +588,10 @@ const AssetsView = (() => {
 
   function submitInspection() {
     const nameEl = document.getElementById('insp-name');
-    const durEl = document.getElementById('insp-duration');
     const name = nameEl ? nameEl.value.trim() : 'Unknown';
-    const duration = durEl ? Math.max(1, Number(durEl.value) || 25) : 25;
+    const duration = _inspectionStartTime
+      ? Math.max(1, Math.round((Date.now() - _inspectionStartTime) / 60000))
+      : 1;
     const isJp = I18n.getLang() === 'jp';
 
     if (!name) {

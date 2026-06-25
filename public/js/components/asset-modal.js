@@ -486,10 +486,10 @@ const AssetModal = (() => {
               />
             </div>
             <div class="inspector-input-group">
-              <label class="inspector-input-label" for="insp-duration">
-                ${isJp ? '所要時間（分）' : 'Duration (mins)'}
+              <label class="inspector-input-label">
+                ${isJp ? '経過時間' : 'Elapsed time'}
               </label>
-              <input id="insp-duration" class="inspector-input" type="number" value="25" min="5" max="120" />
+              <div id="insp-timer" class="insp-timer">00:00</div>
             </div>
           </div>
 

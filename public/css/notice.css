@@ -605,3 +605,38 @@
   object-fit: cover;
   max-height: 140px;
 }
+
+/* ── Repair in-progress bar & chip ──────────────────────────────────── */
+.repair-in-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.repair-in-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+}
+
+.repair-elapsed-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+
+/* "Start Repair" button variant */
+.notice-repair-btn--start {
+  background: rgba(79, 124, 255, 0.08);
+  border-color: var(--clr-accent);
+  color: var(--clr-accent);
+}

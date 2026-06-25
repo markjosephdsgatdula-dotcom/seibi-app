@@ -136,6 +136,12 @@ const I18n = (() => {
       'notif_title': 'Seibi Maintenance Reminder',
       'notif_body_tasks': 'You have {count} task(s) due today.',
       'notif_body_overdue': ' ({count} overdue!)',
+
+      // Timer Feature
+      'btn_start_repair':     '▶ Start Repair',
+      'repair_in_progress':   'Repair in progress —',
+      'timer_elapsed':        'Elapsed',
+      'duration_not_tracked': '—',
     },
     jp: {
       // Frequencies
@@ -263,6 +269,12 @@ const I18n = (() => {
       'notif_title': '整備点検リマインダー',
       'notif_body_tasks': '本日期限のタスクが {count} 件あります。',
       'notif_body_overdue': '（期限超過 {count} 件！）',
+
+      // Timer Feature
+      'btn_start_repair':     '▶ 修理開始',
+      'repair_in_progress':   '修理中 —',
+      'timer_elapsed':        '経過',
+      'duration_not_tracked': '—',
     }
   };
 

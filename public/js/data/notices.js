@@ -209,7 +209,9 @@ const NoticeStore = (() => {
           location: location,
           priority: 'high',
           completedAt: new Date().toISOString(),
-          durationMins: 30,
+          durationMins: notice.startedRepairAt
+            ? Math.max(1, Math.round((new Date() - new Date(notice.startedRepairAt)) / 60000))
+            : null,
           completedBy: repairedBy.trim(),
           notes: repairNote.trim(),
           reportNotes: notice.message,
@@ -234,6 +236,29 @@ const NoticeStore = (() => {
       } else {
         addHistory();
       }
+    }
+
+    return Promise.resolve(notice);
+  }
+
+  function startRepair(id) {
+    const notices = _load().slice();
+    const notice = notices.find(n => n.id === id);
+    if (!notice || notice.repaired || notice.startedRepairAt) return Promise.resolve();
+
+    const startedRepairAt = new Date().toISOString();
+
+    // Write only the new field to Firebase (efficient targeted update)
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('notices/' + id).update({ startedRepairAt }).catch(err => {
+        console.error('[Firebase] Write error on notices/startRepair:', err);
+      });
+    }
+
+    // Keep in-memory cache in sync
+    notice.startedRepairAt = startedRepairAt;
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.notices = notices;
     }
 
     return Promise.resolve(notice);
@@ -283,6 +308,6 @@ const NoticeStore = (() => {
     return Promise.resolve(notice);
   }
 
-  return { getAll, post, deleteNotice, markRepaired, markUnresolved, clearAll, CATEGORIES };
+  return { getAll, post, deleteNotice, markRepaired, markUnresolved, clearAll, startRepair, CATEGORIES };
 
 })();

@@ -24,6 +24,10 @@ const NoticeView = (() => {
   let _modalRepairPhotoBlob = null;
   const _repairPhotoBlobs = {};
 
+  // Repair elapsed-time ticker (browser only, zero Firebase cost)
+  let _repairTimerInterval = null;
+
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   function _savedAuthor() {
@@ -346,6 +350,28 @@ const NoticeView = (() => {
     NoticeStore.getAll().then(notices => {
       _allNotices = notices;
       _applyFilterAndRender();
+      _startRepairTicker();
+    });
+  }
+
+  function _startRepairTicker() {
+    clearInterval(_repairTimerInterval);
+    _repairTimerInterval = setInterval(() => {
+      document.querySelectorAll('.repair-elapsed-timer').forEach(el => {
+        const started = el.dataset.started;
+        if (!started) return;
+        const mins = Math.round((Date.now() - new Date(started)) / 60000);
+        if (mins < 1)  { el.textContent = '< 1m'; return; }
+        if (mins < 60) { el.textContent = `${mins}m`; return; }
+        const h = Math.floor(mins / 60), m = mins % 60;
+        el.textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
+      });
+    }, 30000);
+  }
+
+  function startRepair(noticeId) {
+    NoticeStore.startRepair(noticeId).then(() => {
+      refreshFeed();
     });
   }
 
@@ -785,6 +811,6 @@ const NoticeView = (() => {
     });
   }
 
-  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident, onMachineSelectChange, onIncidentPhotoSelected, openRepairModal, onModalRepairPhotoSelected, submitRepairModal };
+  return { init, submitPost, deleteNotice, openRepairForm, closeRepairForm, onRepairPhotoSelected, submitRepair, refreshFeed, onSearchInput, setCategoryFilter, openIncidentModal, closeIncidentModal, submitIncident, onMachineSelectChange, onIncidentPhotoSelected, openRepairModal, onModalRepairPhotoSelected, submitRepairModal, startRepair };
 
 })();

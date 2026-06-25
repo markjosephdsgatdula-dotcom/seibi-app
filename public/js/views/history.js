@@ -70,7 +70,7 @@ const HistoryView = (() => {
           <div class="hist-card-top">
             <h3 class="hist-card-title">${rec.title}</h3>
             <div class="hist-card-top-right">
-              <span class="hist-card-duration">⏱ ${rec.durationMins}${I18n.t('min')}</span>
+              <span class="hist-card-duration">⏱ ${rec.durationMins !== undefined && rec.durationMins !== null ? rec.durationMins + I18n.t('min') : I18n.t('duration_not_tracked')}</span>
               ${AuthService.isAdmin() ? `
               <button
                 class="hist-delete-btn"

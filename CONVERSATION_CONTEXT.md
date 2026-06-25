@@ -142,6 +142,23 @@ This file serves as a handoff context document for the next Antigravity AI codin
 * **First-Login Resolution:** Prevents intermittent "Permission Denied" database errors on first login before the session token has propagated.
 * **Cache Busting:** Bumped the cache parameter to `v=35b` for `firebase-config.js` in `index.html`.
 
+### Stage 16: Firebase Storage Migration & Database Sanitization (v27)
+* **Firebase Cloud Storage Integration**:
+  * Added the Firebase Storage SDK and initialized it as `firebaseStorage` in `firebase-config.js`.
+  * Refactored `notice.js` and `assets.js` to upload compressed image Blobs to Cloud Storage (`/photos`) on form submission, saving only the public token-authenticated HTTPS download URLs back to the Realtime Database.
+* **Client-Side Image Compression**:
+  * Created `public/js/services/image-service.js` to compress image uploads to lightweight JPEG Blobs (max dimensions 1000x800px at 80% quality) on the client-side.
+* **Bandwidth Optimization & Query Limiting**:
+  * Limited `/history` sync listeners to the 50 most recent records to prevent megabytes of sync overhead on client boot.
+  * Refactored `HistoryStore` to use targeted single-child writes (`addRecord` and `deleteRecord` on individual keys) instead of overwriting the entire history array, preserving historical logs in the cloud.
+* **Database Sanitization**:
+  * Purged all old test/mock entries (created by `dwa`, `MArk`, `ma-klu`, `テスト`, etc.) from the live `/notices`, `/history`, `/tasks`, and `/assets` database nodes, leaving only clean operational records.
+* **Robot Reference Photo Restoration**:
+  * Extracted and restored the custom welding robot reference checklist pictures by uploading them to Cloud Storage and linking their secure download URLs in `/templates` dynamically.
+* **Version Bump & Deployment**:
+  * Version-bumped the status bar UI to `v27` and cache-busting script queries to `v37` in `index.html` and `sw.js` to force clients to clear browser cache and load the latest updates.
+  * Deployed hosting live to production and pushed all files to the main branch on GitHub.
+
 ---
 
 ## 🚨 Cross-Machine AI Sync Instruction (Home PC / Work Laptop)

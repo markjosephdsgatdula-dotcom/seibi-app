@@ -67,8 +67,19 @@ const NoticeStore = (() => {
       incidentType
     };
 
-    notices.push(notice);
-    const saveNoticePromise = _save(notices);
+    // Write only the new notice to its own child node. No full-array overwrite.
+    const saveNoticePromise = (typeof firebaseDb !== 'undefined')
+      ? firebaseDb.ref('notices/' + notice.id).set(notice).catch(err => {
+          console.error('[Firebase] Write error on notices/post:', err);
+        })
+      : Promise.resolve();
+
+    // Keep in-memory cache in sync
+    if (typeof FirebaseSync !== 'undefined') {
+      if (!FirebaseSync.cache.notices.some(n => n.id === notice.id)) {
+        FirebaseSync.cache.notices.push(notice);
+      }
+    }
 
     // Bidirectional sync: if it is an incident or defect, update asset status to needs_repair
     let assetPromise = Promise.resolve();
@@ -101,7 +112,15 @@ const NoticeStore = (() => {
     }
 
     const updatedNotices = notices.filter(n => n.id !== id);
-    _save(updatedNotices);
+    // Remove only this notice's child node.
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('notices/' + id).remove().catch(err => {
+        console.error('[Firebase] Write error on notices/delete:', err);
+      });
+    }
+    if (typeof FirebaseSync !== 'undefined') {
+      FirebaseSync.cache.notices = updatedNotices;
+    }
 
     const promises = [];
 
@@ -139,12 +158,26 @@ const NoticeStore = (() => {
     const notices = _load().slice(); // clone
     const notice = notices.find(n => n.id === id);
     if (!notice) return Promise.resolve();
-    notice.repaired    = true;
-    notice.repairedBy  = repairedBy.trim();
-    notice.repairedAt  = new Date().toISOString();
-    notice.repairNote  = repairNote.trim();
-    notice.repairPhoto = repairPhoto || null;
-    _save(notices);
+    const repairedAt = new Date().toISOString();
+    const repairFields = {
+      repaired:    true,
+      repairedBy:  repairedBy.trim(),
+      repairedAt:  repairedAt,
+      repairNote:  repairNote.trim(),
+      repairPhoto: repairPhoto || null
+    };
+
+    // Merge only the repair fields — other notice fields are untouched.
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('notices/' + id).update(repairFields).catch(err => {
+        console.error('[Firebase] Write error on notices/markRepaired:', err);
+      });
+    }
+
+    // Keep in-memory cache in sync
+    if (notice) {
+      Object.assign(notice, repairFields);
+    }
 
     // Sync back to AssetStore: resolve the asset's repair status!
     if (notice.assetId && typeof AssetStore !== 'undefined') {
@@ -213,12 +246,29 @@ const NoticeStore = (() => {
     const notice = notices.find(n => n.id === id);
     if (!notice) return Promise.resolve();
     
-    delete notice.repaired;
-    delete notice.repairedBy;
-    delete notice.repairedAt;
-    delete notice.repairNote;
-    delete notice.repairPhoto;
-    _save(notices);
+    // Setting a field to null in Firebase RTDB removes it from the node.
+    const clearFields = {
+      repaired:    null,
+      repairedBy:  null,
+      repairedAt:  null,
+      repairNote:  null,
+      repairPhoto: null
+    };
+
+    if (typeof firebaseDb !== 'undefined') {
+      firebaseDb.ref('notices/' + id).update(clearFields).catch(err => {
+        console.error('[Firebase] Write error on notices/markUnresolved:', err);
+      });
+    }
+
+    // Keep in-memory cache in sync
+    if (notice) {
+      delete notice.repaired;
+      delete notice.repairedBy;
+      delete notice.repairedAt;
+      delete notice.repairNote;
+      delete notice.repairPhoto;
+    }
 
     // Sync back to AssetStore: set status back to needs_repair!
     if (notice.assetId && typeof AssetStore !== 'undefined') {

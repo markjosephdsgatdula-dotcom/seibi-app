@@ -64,6 +64,8 @@ Firebase RTDB ──► FirebaseSync (firebase-config.js)
 - ✅ Live database sanitized: all test/mock entries purged from `/notices`, `/history`, `/tasks`, `/assets`
 - ✅ Custom robot checklist reference photos restored to Cloud Storage with token URLs
 - ✅ P0 Security Fixes: Stored XSS protection (HTML escaping for author/initials in notices), role-based delete action guards (delete button restricted to Admin, deleteNotice function-level guard), and removal of unauthenticated test Cloud Function.
+- ✅ P1 NoticeStore Targeted Writes: Replaced full array overwrites with single-item path writes (`set`, `update`, `remove`) and added automatic legacy array to ID-keyed object migration.
+- ✅ P2 Data-View Decoupling: Decoupled data stores from views by replacing 21 direct view controller calls with a centralized `seibi_data_changed` custom event system.
 
 ---
 

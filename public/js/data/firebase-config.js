@@ -238,8 +238,7 @@ const FirebaseSync = (() => {
         cache.assets = [..._assetsSeed];
       }
       _markReady('assets');
-      if (typeof AssetsView !== 'undefined') AssetsView.refresh();
-      if (typeof HomeView !== 'undefined') HomeView.refresh();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'assets' } }));
     }, handleErr('assets'));
 
     // 2. Templates sync — seed data is in AssetStore._templatesSeed
@@ -366,8 +365,7 @@ const FirebaseSync = (() => {
 
       cache.tasks = tasksList;
       _markReady('tasks');
-      if (typeof HomeView !== 'undefined') HomeView.refresh();
-      if (typeof CalendarView !== 'undefined') CalendarView.init();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'tasks' } }));
     }, handleErr('tasks'));
 
     // 4. Notices sync
@@ -400,7 +398,7 @@ const FirebaseSync = (() => {
         cache.notices = [];
       }
       _markReady('notices');
-      if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'notices' } }));
     }, handleErr('notices'));
 
     // 5. History sync (limit to last 50 to save bandwidth)
@@ -412,7 +410,7 @@ const FirebaseSync = (() => {
         cache.history = [];
       }
       _markReady('history');
-      if (typeof HistoryView !== 'undefined') HistoryView.init();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'history' } }));
     }, handleErr('history'));
 
     // 6. Equipment sync
@@ -425,7 +423,7 @@ const FirebaseSync = (() => {
         cache.equipment = [..._equipmentSeed];
       }
       _markReady('equipment');
-      if (typeof WireMapView !== 'undefined') WireMapView.refresh();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'equipment' } }));
     }, handleErr('equipment'));
 
     // 7. Wires sync
@@ -438,7 +436,7 @@ const FirebaseSync = (() => {
         cache.wires = [..._wiresSeed];
       }
       _markReady('wires');
-      if (typeof WireMapView !== 'undefined') WireMapView.refresh();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'wires' } }));
     }, handleErr('wires'));
 
     console.log('[Firebase] Real-time synchronization listeners attached.');

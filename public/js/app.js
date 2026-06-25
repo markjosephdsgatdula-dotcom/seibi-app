@@ -201,10 +201,12 @@ const App = (() => {
       FirebaseSync.start().then(() => {
         _initViews();
         Router.init();
+        _registerDataListeners();
       });
     } else {
       _initViews();
       Router.init();
+      _registerDataListeners();
     }
   }
 
@@ -266,6 +268,36 @@ const App = (() => {
     });
 
     console.log('[Seibi] App booted.');
+  }
+
+  // ─── Data change subscriptions ────────────────────────────────────────────
+
+  function _registerDataListeners() {
+    window.addEventListener('seibi_data_changed', (e) => {
+      const node = e.detail && e.detail.node;
+      switch (node) {
+        case 'assets':
+          if (typeof AssetsView !== 'undefined') AssetsView.refresh();
+          if (typeof HomeView   !== 'undefined') HomeView.refresh();
+          break;
+        case 'tasks':
+          if (typeof HomeView     !== 'undefined') HomeView.refresh();
+          if (typeof CalendarView !== 'undefined') CalendarView.init();
+          break;
+        case 'notices':
+          if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+          break;
+        case 'history':
+          if (typeof HistoryView !== 'undefined') HistoryView.init();
+          break;
+        case 'equipment':
+        case 'wires':
+          if (typeof WireMapView !== 'undefined') WireMapView.refresh();
+          break;
+        default:
+          console.warn('[App] seibi_data_changed: unknown node:', node);
+      }
+    });
   }
 
   if (document.readyState === 'loading') {

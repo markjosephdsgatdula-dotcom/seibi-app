@@ -485,9 +485,7 @@ const AssetStore = (() => {
 
     _saveAssets(assets);
 
-    if (typeof AssetsView !== 'undefined') {
-      AssetsView.refresh();
-    }
+    window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'assets' } }));
 
     return Promise.resolve(asset);
   }
@@ -500,9 +498,7 @@ const AssetStore = (() => {
     asset.status = status;
     _saveAssets(assets);
 
-    if (typeof AssetsView !== 'undefined') {
-      AssetsView.refresh();
-    }
+    window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'assets' } }));
 
     return Promise.resolve(asset);
   }
@@ -515,9 +511,7 @@ const AssetStore = (() => {
     asset.dueDate = newDate;
     _saveAssets(assets);
 
-    if (typeof AssetsView !== 'undefined') {
-      AssetsView.refresh();
-    }
+    window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'assets' } }));
 
     return Promise.resolve(asset);
   }

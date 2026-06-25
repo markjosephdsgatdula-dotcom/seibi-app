@@ -143,9 +143,8 @@ const NoticeStore = (() => {
     }
 
     return Promise.all(promises).then(() => {
-      if (typeof HomeView !== 'undefined') HomeView.refresh();
-      if (typeof CalendarView !== 'undefined') CalendarView.init();
-      if (typeof HistoryView !== 'undefined') HistoryView.init();
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'tasks' } }));
+      window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'history' } }));
     });
   }
 
@@ -187,8 +186,7 @@ const NoticeStore = (() => {
     // Sync back to MockDB: mark the linked repair task as done!
     if (typeof MockDB !== 'undefined') {
       MockDB.markDone(`task-repair-${id}`).then(() => {
-        if (typeof HomeView !== 'undefined') HomeView.refresh();
-        if (typeof CalendarView !== 'undefined') CalendarView.init();
+        window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'tasks' } }));
       });
     }
 
@@ -221,7 +219,7 @@ const NoticeStore = (() => {
         };
 
         HistoryStore.addRecord(historyRecord).then(() => {
-          if (typeof HistoryView !== 'undefined') HistoryView.init();
+          window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'history' } }));
         });
       };
 
@@ -278,7 +276,7 @@ const NoticeStore = (() => {
     // Delete corresponding history record if present
     if (typeof HistoryStore !== 'undefined') {
       HistoryStore.deleteRecord(`hist-repair-${id}`).then(() => {
-        if (typeof HistoryView !== 'undefined') HistoryView.init();
+        window.dispatchEvent(new CustomEvent('seibi_data_changed', { detail: { node: 'history' } }));
       });
     }
 

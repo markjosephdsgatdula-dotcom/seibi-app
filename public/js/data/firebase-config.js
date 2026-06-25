@@ -25,6 +25,7 @@ const firebaseConfig = {
 let firebaseApp;
 let firebaseAuth;
 let firebaseDb;
+let firebaseStorage;
 let firebaseMessaging;
 if (typeof firebase !== 'undefined') {
   firebaseApp = firebase.initializeApp(firebaseConfig);
@@ -33,6 +34,9 @@ if (typeof firebase !== 'undefined') {
   }
   if (typeof firebaseApp.database === 'function') {
     firebaseDb = firebaseApp.database();
+  }
+  if (typeof firebaseApp.storage === 'function') {
+    firebaseStorage = firebaseApp.storage();
   }
   try {
     firebaseMessaging = firebaseApp.messaging();
@@ -184,7 +188,7 @@ const FirebaseSync = (() => {
     const txt = document.getElementById('firebase-status-text');
     if (dot && txt) {
       dot.className = `status-dot status-dot--${status}`;
-      txt.textContent = `${text} (v26)`;
+      txt.textContent = `${text} (v27)`;
     }
   }
 
@@ -378,11 +382,11 @@ const FirebaseSync = (() => {
       if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
     }, handleErr('notices'));
 
-    // 5. History sync
-    db.ref('history').on('value', snapshot => {
+    // 5. History sync (limit to last 50 to save bandwidth)
+    db.ref('history').orderByKey().limitToLast(50).on('value', snapshot => {
       const data = snapshot.val();
       if (data) {
-        cache.history = Array.isArray(data) ? data : Object.values(data);
+        cache.history = (Array.isArray(data) ? data : Object.values(data)).filter(Boolean);
       } else {
         cache.history = [];
       }
@@ -433,11 +437,19 @@ const FirebaseSync = (() => {
     return _readyPromise;
   }
 
+  function uploadPhoto(blob, path) {
+    if (!firebaseStorage) {
+      return Promise.reject(new Error('Firebase Storage not initialized'));
+    }
+    const ref = firebaseStorage.ref().child(path);
+    return ref.put(blob).then(snapshot => snapshot.ref.getDownloadURL());
+  }
+
   /** Returns a Promise that resolves when all data nodes have loaded their first snapshot. */
   function ready() {
     return _readyPromise;
   }
 
-  return { start, ready, cache };
+  return { start, ready, cache, uploadPhoto };
 
 })();

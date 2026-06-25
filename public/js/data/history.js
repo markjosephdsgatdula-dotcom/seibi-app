@@ -13,18 +13,6 @@ const HistoryStore = (() => {
     return (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.history) || [];
   }
 
-  function _save(records) {
-    if (typeof FirebaseSync !== 'undefined') {
-      FirebaseSync.cache.history = records;
-    }
-    if (typeof firebaseDb !== 'undefined') {
-      firebaseDb.ref('history').set(records).catch(err => {
-        console.error('[Firebase] Write error on history:', err);
-      });
-    }
-    return Promise.resolve();
-  }
-
   // ─── Public API ──────────────────────────────────────────────────────────
 
   function getAll() {
@@ -34,18 +22,45 @@ const HistoryStore = (() => {
   }
 
   function addRecord(record) {
-    const records = _load().slice(); // clone
     if (!record.id) {
       record.id = `hist-${Date.now()}`;
     }
-    records.push(record);
-    _save(records);
+    if (typeof firebaseDb !== 'undefined') {
+      return firebaseDb.ref('history/' + record.id).set(record)
+        .then(() => {
+          if (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.history) {
+            if (!FirebaseSync.cache.history.some(r => r.id === record.id)) {
+              FirebaseSync.cache.history.push(record);
+            }
+          }
+          return record;
+        })
+        .catch(err => {
+          console.error('[Firebase] Write error on history add:', err);
+          return record;
+        });
+    }
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.history) {
+      FirebaseSync.cache.history.push(record);
+    }
     return Promise.resolve(record);
   }
 
   function deleteRecord(id) {
-    const records = _load().filter(r => r.id !== id);
-    _save(records);
+    if (typeof firebaseDb !== 'undefined') {
+      return firebaseDb.ref('history/' + id).remove()
+        .then(() => {
+          if (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.history) {
+            FirebaseSync.cache.history = FirebaseSync.cache.history.filter(r => r.id !== id);
+          }
+        })
+        .catch(err => {
+          console.error('[Firebase] Write error on history delete:', err);
+        });
+    }
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.cache.history) {
+      FirebaseSync.cache.history = FirebaseSync.cache.history.filter(r => r.id !== id);
+    }
     return Promise.resolve();
   }
 

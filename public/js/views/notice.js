@@ -20,6 +20,9 @@ const NoticeView = (() => {
   let _activeFilter = 'all';
   let _searchQuery = '';
   let _allNotices = [];
+  let _incidentPhotoBlob = null;
+  let _modalRepairPhotoBlob = null;
+  const _repairPhotoBlobs = {};
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -237,20 +240,31 @@ const NoticeView = (() => {
     if (form) form.style.display = 'none';
   }
 
+  function _compressAndPreview(file, nameEl, previewEl, callback) {
+    if (nameEl) nameEl.textContent = 'Compressing...';
+    ImageService.compressAndPreview(file, { maxWidth: 1000, maxHeight: 800, quality: 0.8 }, (err, result) => {
+      if (err) {
+        console.error('[NoticeView] Image compression failed:', err);
+        if (nameEl) nameEl.textContent = 'Error';
+        return;
+      }
+      if (previewEl) {
+        previewEl.src = URL.createObjectURL(result.blob);
+        previewEl.style.display = 'block';
+      }
+      if (nameEl) nameEl.textContent = file.name;
+      if (callback) callback(result.blob);
+    });
+  }
+
   function onRepairPhotoSelected(id, input) {
     const file = input.files[0];
     if (!file) return;
     const nameEl  = document.getElementById(`repair-photo-name-${id}`);
     const preview = document.getElementById(`repair-photo-preview-${id}`);
-    if (nameEl) nameEl.textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (preview) {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-      }
-    };
-    reader.readAsDataURL(file);
+    _compressAndPreview(file, nameEl, preview, (blob) => {
+      _repairPhotoBlobs[id] = blob;
+    });
   }
 
   function submitRepair(id) {
@@ -266,11 +280,39 @@ const NoticeView = (() => {
       return;
     }
 
-    const previewEl   = document.getElementById(`repair-photo-preview-${id}`);
-    const repairPhoto  = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
+    const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+    const submitBtn = document.querySelector(`#repair-form-${id} .repair-submit-btn`);
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = isJp ? '送信中...' : 'Uploading...';
+    }
 
-    NoticeStore.markRepaired(id, { repairedBy, repairNote, repairPhoto }).then(() => {
+    const blob = _repairPhotoBlobs[id];
+    let uploadPromise = Promise.resolve(null);
+    if (blob) {
+      const filename = `repair-${id}-${Date.now()}.jpg`;
+      uploadPromise = FirebaseSync.uploadPhoto(blob, 'photos/' + filename)
+        .catch(err => {
+          console.error('[Firebase Storage] Photo upload failed:', err);
+          alert(isJp ? '写真のアップロードに失敗しました。' : 'Failed to upload photo.');
+          return null;
+        });
+    }
+
+    uploadPromise.then(downloadUrl => {
+      // Clean up local blob state
+      delete _repairPhotoBlobs[id];
+
+      return NoticeStore.markRepaired(id, { repairedBy, repairNote, repairPhoto: downloadUrl });
+    }).then(() => {
       refreshFeed();
+    }).catch(err => {
+      console.error('[NoticeView] Error submitting repair:', err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
   }
 
@@ -429,15 +471,9 @@ const NoticeView = (() => {
     if (!file) return;
     const nameEl  = document.getElementById('inc-photo-name');
     const preview = document.getElementById('inc-photo-preview');
-    if (nameEl) nameEl.textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (preview) {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-      }
-    };
-    reader.readAsDataURL(file);
+    _compressAndPreview(file, nameEl, preview, (blob) => {
+      _incidentPhotoBlob = blob;
+    });
   }
 
   function submitIncident(event) {
@@ -454,7 +490,6 @@ const NoticeView = (() => {
     const assetId = machineEl ? machineEl.value : '';
     const incidentType = typeEl ? typeEl.value : '';
     const message = notesEl ? notesEl.value.trim() : '';
-    const photo = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
     
     let timeVal = timeEl ? timeEl.value : '';
     let occurrenceTime = '';
@@ -507,34 +542,58 @@ const NoticeView = (() => {
 
     _saveAuthor(author);
 
-    let postPromise;
-    if (assetId === 'custom') {
-      const customName = customMachineEl.value.trim();
-      postPromise = NoticeStore.post({
-        author,
-        category: 'incident',
-        message,
-        assetId: null,
-        assetName: customName,
-        incidentType,
-        occurrenceTime,
-        photo
-      });
-    } else {
-      postPromise = AssetStore.getById(assetId).then(asset => {
-        const assetName = asset ? asset.name : 'Unknown Equipment';
+    const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+    const submitBtn = document.querySelector('#modal-incident-form button[type="submit"]') || document.querySelector('#view-notice button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = isJp ? '送信中...' : 'Uploading...';
+    }
+
+    const blob = _incidentPhotoBlob;
+    let uploadPromise = Promise.resolve(null);
+    if (blob) {
+      const filename = `incident-${Date.now()}.jpg`;
+      uploadPromise = FirebaseSync.uploadPhoto(blob, 'photos/' + filename)
+        .catch(err => {
+          console.error('[Firebase Storage] Photo upload failed:', err);
+          alert(isJp ? '写真のアップロードに失敗しました。' : 'Failed to upload photo.');
+          return null;
+        });
+    }
+
+    let postPromise = uploadPromise.then(downloadUrl => {
+      // Clean up local blob
+      _incidentPhotoBlob = null;
+
+      if (assetId === 'custom') {
+        const customName = customMachineEl.value.trim();
         return NoticeStore.post({
           author,
           category: 'incident',
           message,
-          assetId,
-          assetName,
+          assetId: null,
+          assetName: customName,
           incidentType,
           occurrenceTime,
-          photo
+          photo: downloadUrl
         });
-      });
-    }
+      } else {
+        return AssetStore.getById(assetId).then(asset => {
+          const assetName = asset ? asset.name : 'Unknown Equipment';
+          return NoticeStore.post({
+            author,
+            category: 'incident',
+            message,
+            assetId,
+            assetName,
+            incidentType,
+            occurrenceTime,
+            photo: downloadUrl
+          });
+        });
+      }
+    });
 
     postPromise.then(() => {
       closeIncidentModal();
@@ -647,15 +706,9 @@ const NoticeView = (() => {
     if (!file) return;
     const nameEl  = document.getElementById('modal-repair-photo-name');
     const preview = document.getElementById('modal-repair-photo-preview');
-    if (nameEl) nameEl.textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (preview) {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-      }
-    };
-    reader.readAsDataURL(file);
+    _compressAndPreview(file, nameEl, preview, (blob) => {
+      _modalRepairPhotoBlob = blob;
+    });
   }
 
   function submitRepairModal(event, noticeId) {
@@ -666,7 +719,6 @@ const NoticeView = (() => {
 
     const repairedBy = byEl ? byEl.value.trim() : '';
     const repairNote = noteEl ? noteEl.value.trim() : '';
-    const repairPhoto = (previewEl && previewEl.src && previewEl.src.startsWith('data:')) ? previewEl.src : null;
 
     if (!repairedBy) {
       byEl.classList.add('compose-input--error');
@@ -683,10 +735,41 @@ const NoticeView = (() => {
 
     _saveAuthor(repairedBy);
 
-    NoticeStore.markRepaired(noticeId, { repairedBy, repairNote, repairPhoto }).then(() => {
+    const isJp = typeof I18n !== 'undefined' && I18n.getLang() === 'jp';
+    const submitBtn = document.querySelector('#repair-modal button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = isJp ? '送信中...' : 'Uploading...';
+    }
+
+    const blob = _modalRepairPhotoBlob;
+    let uploadPromise = Promise.resolve(null);
+    if (blob) {
+      const filename = `repair-${noticeId}-${Date.now()}.jpg`;
+      uploadPromise = FirebaseSync.uploadPhoto(blob, 'photos/' + filename)
+        .catch(err => {
+          console.error('[Firebase Storage] Photo upload failed:', err);
+          alert(isJp ? '写真のアップロードに失敗しました。' : 'Failed to upload photo.');
+          return null;
+        });
+    }
+
+    uploadPromise.then(downloadUrl => {
+      // Clean up local blob
+      _modalRepairPhotoBlob = null;
+
+      return NoticeStore.markRepaired(noticeId, { repairedBy, repairNote, repairPhoto: downloadUrl });
+    }).then(() => {
       const modal = document.getElementById('repair-modal');
       if (modal) modal.remove();
       refreshFeed();
+    }).catch(err => {
+      console.error('[NoticeView] Error submitting modal repair:', err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
   }
 

@@ -293,9 +293,12 @@ const AssetsView = (() => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64Url = e.target.result;
+    ImageService.compressAndPreview(file, { maxWidth: 1000, maxHeight: 800, quality: 0.8 }, (err, result) => {
+      if (err) {
+        console.error('[AssetsView] Image compression failed:', err);
+        return;
+      }
+      const base64Url = result.base64;
       
       // Update text input value visually
       const wrapper = event.target.closest('.image-select-wrapper');
@@ -312,8 +315,7 @@ const AssetsView = (() => {
       } else if (customInputCallbackName === 'AssetsView.onEditImageCustomInputChange') {
         onEditImageCustomInputChange(index, base64Url);
       }
-    };
-    reader.readAsDataURL(file);
+    });
   }
 
   // ─── Edit Asset & Checklist Modal ─────────────────────────────────────────
@@ -578,61 +580,88 @@ const AssetsView = (() => {
     const failedItems = _checklistState.filter(item => item.status === 'fail');
     const totalDefects = failedItems.length;
     const assetName = (isJp && _activeAsset.name_jp) ? _activeAsset.name_jp : _activeAsset.name;
-
-    const failedReport = failedItems.map(item => {
-      const itemTitle = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
-      return { itemTitle, notes: item.notes };
-    });
-
     const priority = totalDefects > 0 ? 'high' : 'low';
 
-    const historyRecord = {
-      title: isJp ? `${assetName} — 月次点検` : `${_activeAsset.name} — Monthly Inspection`,
-      title_jp: `${assetName} — 月次点検`,
-      assetId: _activeAsset.id,
-      assetName: _activeAsset.name,
-      assetName_jp: _activeAsset.name_jp || _activeAsset.name,
-      location: _activeAsset.location,
-      priority: priority,
-      completedAt: new Date().toISOString(),
-      durationMins: duration,
-      completedBy: name,
-      notes: totalDefects === 0 
-        ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
-        : (isJp ? `${totalDefects}件の不具合が報告されました` : `${totalDefects} issue(s) reported`),
-      checklist: _checklistState,
-      type: 'inspection'
-    };
+    const submitBtn = document.getElementById('btn-submit-inspection');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = isJp ? '送信中...' : 'Uploading...';
+    }
 
-    HistoryStore.addRecord(historyRecord).then(() => {
-
-      // ── Auto-post a Defect notice for each failed checklist item ──
-      let noticePromise = Promise.resolve();
-      if (failedItems.length > 0 && typeof NoticeStore !== 'undefined') {
-        const postPromises = failedItems.map(item => {
-          const itemTitle = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
-          const messageText = isJp
-            ? `【異常検知】 ${assetName} — ${_activeAsset.location}\n` +
-              `点検中に「${itemTitle}」で異常が報告されました。`
-            : `[DEFECT FOUND] ${assetName} — ${_activeAsset.location}\n` +
-              `Defect reported during inspection of "${itemTitle}".`;
-
-          return NoticeStore.post({
-            author: name,
-            category: 'defect',
-            assetId: _activeAsset.id,
-            photo: item.photo || null,
-            message: messageText
+    // Find and upload all photos attached to checklist items
+    const uploadPromises = _checklistState.map(item => {
+      if (item.photoBlob) {
+        const filename = `defect-${_activeAsset.id}-${item.itemId}-${Date.now()}.jpg`;
+        return FirebaseSync.uploadPhoto(item.photoBlob, 'photos/' + filename)
+          .then(downloadUrl => {
+            item.photo = downloadUrl;
+            delete item.photoBlob; // Clean up local blob state
+          })
+          .catch(err => {
+            console.error(`[Firebase Storage] Upload failed for item ${item.itemId}:`, err);
+            item.photo = null;
+            delete item.photoBlob;
           });
-        });
-        noticePromise = Promise.all(postPromises).then(() => {
-          if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
-        });
       }
+      // If photo was a localObjectURL preview but no Blob, clean it up
+      if (item.photo && item.photo.startsWith('blob:')) {
+        item.photo = null;
+      }
+      return Promise.resolve();
+    });
 
-      return noticePromise.then(() => {
-        const todayStr = AssetService.getTodayString();
-        return AssetStore.completeInspection(_activeAsset.id, todayStr, failedItems.length > 0);
+    Promise.all(uploadPromises).then(() => {
+      // Re-query failed items now that their photo properties contain live Firebase URLs
+      const updatedFailedItems = _checklistState.filter(item => item.status === 'fail');
+
+      const historyRecord = {
+        title: isJp ? `${assetName} — 月次点検` : `${_activeAsset.name} — Monthly Inspection`,
+        title_jp: `${assetName} — 月次点検`,
+        assetId: _activeAsset.id,
+        assetName: _activeAsset.name,
+        assetName_jp: _activeAsset.name_jp || _activeAsset.name,
+        location: _activeAsset.location,
+        priority: priority,
+        completedAt: new Date().toISOString(),
+        durationMins: duration,
+        completedBy: name,
+        notes: totalDefects === 0 
+          ? (isJp ? 'すべての項目に合格しました。' : 'All items passed.') 
+          : (isJp ? `${totalDefects}件の不具合が報告されました` : `${totalDefects} issue(s) reported`),
+        checklist: _checklistState,
+        type: 'inspection'
+      };
+
+      return HistoryStore.addRecord(historyRecord).then(() => {
+        // ── Auto-post a Defect notice for each failed checklist item ──
+        let noticePromise = Promise.resolve();
+        if (updatedFailedItems.length > 0 && typeof NoticeStore !== 'undefined') {
+          const postPromises = updatedFailedItems.map(item => {
+            const itemTitle = isJp ? (item.title_jp || item.title) : (item.title_en || item.title);
+            const messageText = isJp
+              ? `【異常検知】 ${assetName} — ${_activeAsset.location}\n` +
+                `点検中に「${itemTitle}」で異常が報告されました。`
+              : `[DEFECT FOUND] ${assetName} — ${_activeAsset.location}\n` +
+                `Defect reported during inspection of "${itemTitle}".`;
+
+            return NoticeStore.post({
+              author: name,
+              category: 'defect',
+              assetId: _activeAsset.id,
+              photo: item.photo || null,
+              message: messageText
+            });
+          });
+          noticePromise = Promise.all(postPromises).then(() => {
+            if (typeof NoticeView !== 'undefined') NoticeView.refreshFeed();
+          });
+        }
+
+        return noticePromise.then(() => {
+          const todayStr = AssetService.getTodayString();
+          return AssetStore.completeInspection(_activeAsset.id, todayStr, updatedFailedItems.length > 0);
+        });
       });
     }).then(() => {
       closeInspection();
@@ -642,7 +671,13 @@ const AssetsView = (() => {
       if (typeof CalendarView !== 'undefined') CalendarView.init();
       if (typeof HistoryView !== 'undefined') HistoryView.init();
 
-      _showSuccessBanner(historyRecord.assetName);
+      _showSuccessBanner(assetName);
+    }).catch(err => {
+      console.error('[AssetsView] Error submitting inspection:', err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
   }
 
@@ -753,53 +788,28 @@ const AssetsView = (() => {
 
     if (labelEl) labelEl.textContent = 'Compressing image...';
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
+    ImageService.compressAndPreview(file, { maxWidth: 1000, maxHeight: 800, quality: 0.8 }, (err, result) => {
+      if (err) {
+        console.error('[AssetsView] Image compression failed:', err);
+        if (labelEl) labelEl.textContent = 'Error';
+        return;
+      }
+      const localUrl = URL.createObjectURL(result.blob);
+      record.photo = localUrl;
+      record.photoBlob = result.blob;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG at 80% quality (resulting in about 100-200KB Base64)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-
-        record.photo = compressedBase64;
-
-        if (labelEl) labelEl.textContent = file.name;
-        if (removeBtn) removeBtn.style.display = 'inline-block';
-        if (previewImg) previewImg.src = compressedBase64;
-        if (previewContainer) previewContainer.style.display = 'block';
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      if (labelEl) labelEl.textContent = file.name;
+      if (removeBtn) removeBtn.style.display = 'inline-block';
+      if (previewImg) previewImg.src = localUrl;
+      if (previewContainer) previewContainer.style.display = 'block';
+    });
   }
 
   function removeDefectPhoto(itemId) {
     const record = _checklistState.find(item => item.itemId === itemId);
     if (record) {
       delete record.photo;
+      delete record.photoBlob;
     }
 
     const fileInput = document.getElementById(`photo-input-${itemId}`);

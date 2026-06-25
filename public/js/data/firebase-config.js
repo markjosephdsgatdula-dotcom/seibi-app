@@ -379,10 +379,19 @@ const FirebaseSync = (() => {
 
         if (isLegacyArray) {
           // One-time migration: convert numeric-keyed array to ID-keyed object.
-          console.log('[FirebaseSync] Migrating /notices from array format to ID-keyed format...');
+          console.log('[FirebaseSync] Migrating /notices from array format to ID-keyed format...', data);
           const migrated = {};
-          Object.values(data).forEach(n => { if (n && n.id) migrated[n.id] = n; });
-          db.ref('notices').set(migrated); // single rewrite — safe, no race risk here
+          Object.values(data).forEach((n, idx) => {
+            if (n) {
+              const id = n.id || `notice-${Date.now()}_${idx}`;
+              n.id = id;
+              migrated[id] = n;
+            }
+          });
+          console.log('[FirebaseSync] Writing migrated notices to Firebase:', migrated);
+          db.ref('notices').set(migrated)
+            .then(() => console.log('[FirebaseSync] Notices migration write succeeded.'))
+            .catch(err => console.error('[FirebaseSync] Notices migration write failed:', err));
           cache.notices = Object.values(migrated);
         } else {
           cache.notices = Object.values(data);

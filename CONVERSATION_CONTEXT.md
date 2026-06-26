@@ -48,7 +48,7 @@ Firebase RTDB ──► FirebaseSync (firebase-config.js)
 
 ## Key Features / Current State
 
-**Stable Baseline — v27 (script cache `?v=37`)**
+**Stable Baseline — v27 (script cache `?v=37`) — Last updated: 2026-06-26**
 
 - ✅ Role-based login (Admin / Operator) with Firebase Auth
 - ✅ Asset management with per-asset custom checklist templates
@@ -66,6 +66,37 @@ Firebase RTDB ──► FirebaseSync (firebase-config.js)
 - ✅ P0 Security Fixes: Stored XSS protection (HTML escaping for author/initials in notices), role-based delete action guards (delete button restricted to Admin, deleteNotice function-level guard), and removal of unauthenticated test Cloud Function.
 - ✅ P1 NoticeStore Targeted Writes: Replaced full array overwrites with single-item path writes (`set`, `update`, `remove`) and added automatic legacy array to ID-keyed object migration.
 - ✅ P2 Data-View Decoupling: Decoupled data stores from views by replacing 21 direct view controller calls with a centralized `seibi_data_changed` custom event system.
+- ✅ Timer Feature (commit `c007adb`): Inspection stopwatch in asset modal (live ticking `00:00` display, elapsed time saved to history). Notice board repair timer: "▶ Start Repair" button → amber "⏱ Repair in progress" chip with live elapsed time → "Mark as Repaired" with actual duration saved. History view guards null `durationMins` (renders `—` for old records).
+
+---
+
+## DB Cleanup Tool
+
+A one-shot cleanup script exists at `scratch/cleanup_db.js`.
+
+**What it does:**
+- Clears `/history` and `/notices`
+- Deletes auto-generated July task copies (prevents duplicates on re-inspection)
+- Resets done June inspection tasks → `pending`
+- Resets asset statuses → `healthy`
+
+**Run with:** `node scratch/cleanup_db.js`
+(Uses Firebase CLI credentials from `%USERPROFILE%\.config\configstore\firebase-tools.json`)
+
+**Last cleanup run:** 2026-06-26 — DB is currently clean and ready for fresh testing.
+
+---
+
+## Task ID Conventions
+
+| Prefix | Type |
+|---|---|
+| `task-robot-XX` | Core monthly inspection task (original seed) |
+| `task-regulator-XX` | Regulator inspection task (original seed) |
+| `task-utility-gas-XX` | Gas utility task (original seed) |
+| `task-robot-<timestamp>` | Auto-generated next-cycle task (after inspection submitted) |
+| `task-repair-notice-<timestamp>` | Auto-generated repair task (after defect reported) |
+| `task-custom-<timestamp>` | Manually created custom work order |
 
 ---
 
